@@ -50,8 +50,4 @@ package object v1{
     transform(s, Renderer(out, indent, escapeUnicode)).toString
   }
   // End com.rallyhealth.ujson.v1
-  @deprecated("use com.rallyhealth.ujson.v1.Value")
-  type Js = Value
-  @deprecated("use com.rallyhealth.ujson.v1.Value")
-  val Js = Value
 }

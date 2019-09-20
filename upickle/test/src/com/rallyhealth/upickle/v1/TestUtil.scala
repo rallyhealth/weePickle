@@ -5,7 +5,6 @@ import acyclic.file
 * Created by haoyi on 4/22/14.
 */
 object TestUtil extends TestUtil[com.rallyhealth.upickle.v1.default.type](com.rallyhealth.upickle.v1.default)
-object LegacyTestUtil extends TestUtil[com.rallyhealth.upickle.v1.legacy.type](com.rallyhealth.upickle.v1.legacy)
 class TestUtil[Api <: com.rallyhealth.upickle.v1.Api](val api: Api){
 
   def rw[T: api.Reader: api.Writer](t: T, s: String*) = {

@@ -1,6 +1,5 @@
 package com.rallyhealth.upickle.v1
 import utest._
-import com.rallyhealth.upickle.v1.legacy.{read, write}
 
 import scala.collection.compat._
 import scala.concurrent.duration._
@@ -130,24 +129,6 @@ object StructTests extends TestSuite {
         rw(Right(Some(0.33 millis)): Either[Int, Option[Duration]], """[1,["330000"]]""")
         rw(Left(10 seconds): Either[Duration, Option[Duration]], """[0,"10000000000"]""")
         rw(Right(Some(0.33 millis)): Either[Duration, Option[Duration]], """[1,["330000"]]""")
-      }
-    }
-
-    test("transmutation"){
-      test("vectorToList"){
-        val vectorToList = read[List[Double]](write(Vector(1.1, 2.2, 3.3)))
-        assert(
-          vectorToList.isInstanceOf[List[Double]],
-          vectorToList == List(1.1, 2.2, 3.3)
-        )
-
-      }
-      test("listToMap"){
-        val listToMap = read[Map[Int, String]](write(List((1, "1"), (2, "2"))))
-        assert(
-          listToMap.isInstanceOf[Map[Int, String]],
-          listToMap == Map(1 -> "1", 2 -> "2")
-        )
       }
     }
 

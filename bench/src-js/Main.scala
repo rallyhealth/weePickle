@@ -15,21 +15,15 @@ object Main{
       Common.playJson(duration)
       Common.circe(duration)
       Common.upickleDefault(duration)
-      Common.upickleLegacy(duration)
       Common.upickleBinaryDefault(duration)
-      Common.upickleBinaryLegacy(duration)
 //      Common.genCodec(duration)
       upickleWebDefault(duration)
-      upickleWebLegacy(duration)
       Common.playJsonCached(duration)
       Common.circeCached(duration)
       Common.upickleDefaultCached(duration)
-      Common.upickleLegacyCached(duration)
       Common.upickleDefaultBinaryCached(duration)
-      Common.upickleLegacyBinaryCached(duration)
 //      Common.genCodecCached(duration)
       upickleWebDefaultCached(duration)
-      upickleWebLegacyCached(duration)
       println()
     }
   }
@@ -71,38 +65,6 @@ object Main{
     bench[String](duration)(
       com.rallyhealth.upickle.v1.default.web.read[Data],
       com.rallyhealth.upickle.v1.default.web.write(_)
-    )
-  }
-  def upickleWebLegacy(duration: Int) = {
-    import com.rallyhealth.upickle.v1.legacy.{ReadWriter => RW}
-    implicit def rw1: RW[Data] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw2: RW[A] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw3: RW[B] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw4: RW[C] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw5: RW[LL] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw6: RW[Node] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw7: RW[End.type] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw8: RW[ADTc] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit def rw9: RW[ADT0] = com.rallyhealth.upickle.v1.legacy.macroRW
-    bench[String](duration)(
-      com.rallyhealth.upickle.v1.legacy.web.read[Data],
-      com.rallyhealth.upickle.v1.legacy.web.write(_)
-    )
-  }
-  def upickleWebLegacyCached(duration: Int) = {
-    import com.rallyhealth.upickle.v1.legacy.{ReadWriter => RW}
-    implicit lazy val rw1: RW[Data] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw2: RW[A] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw3: RW[B] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw4: RW[C] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw5: RW[LL] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw6: RW[Node] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw7: RW[End.type] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw8: RW[ADTc] = com.rallyhealth.upickle.v1.legacy.macroRW
-    implicit lazy val rw9: RW[ADT0] = com.rallyhealth.upickle.v1.legacy.macroRW
-    bench[String](duration)(
-      com.rallyhealth.upickle.v1.legacy.web.read[Data],
-      com.rallyhealth.upickle.v1.legacy.web.write(_)
     )
   }
 }

@@ -102,64 +102,6 @@ object Api{
 object default extends AttributeTagged{
 
 }
-/**
- * An instance of the com.rallyhealth.upickle.v1 API that follows the old serialization for
- * tagged instances of sealed traits: as a list with two items, the first
- * being the type-tag and the second being the serialized object
- */
-object legacy extends LegacyApi
-trait LegacyApi extends Api{
-  def annotate[V](rw: Reader[V], n: String) = new TaggedReader.Leaf[V](n, rw)
-
-  def annotate[V](rw: CaseW[V], n: String)(implicit c: ClassTag[V]) = {
-    new TaggedWriter.Leaf[V](c, n, rw)
-  }
-
-  def taggedExpectedMsg = "expected sequence"
-  sealed trait TaggedReaderState
-  object TaggedReaderState{
-    case object Initializing extends TaggedReaderState
-    case class Parsing(f: Reader[_]) extends TaggedReaderState
-    case class Parsed(res: Any) extends TaggedReaderState
-  }
-  override def taggedArrayContext[T](taggedReader: TaggedReader[T], index: Int) = new ArrVisitor[Any, T] {
-    var state: TaggedReaderState = TaggedReaderState.Initializing
-
-    def subVisitor = state match{
-      case TaggedReaderState.Initializing => StringReader
-      case TaggedReaderState.Parsing(f) => f
-      case TaggedReaderState.Parsed(res) => NoOpVisitor
-    }
-
-    def visitValue(v: Any, index: Int): Unit = state match{
-      case TaggedReaderState.Initializing =>
-        val typeName = objectTypeKeyReadMap(v.toString).toString
-        val delegate = taggedReader.findReader(typeName)
-        if (delegate == null) {
-          throw new Abort("invalid tag for tagged object: " + typeName)
-        }
-        state = TaggedReaderState.Parsing(delegate)
-      case TaggedReaderState.Parsing(f) =>
-        state = TaggedReaderState.Parsed(v)
-      case TaggedReaderState.Parsed(res) => res.asInstanceOf[T]
-        throw new Abort("expected tagged dictionary")
-    }
-
-    def visitEnd(index: Int) = state match{
-      case TaggedReaderState.Parsed(res) => res.asInstanceOf[T]
-      case _ => throw new Abort("expected tagged dictionary")
-    }
-
-  }
-  def taggedWrite[T, R](w: CaseW[T], tag: String, out: Visitor[_,  R], v: T): R = {
-    val ctx = out.asInstanceOf[Visitor[Any, R]].visitArray(2, -1)
-    ctx.visitValue(out.visitString(objectTypeKeyWriteMap(tag), -1), -1)
-
-    ctx.visitValue(w.write(out, v), -1)
-
-    ctx.visitEnd(-1)
-  }
-}
 
 /**
  * A `com.rallyhealth.upickle.v1.Api` that follows the default sealed-trait-instance-tagging

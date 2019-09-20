@@ -1,26 +1,20 @@
 package com.rallyhealth.upickle.v1
 
 import utest._
-import com.rallyhealth.upickle.v1.legacy.read
+import com.rallyhealth.upickle.v1.default.read
 import acyclic.file
 import com.rallyhealth.ujson.v1.{IncompleteParseException, ParseException}
 import com.rallyhealth.upickle.v1.core.AbortException
 case class Fee(i: Int, s: String)
-object Fee{
-  implicit def rw: com.rallyhealth.upickle.v1.legacy.ReadWriter[Fee] = com.rallyhealth.upickle.v1.legacy.macroRW
-}
 sealed trait Fi
 object Fi{
-  implicit def rw1: com.rallyhealth.upickle.v1.legacy.ReadWriter[Fi] = com.rallyhealth.upickle.v1.legacy.ReadWriter.merge(Fo.rw1, Fum.rw1)
   implicit def rw2: com.rallyhealth.upickle.v1.default.ReadWriter[Fi] = com.rallyhealth.upickle.v1.default.ReadWriter.merge(Fo.rw2, Fum.rw2)
   case class Fo(i: Int) extends Fi
   object Fo{
-    implicit def rw1: com.rallyhealth.upickle.v1.legacy.ReadWriter[Fo] = com.rallyhealth.upickle.v1.legacy.macroRW
     implicit def rw2: com.rallyhealth.upickle.v1.default.ReadWriter[Fo] = com.rallyhealth.upickle.v1.default.macroRW
   }
   case class Fum(s: String) extends Fi
   object Fum{
-    implicit def rw1: com.rallyhealth.upickle.v1.legacy.ReadWriter[Fum] = com.rallyhealth.upickle.v1.legacy.macroRW
     implicit def rw2: com.rallyhealth.upickle.v1.default.ReadWriter[Fum] = com.rallyhealth.upickle.v1.default.macroRW
   }
 }
@@ -94,56 +88,21 @@ object FailureTests extends TestSuite {
     }
 
     test("facadeFailures"){
-      def assertErrorMsg[T: com.rallyhealth.upickle.v1.legacy.Reader](s: String, msgs: String*) = {
-        val err = intercept[AbortException] { com.rallyhealth.upickle.v1.legacy.read[T](s) }
-        for (msg <- msgs) assert(err.getMessage.contains(msg))
-
-        err
-      }
       def assertErrorMsgDefault[T: com.rallyhealth.upickle.v1.default.Reader](s: String, msgs: String*) = {
         val err = intercept[AbortException] { com.rallyhealth.upickle.v1.default.read[T](s) }
         for (msg <- msgs) assert(err.getMessage.contains(msg))
         err
       }
-      test("structs"){
-        test - assertErrorMsg[Boolean]("\"lol\"", "expected boolean got string at index 0")
-        test - assertErrorMsg[Int]("\"lol\"", "expected number got string at index 0")
-        test - assertErrorMsg[Seq[Int]]("\"lol\"", "expected sequence got string at index 0")
-        test - assertErrorMsg[Seq[String]]("""["1", 2, 3]""", "expected string got number at index 6")
-        test("tupleShort"){
-          assertErrorMsg[Seq[(Int, String)]](
-            "[[1, \"1\"], [2, \"2\"], []]",
-            "expected 2 items in sequence, found 0 at index 22"
-          )
-        }
-      }
       test("caseClass"){
         // Separate this guy out because the read macro and
         // the intercept macro play badly with each other
-        test("missingKey"){
-          test - assertErrorMsg[Fee]("""{"i": 123}""", "missing keys in dictionary: s at index 9")
-          test - assertErrorMsg[Fee](""" {"s": "123"}""", "missing keys in dictionary: i at index 1")
-          test - assertErrorMsg[Fee]("""  {}""", "missing keys in dictionary: i, s at index 3")
-        }
-        test("badKey"){
-          test - assertErrorMsg[Fee]("""{"i": true}""", "expected number got boolean")
-        }
-
-        test("wrongType"){
-          test - assertErrorMsg[Fee]("""[1, 2, 3]""", "expected dictionary got sequence at index 0")
-          test - assertErrorMsg[Fee]("""31337""", "expected dictionary got number at index 0")
-        }
 
         test("invalidTag"){
-          test - assertErrorMsg[Fi.Fo]("""["omg", {}]""", "invalid tag for tagged object: omg at index 1")
-          test - assertErrorMsg[Fi]("""["omg", {}]""", "invalid tag for tagged object: omg at index 1")
           test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg at index 1")
           test - assertErrorMsgDefault[Fi]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg at index 1")
         }
 
         test("taggedInvalidBody"){
-          test - assertErrorMsg[Fi.Fo]("""["com.rallyhealth.upickle.v1.Fi.Fo", {"i": true, "z": null}]""", "expected number got boolean at index 43")
-          test - assertErrorMsg[Fi]("""["com.rallyhealth.upickle.v1.Fi.Fo", {"i": true, "z": null}]""", "expected number got boolean at index 43")
           test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.upickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 51")
           test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.upickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 51")
         }

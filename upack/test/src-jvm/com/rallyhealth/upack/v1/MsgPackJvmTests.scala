@@ -21,14 +21,14 @@ object MsgPackJvmTests extends TestSuite{
 
       // Taken from:
       // https://github.com/msgpack/msgpack-ruby/tree/a22d8268f82e0f2ae95f038285af43ce5971810e/spec
-      val casesJson = "com.rallyhealth.upack.v1/test/resources/cases.json"
-      val casesMsg = "com.rallyhealth.upack.v1/test/resources/cases.msg"
-      val casesCompactMsg = "com.rallyhealth.upack.v1/test/resources/cases_compact.msg"
+      val casesJson = "upack/test/resources/cases.json"
+      val casesMsg = "upack/test/resources/cases.msg"
+      val casesCompactMsg = "upack/test/resources/cases_compact.msg"
       val expectedJson = com.rallyhealth.ujson.v1.read(readBytes(casesJson))
       val msg = readMsgs(casesMsg)
       val msgCompact = readMsgs(casesCompactMsg)
-      val jsonMsg = com.rallyhealth.upack.v1.transform(msg, com.rallyhealth.ujson.v1.Js)
-      val jsonMsgCompact = com.rallyhealth.upack.v1.transform(msgCompact, com.rallyhealth.ujson.v1.Js)
+      val jsonMsg = com.rallyhealth.upack.v1.transform(msg, com.rallyhealth.ujson.v1.Value)
+      val jsonMsgCompact = com.rallyhealth.upack.v1.transform(msgCompact, com.rallyhealth.ujson.v1.Value)
       val writtenMsg = Util.bytesToString(com.rallyhealth.upack.v1.write(msg))
       val rewrittenMsg = Util.bytesToString(
         com.rallyhealth.upack.v1.write(com.rallyhealth.upack.v1.read(com.rallyhealth.upack.v1.write(msg)))

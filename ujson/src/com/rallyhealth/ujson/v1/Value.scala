@@ -14,49 +14,49 @@ sealed trait Value extends Readable {
 
   /**
     * Returns the `String` value of this [[Value]], fails if it is not
-    * a [[Value.Str]]
+    * a [[Str]]
     */
   def str = this match{
-    case Value.Str(value) => value
+    case Str(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Str")
   }
   /**
     * Returns the key/value map of this [[Value]], fails if it is not
-    * a [[Value.Obj]]
+    * a [[Obj]]
     */
   def obj = this match{
-    case Value.Obj(value) => value
+    case Obj(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Obj")
   }
   /**
     * Returns the elements of this [[Value]], fails if it is not
-    * a [[Value.Arr]]
+    * a [[Arr]]
     */
   def arr = this match{
-    case Value.Arr(value) => value
+    case Arr(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Arr")
   }
   /**
     * Returns the `Double` value of this [[Value]], fails if it is not
-    * a [[Value.Num]]
+    * a [[Num]]
     */
   def num = this match{
-    case Value.Num(value) => value
+    case Num(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Num")
   }
   /**
     * Returns the `Boolean` value of this [[Value]], fails if it is not
-    * a [[Value.Bool]]
+    * a [[Bool]]
     */
   def bool = this match{
-    case Value.Bool(value) => value
+    case Bool(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Bool")
   }
   /**
     * Returns true if the value of this [[Value]] is com.rallyhealth.ujson.v1.Null, false otherwise
     */
   def isNull = this match {
-    case Value.Null => true
+    case Null => true
     case _ => false
   }
 
@@ -100,37 +100,11 @@ object Value extends AstTransformer[Value]{
     }
   }
 
-  @deprecated("use com.rallyhealth.ujson.v1.Str")
-  val Str = com.rallyhealth.ujson.v1.Str
-  @deprecated("use com.rallyhealth.ujson.v1.Str")
-  type Str = com.rallyhealth.ujson.v1.Str
-  @deprecated("use com.rallyhealth.ujson.v1.Obj")
-  val Obj = com.rallyhealth.ujson.v1.Obj
-  @deprecated("use com.rallyhealth.ujson.v1.Obj")
-  type Obj = com.rallyhealth.ujson.v1.Obj
-  @deprecated("use com.rallyhealth.ujson.v1.Arr")
-  val Arr = com.rallyhealth.ujson.v1.Arr
-  @deprecated("use com.rallyhealth.ujson.v1.Arr")
-  type Arr = com.rallyhealth.ujson.v1.Arr
-  @deprecated("use com.rallyhealth.ujson.v1.Num")
-  val Num = com.rallyhealth.ujson.v1.Num
-  @deprecated("use com.rallyhealth.ujson.v1.Num")
-  type Num = com.rallyhealth.ujson.v1.Num
-  @deprecated("use com.rallyhealth.ujson.v1.Bool")
-  val Bool = com.rallyhealth.ujson.v1.Bool
-  @deprecated("use com.rallyhealth.ujson.v1.Bool")
-  type Bool = com.rallyhealth.ujson.v1.Bool
-  @deprecated("use com.rallyhealth.ujson.v1.True")
-  val True = com.rallyhealth.ujson.v1.True
-  @deprecated("use com.rallyhealth.ujson.v1.False")
-  val False = com.rallyhealth.ujson.v1.False
-  @deprecated("use com.rallyhealth.ujson.v1.Null")
-  val Null = com.rallyhealth.ujson.v1.Null
   implicit def JsonableSeq[T](items: TraversableOnce[T])
                              (implicit f: T => Value) = Arr.from(items.map(f))
   implicit def JsonableDict[T](items: TraversableOnce[(String, T)])
                               (implicit f: T => Value)= Obj.from(items.map(x => (x._1, f(x._2))))
-  implicit def JsonableBoolean(i: Boolean) = if (i) Value.True else Value.False
+  implicit def JsonableBoolean(i: Boolean) = if (i) True else False
   implicit def JsonableByte(i: Byte) = Num(i)
   implicit def JsonableShort(i: Short) = Num(i)
   implicit def JsonableInt(i: Int) = Num(i)
@@ -143,37 +117,37 @@ object Value extends AstTransformer[Value]{
 
   def transform[T](j: Value, f: Visitor[_, T]): T = {
     j match{
-      case Value.Null => f.visitNull(-1)
-      case Value.True => f.visitTrue(-1)
-      case Value.False => f.visitFalse(-1)
-      case Value.Str(s) => f.visitString(s, -1)
-      case Value.Num(d) => f.visitFloat64(d, -1)
-      case Value.Arr(items) => transformArray(f, items)
-      case Value.Obj(items) => transformObject(f, items)
+      case Null => f.visitNull(-1)
+      case True => f.visitTrue(-1)
+      case False => f.visitFalse(-1)
+      case Str(s) => f.visitString(s, -1)
+      case Num(d) => f.visitFloat64(d, -1)
+      case Arr(items) => transformArray(f, items)
+      case Obj(items) => transformObject(f, items)
     }
   }
 
-  def visitArray(length: Int, index: Int) = new AstArrVisitor[ArrayBuffer](xs => Value.Arr(xs))
+  def visitArray(length: Int, index: Int) = new AstArrVisitor[ArrayBuffer](xs => Arr(xs))
 
-  def visitObject(length: Int, index: Int) = new AstObjVisitor[mutable.LinkedHashMap[String, Value]](xs => Value.Obj(xs))
+  def visitObject(length: Int, index: Int) = new AstObjVisitor[mutable.LinkedHashMap[String, Value]](xs => Obj(xs))
 
-  def visitNull(index: Int) = Value.Null
+  def visitNull(index: Int) = Null
 
-  def visitFalse(index: Int) = Value.False
+  def visitFalse(index: Int) = False
 
-  def visitTrue(index: Int) = Value.True
+  def visitTrue(index: Int) = True
 
 
   override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
-    Value.Num(
+    Num(
       if (decIndex != -1 || expIndex != -1) s.toString.toDouble
       else Util.parseIntegralNum(s, decIndex, expIndex, index)
     )
   }
 
-  override def visitFloat64(d: Double, index: Int) = Value.Num(d)
+  override def visitFloat64(d: Double, index: Int) = Num(d)
 
-  def visitString(s: CharSequence, index: Int) = Value.Str(s.toString)
+  def visitString(s: CharSequence, index: Int) = Str(s.toString)
 
   /**
     * Thrown when uPickle tries to convert a JSON blob into a given data

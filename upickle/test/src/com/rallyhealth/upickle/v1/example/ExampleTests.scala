@@ -7,7 +7,7 @@ import com.rallyhealth.upickle.v1.{TestUtil, default}
 import utest._
 import com.rallyhealth.upickle.v1.default.{macroRW, ReadWriter => RW}
 import com.rallyhealth.ujson.v1.{IncompleteParseException, ParseException, Readable}
-import com.rallyhealth.ujson.v1.{BytesRenderer, Js, StringRenderer}
+import com.rallyhealth.ujson.v1.{BytesRenderer, Value, StringRenderer}
 import com.rallyhealth.upickle.v1.core.{NoOpVisitor, Visitor}
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
@@ -252,7 +252,7 @@ object ExampleTests extends TestSuite {
         write(Seq(Wrap(1), Wrap(10), Wrap(100))) ==> "[1,10,100]"
         read[Seq[Wrap]]("[1,10,100]") ==> Seq(Wrap(1), Wrap(10), Wrap(100))
       }
-      test("Js"){
+      test("Value"){
         import com.rallyhealth.upickle.v1.default._
         case class Bar(i: Int, s: String)
         implicit val fooReadWrite: ReadWriter[Bar] =
@@ -372,7 +372,7 @@ object ExampleTests extends TestSuite {
       com.rallyhealth.upickle.v1.default.readBinary[Seq[com.rallyhealth.upack.v1.Msg]](binary) ==> msgSeq
     }
 
-    test("msgToJson"){
+    test("msgToValueon"){
       val msg = com.rallyhealth.upack.v1.Arr(
         com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Str("myFieldA") -> com.rallyhealth.upack.v1.Int32(1), com.rallyhealth.upack.v1.Str("myFieldB") -> com.rallyhealth.upack.v1.Str("g")),
         com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Str("myFieldA") -> com.rallyhealth.upack.v1.Int32(2), com.rallyhealth.upack.v1.Str("myFieldB") -> com.rallyhealth.upack.v1.Str("k"))
@@ -395,7 +395,7 @@ object ExampleTests extends TestSuite {
     }
     test("json"){
       test("construction"){
-        import com.rallyhealth.ujson.v1.Js
+        import com.rallyhealth.ujson.v1.Value
 
         val json0 = com.rallyhealth.ujson.v1.Arr(
           com.rallyhealth.ujson.v1.Obj("myFieldA" -> com.rallyhealth.ujson.v1.Num(1), "myFieldB" -> com.rallyhealth.ujson.v1.Str("g")),
@@ -429,7 +429,7 @@ object ExampleTests extends TestSuite {
       }
       test("mutable"){
         val str = """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
-        val json: com.rallyhealth.ujson.v1.Js = com.rallyhealth.ujson.v1.read(str)
+        val json: com.rallyhealth.ujson.v1.Value = com.rallyhealth.ujson.v1.read(str)
 
         json.arr.remove(1)
         json(0)("myFieldA") = 1337
@@ -439,7 +439,7 @@ object ExampleTests extends TestSuite {
       }
       test("update"){
         val str = """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
-        val json: com.rallyhealth.ujson.v1.Js = com.rallyhealth.ujson.v1.read(str)
+        val json: com.rallyhealth.ujson.v1.Value = com.rallyhealth.ujson.v1.read(str)
 
         json(0)("myFieldA") = _.num + 100
         json(1)("myFieldB") = _.str + "lol"
@@ -506,7 +506,7 @@ object ExampleTests extends TestSuite {
         // It can be used for parsing JSON into an AST
         val exampleAst = com.rallyhealth.ujson.v1.Arr(1, 2, 3)
 
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", Js) ==> exampleAst
+        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", Value) ==> exampleAst
 
         // Rendering the AST to a string
         com.rallyhealth.ujson.v1.transform(exampleAst, StringRenderer()).toString ==> "[1,2,3]"
