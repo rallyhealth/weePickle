@@ -131,14 +131,14 @@ object implicits extends Module {
       }
 
       ammonite.ops.write(file, s"""
-      package upickle.implicits
+      package com.rallyhealth.upickle.v1.implicits
       import acyclic.file
       import language.experimental.macros
       /**
        * Auto-generated picklers and unpicklers, used for creating the 22
        * versions of tuple-picklers and case-class picklers
        */
-      trait Generated extends upickle.core.Types{
+      trait Generated extends com.rallyhealth.upickle.v1.core.Types{
         ${tuples.mkString("\n")}
       }
     """)
