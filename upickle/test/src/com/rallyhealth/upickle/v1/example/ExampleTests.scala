@@ -7,8 +7,9 @@ import com.rallyhealth.upickle.v1.{TestUtil, default}
 import utest._
 import com.rallyhealth.upickle.v1.default.{macroRW, ReadWriter => RW}
 import com.rallyhealth.ujson.v1.{IncompleteParseException, ParseException, Readable}
-import com.rallyhealth.ujson.v1.{BytesRenderer, Value, StringRenderer}
+import com.rallyhealth.ujson.v1.{BytesRenderer, StringRenderer, Value}
 import com.rallyhealth.upickle.v1.core.{NoOpVisitor, Visitor}
+import com.rallyhealth.upickle.v1.implicits.dropDefault
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
   object Thing{
@@ -44,9 +45,15 @@ object Recursive{
   }
 }
 object Defaults{
-  case class FooDefault(i: Int = 10, s: String = "lol")
-  object FooDefault{
-    implicit val rw: RW[FooDefault] = macroRW
+  case class FooOmitDefault(
+    @dropDefault i: Int = 10,
+    @dropDefault s: String = "lol")
+  object FooOmitDefault{
+    implicit val rw: RW[FooOmitDefault] = macroRW
+  }
+  case class FooIncludeDefault(i: Int = 10, s: String = "lol")
+  object FooIncludeDefault{
+    implicit val rw: RW[FooIncludeDefault] = macroRW
   }
 }
 object Keyed{
@@ -166,8 +173,8 @@ object ExampleTests extends TestSuite {
         write(SortedSet(1, 2, 3))         ==> "[1,2,3]"
       }
       test("options"){
-        write(Some(1))                    ==> "[1]"
-        write(None)                       ==> "[]"
+        write(Some(1))                    ==> "1"
+        write(None)                       ==> "null"
       }
       test("tuples"){
         write((1, "omg"))                 ==> """[1,"omg"]"""
@@ -224,15 +231,31 @@ object ExampleTests extends TestSuite {
     }
     test("defaults"){
       import com.rallyhealth.upickle.v1.default._
-      test("reading"){
-        read[FooDefault]("{}")                ==> FooDefault(10, "lol")
-        read[FooDefault]("""{"i": 123}""")    ==> FooDefault(123,"lol")
+      test("omit") {
+        // lihaoyi/upickle default behavior
+        test("reading is tolerant"){
+          read[FooOmitDefault]("{}")                ==> FooOmitDefault(10, "lol")
+          read[FooOmitDefault]("""{"i": 123}""")    ==> FooOmitDefault(123,"lol")
+        }
+        test("writing omits defaults"){
+          write(FooOmitDefault(i = 11, s = "lol"))  ==> """{"i":11}"""
+          write(FooOmitDefault(i = 10, s = "lol"))  ==> """{}"""
+          write(FooOmitDefault())                   ==> """{}"""
+        }
       }
-      test("writing"){
-        write(FooDefault(i = 11, s = "lol"))  ==> """{"i":11}"""
-        write(FooDefault(i = 10, s = "lol"))  ==> """{}"""
-        write(FooDefault())                   ==> """{}"""
+      test("include") {
+        // rallyhealth/upickle default behavior
+        test("reading is tolerant"){
+          read[FooIncludeDefault]("{}")                ==> FooIncludeDefault(10, "lol")
+          read[FooIncludeDefault]("""{"i": 123}""")    ==> FooIncludeDefault(123,"lol")
+        }
+        test("writing includes defaults"){
+          write(FooIncludeDefault(i = 11, s = "lol"))  ==> """{"i":11,"s":"lol"}"""
+          write(FooIncludeDefault(i = 10, s = "lol"))  ==> """{"i":10,"s":"lol"}"""
+          write(FooIncludeDefault())                   ==> """{"i":10,"s":"lol"}"""
+        }
       }
+
     }
 
     test("sources"){

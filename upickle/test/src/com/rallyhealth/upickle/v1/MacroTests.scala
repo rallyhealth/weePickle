@@ -102,10 +102,18 @@ object MacroTests extends TestSuite {
           """{"i":1,"s":"lol","t":[1.1,1.2],"a":{"i":1},"q":[1.2,2.1,3.14]}"""
         )
 
-        test - rw(
-          ADTs.ADTf(1, "lol", (1.1, 1.2), ADTs.ADTa(1), List(1.2, 2.1, 3.14), Some(None)),
-          """{"i":1,"s":"lol","t":[1.1,1.2],"a":{"i":1},"q":[1.2,2.1,3.14],"o":[[]]}"""
-        )
+        // This use case is not currently supported in the rallyhealth/upickle fork.
+        // We'd like for the idiomatic scala Option[String] to map to
+        // the idiomatic OpenAPI schema for a non-required string.
+        // I can't think of a use case where we'd ever use Option[Option[T]],
+        // so we're defaulting to the use case we have at the expense of not being able
+        // to roundtrip over this use case we don't have.
+        // In the future, maybe we can special case the handling of Option[Option[T]].
+        //
+        // test - rw(
+        //   ADTs.ADTf(1, "lol", (1.1, 1.2), ADTs.ADTa(1), List(1.2, 2.1, 3.14), Some(None)),
+        //   """{"i":1,"s":"lol","t":[1.1,1.2],"a":{"i":1},"q":[1.2,2.1,3.14],"o":[[]]}"""
+        // )
         val chunks = for (i <- 1 to 18) yield {
           val rhs = if (i % 2 == 1) "1" else "\"1\""
           val lhs = '"' + s"t$i" + '"'

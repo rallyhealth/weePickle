@@ -4,7 +4,7 @@ import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import compat._
 import acyclic.file
-import com.rallyhealth.upickle.v1.implicits.key
+import com.rallyhealth.upickle.v1.implicits.{key, dropDefault}
 
 import language.higherKinds
 import language.existentials
@@ -196,6 +196,7 @@ object Macros {
                 mappedArgs,
                 argSyms.map(_.typeSignature).map(func),
                 hasDefaults,
+                argSyms.map(shouldOmitDefault),
                 tpe,
                 argSyms.exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
               )
@@ -221,6 +222,25 @@ object Macros {
           .map{case Literal(Constant(s)) => s.toString}
     }
 
+    /**
+      * Unlike lihaoyi/upickle, rallyhealth/upickle will write values even if they're
+      * the same as the default value, unless instructed explicitly not to with the
+      * [[dropDefault]] annotation.
+      *
+      * We are upgrading from play-json which always sends default values.
+      * If teams swapped in upickle for play-json and their rest endpoints started
+      * omitting fields, that would be a surprising breaking API change.
+      * The play-json will throw if a default valued field is missing,
+      * e.g. Json.parse("{}").as[FooDefault] // throws: missing i
+      *
+      * Over time, consumers will transition to tolerant upickle readers, and we
+      * can revisit this.
+      */
+    def shouldOmitDefault(sym: c.Symbol): Boolean = {
+        sym.annotations
+          .exists(_.tpe == typeOf[dropDefault])
+    }
+
     def wrapObject(obj: Tree): Tree
 
     def wrapCaseN(companion: Tree,
@@ -228,6 +248,7 @@ object Macros {
                   mappedArgs: Seq[String],
                   argTypes: Seq[Type],
                   hasDefaults: Seq[Boolean],
+                  omitDefaults: Seq[Boolean],
                   targetType: c.Type,
                   varargs: Boolean): Tree
   }
@@ -242,6 +263,7 @@ object Macros {
                   mappedArgs: Seq[String],
                   argTypes: Seq[Type],
                   hasDefaults: Seq[Boolean],
+                  omitDefaults: Seq[Boolean],
                   targetType: c.Type,
                   varargs: Boolean) = {
       val defaults = deriveDefaults(companion, hasDefaults)
@@ -330,9 +352,12 @@ object Macros {
                   mappedArgs: Seq[String],
                   argTypes: Seq[Type],
                   hasDefaults: Seq[Boolean],
+                  omitDefaults: Seq[Boolean],
                   targetType: c.Type,
                   varargs: Boolean) = {
       val defaults = deriveDefaults(companion, hasDefaults)
+
+      def checkDefault(i: Int) = hasDefaults(i) && omitDefaults(i)
 
       def write(i: Int) = {
         val snippet = q"""
@@ -347,8 +372,12 @@ object Macros {
           val w = implicitly[${c.prefix}.Writer[${argTypes(i)}]]
           ctx.narrow.visitValue(w.write(ctx.subVisitor, v.${TermName(rawArgs(i))}), -1)
         """
-        if (!hasDefaults(i)) snippet
-        else q"""if (v.${TermName(rawArgs(i))} != ${defaults(i)}) $snippet"""
+
+        /**
+          * @see [[shouldOmitDefault()]]
+          */
+        if (checkDefault(i)) q"""if (v.${TermName(rawArgs(i))} != ${defaults(i)}) $snippet"""
+        else snippet
       }
       q"""
         new ${c.prefix}.CaseW[$targetType]{
@@ -357,7 +386,7 @@ object Macros {
             ..${
               for(i <- 0 until rawArgs.length)
               yield {
-                if (!hasDefaults(i)) q"n += 1"
+                if (!checkDefault(i)) q"n += 1"
                 else q"""if (v.${TermName(rawArgs(i))} != ${defaults(i)}) n += 1"""
               }
             }

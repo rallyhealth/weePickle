@@ -49,21 +49,10 @@ trait Writers extends com.rallyhealth.upickle.v1.core.Types with Generated with 
   implicit val BigDecimalWriter: Writer[BigDecimal] = StringWriter.comap[BigDecimal](_.toString)
   implicit val SymbolWriter: Writer[Symbol] = StringWriter.comap[Symbol](_.name)
 
-  implicit def OptionWriter[T: Writer]: Writer[Option[T]] = new Writer[Option[T]] {
-    def write0[V](out: Visitor[_, V], v: Option[T]) = {
-      val ctx = out.visitArray(v.size, -1).narrow
-      val x = v.iterator
-      v match{
-        case None =>
-        case Some(next) =>
-        val written = implicitly[Writer[T]].write(ctx.subVisitor, next)
-        ctx.visitValue(written, -1)
-      }
-
-      ctx.visitEnd(-1)
-    }
+  implicit def OptionWriter[T: Writer]: Writer[Option[T]] = implicitly[Writer[T]].comap[Option[T]] {
+    case None => null.asInstanceOf[T]
+    case Some(x) => x
   }
-
   implicit def SomeWriter[T: Writer]: Writer[Some[T]] = OptionWriter[T].narrow[Some[T]]
   implicit def NoneWriter: Writer[None.type] = OptionWriter[Unit].narrow[None.type]
   implicit def SeqLikeWriter[C[_] <: Iterable[_], T](implicit r: Writer[T]) = new Writer[C[T]] {

@@ -19,6 +19,14 @@ So this is a shaded fork of uPickle. It is hard-shaded (instead of using
 sbt-assembly or something like that) because uPickle includes macros with
 hard-coded paths, so automatic shading isn't likely to work correctly.
 
+## Differences
+The upstream https://github.com/lihaoyi/upickle macros serialize some things differently
+than other common libs like circe and play-json. Many of the differences have 
+well-reasoned motivations, but hinder adoption as a drop-in replacement.
+
+In https://github.com/rallyhealth/upickle, the macros have been changed to work
+more like circe and play-json, as described [here](differences.md).
+
 ### Building uPickle
 
 uPickle is based on Mill, not sbt. (There is an sbt file, but it's just
@@ -26,6 +34,17 @@ for the documentation.) In order to build this, you will need to install
 Mill:
 ```
 brew install mill
+```
+
+#### IntelliJ
+You can generate an IntelliJ project structure with:
+```
+mill mill.scalalib.GenIdea/idea
+```
+
+The generated modules use overlapping directories which will confuse IntelliJ. You can get to a mostly working state with:
+```
+rm .idea_modules/*.js-* .idea_modules/*-2.11* .idea_modules/*-2.13*
 ```
 
 #### Compile
@@ -77,11 +96,8 @@ uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
 
 - [Documentation](https://lihaoyi.github.io/upickle)
 
-If you use uPickle and like it, please support it by donating to our Patreon:
+If you use uPickle and like it, please support it by donating to lihaoyi's Patreon:
 
 - [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
 
 [![Build Status](https://travis-ci.org/rallyhealth/upickle.svg)](https://travis-ci.org/rallyhealth/upickle)
-
-
-[![Join the chat at https://gitter.im/lihaoyi/upickle](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lihaoyi/upickle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

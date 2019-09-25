@@ -148,20 +148,10 @@ trait Readers extends com.rallyhealth.upickle.v1.core.Types with Generated with 
     }
   }
 
-  implicit def OptionReader[T: Reader]: Reader[Option[T]] = new SimpleReader[Option[T]] {
-    override def expectedMsg = "expected sequence"
-    override def visitArray(length: Int, index: Int) = new ArrVisitor[Any, Option[T]] {
-      var b: Option[T] = None
-
-      def visitValue(v: Any, index: Int): Unit = {
-        b = Some(v.asInstanceOf[T])
-      }
-
-      def visitEnd(index: Int) = b
-
-      def subVisitor = implicitly[Reader[T]]
+  implicit def OptionReader[T: Reader]: Reader[Option[T]] = implicitly[Reader[T]].mapNulls{
+      case null => None
+      case x => Some(x)
     }
-  }
   implicit def SomeReader[T: Reader]: Reader[Some[T]] = OptionReader[T].narrow[Some[T]]
   implicit def NoneReader: Reader[None.type] = OptionReader[Unit].narrow[None.type]
 
