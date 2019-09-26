@@ -126,7 +126,7 @@ object Macros {
           s"The referenced trait [[${clsSymbol.name}]] does not have any sub-classes. This may " +
             "happen due to a limitation of scalac (SI-7046). To work around this, " +
             "try manually specifying the sealed trait picklers as described in " +
-            "http://lihaoyi.github.com/upickle-pprint/upickle/#ManualSealedTraitPicklers"
+            "http://www.lihaoyi.com/upickle/#ManualSealedTraitPicklers"
         fail(tpe, msg)
       }else{
         val subTypes = fleshedOutSubtypes(tpe.asInstanceOf[TypeRef]).toSeq
@@ -267,16 +267,28 @@ object Macros {
                   targetType: c.Type,
                   varargs: Boolean) = {
       val defaults = deriveDefaults(companion, hasDefaults)
+      if (rawArgs.size > 64) {
+        c.abort(c.enclosingPosition, "uPickle does not support serializing case classes with >64 fields")
+      }
+      val localReaders = for (i <- rawArgs.indices) yield TermName("localReader" + i)
+      val aggregates = for (i <- rawArgs.indices) yield TermName("aggregated" + i)
       q"""
-        lazy val localReaders = Array[${c.prefix}.Reader[_]](
-          ..${
-            for (i <- rawArgs.indices)
-            yield q"implicitly[${c.prefix}.Reader[${argTypes(i)}]]"
-          }
-        )
-
-        new ${c.prefix}.CaseR[$targetType](${rawArgs.length}){
+        ..${
+          for (i <- rawArgs.indices)
+          yield q"private[this] lazy val ${localReaders(i)} = implicitly[${c.prefix}.Reader[${argTypes(i)}]]"
+        }
+        new ${c.prefix}.CaseR[$targetType]{
           override def visitObject(length: Int, index: Int) = new CaseObjectContext{
+            ..${
+              for (i <- rawArgs.indices)
+              yield q"private[this] var ${aggregates(i)}: ${argTypes(i)} = _"
+            }
+            def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
+              case ..${
+                for (i <- rawArgs.indices)
+                yield cq"$i => ${aggregates(i)} = v.asInstanceOf[${argTypes(i)}]"
+              }
+            }
             def visitKey(index: Int) = com.rallyhealth.upickle.v1.core.StringVisitor
             def visitKeyValue(s: Any) = {
               currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
@@ -291,13 +303,16 @@ object Macros {
             def visitEnd(index: Int) = {
               ..${
                 for(i <- rawArgs.indices if hasDefaults(i))
-                yield q"if (!found($i)) {count += 1; found($i) = true; aggregated($i) = ${defaults(i)}}"
+                yield q"if ((found & (1L << $i)) == 0) {found |= (1L << $i); storeAggregatedValue($i, ${defaults(i)})}"
               }
-              if (count != argCount){
+
+              // Special-case 64 because java bit shifting ignores any RHS values above 63
+              // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
+              if (found != ${if (rawArgs.length == 64) -1 else (1L << rawArgs.length) - 1}){
                 var i = 0
                 val keys = for{
                   i <- 0 until ${rawArgs.length}
-                  if !found(i)
+                  if (found & (1L << i)) == 0
                 } yield i match{
                   case ..${
                     for (i <- mappedArgs.indices)
@@ -312,15 +327,19 @@ object Macros {
                 ..${
                   for(i <- rawArgs.indices)
                   yield
-                    if (i == rawArgs.length - 1 && varargs) q"aggregated($i).asInstanceOf[${argTypes(i)}]:_*"
-                    else q"aggregated($i).asInstanceOf[${argTypes(i)}]"
+                    if (i == rawArgs.length - 1 && varargs) q"${aggregates(i)}:_*"
+                    else q"${aggregates(i)}"
                 }
               )
             }
 
-            def subVisitor: com.rallyhealth.upickle.v1.core.Visitor[_, _] =
-              if (currentIndex == -1) com.rallyhealth.upickle.v1.core.NoOpVisitor
-              else localReaders(currentIndex)
+            def subVisitor: com.rallyhealth.upickle.v1.core.Visitor[_, _] = currentIndex match{
+              case -1 => com.rallyhealth.upickle.v1.core.NoOpVisitor
+              case ..${
+                for (i <- rawArgs.indices)
+                yield cq"$i => ${localReaders(i)} "
+              }
+            }
           }
         }
       """

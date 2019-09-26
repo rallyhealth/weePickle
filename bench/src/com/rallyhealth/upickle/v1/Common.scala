@@ -1,6 +1,5 @@
 package com.rallyhealth.upickle.v1
 
-
 object Common{
   import ADTs.ADT0
   import Defaults._
@@ -22,7 +21,6 @@ object Common{
   )
   val benchmarkSampleJson = com.rallyhealth.upickle.v1.default.write(benchmarkSampleData)
   val benchmarkSampleMsgPack = com.rallyhealth.upickle.v1.default.writeBinary(benchmarkSampleData)
-
 
   def circe(duration: Int) = {
     import io.circe._

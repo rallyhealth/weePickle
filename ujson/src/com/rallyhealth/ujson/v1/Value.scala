@@ -20,6 +20,15 @@ sealed trait Value extends Readable {
     case Str(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Str")
   }
+
+  /**
+    * Returns an Optional `String` value of this [[Value]] in case this [[Value]] is a 'String'.
+    */
+  def strOpt = this match{
+    case Str(value) => Some(value)
+    case _ => None
+  }
+
   /**
     * Returns the key/value map of this [[Value]], fails if it is not
     * a [[Obj]]
@@ -27,6 +36,13 @@ sealed trait Value extends Readable {
   def obj = this match{
     case Obj(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Obj")
+  }
+  /**
+    * Returns an Optional key/value map of this [[Value]] in case this [[Value]] is a 'Obj'.
+    */
+  def objOpt = this match{
+    case Obj(value) => Some(value)
+    case _ => None
   }
   /**
     * Returns the elements of this [[Value]], fails if it is not
@@ -37,6 +53,13 @@ sealed trait Value extends Readable {
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Arr")
   }
   /**
+    * Returns The optional elements of this [[Value]] in case this [[Value]] is a 'Arr'.
+    */
+  def arrOpt = this match{
+    case Arr(value) => Some(value)
+    case _ => None
+  }
+  /**
     * Returns the `Double` value of this [[Value]], fails if it is not
     * a [[Num]]
     */
@@ -45,12 +68,26 @@ sealed trait Value extends Readable {
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Num")
   }
   /**
+    * Returns an Option[Double] in case this [[Value]] is a 'Num'.
+    */
+  def numOpt = this match{
+    case Num(value) => Some(value)
+    case _ => None
+  }
+  /**
     * Returns the `Boolean` value of this [[Value]], fails if it is not
     * a [[Bool]]
     */
   def bool = this match{
     case Bool(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Bool")
+  }
+  /**
+    * Returns an Optional `Boolean` value of this [[Value]] in case this [[Value]] is a 'Bool'.
+    */
+  def boolOpt = this match{
+    case Bool(value) => Some(value)
+    case _ => None
   }
   /**
     * Returns true if the value of this [[Value]] is com.rallyhealth.ujson.v1.Null, false otherwise
