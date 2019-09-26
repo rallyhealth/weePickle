@@ -1,11 +1,12 @@
 ## Shaded fork of uPickle
 
-Many of our libraries need to work with JSON. However, we have found (through
-long painful experience) that letting them use Play-Json puts us into a
-particular form of Dependency Hell: the libraries wind up dependent on
-a *specific version* of Play-Json, which means that upgrading Play requires
-upgrading much of our ecosystem, which is a hassle. We want to decouple
-our libraries from Play as much as possible, to reduce this friction.
+Many of Rally Health's libraries need to work with JSON. However, we have
+found (through long painful experience) that letting them use Play-Json
+puts us into a particular form of Dependency Hell: the libraries wind up
+dependent on a *specific version* of Play-Json, which means that upgrading
+Play requires upgrading much of our ecosystem, which is a hassle. We want
+to decouple our libraries from Play as much as possible, to reduce this
+friction.
 
 So we are encouraging libraries to make use of uPickle instead: it's
 popular, well-supported and fast.
