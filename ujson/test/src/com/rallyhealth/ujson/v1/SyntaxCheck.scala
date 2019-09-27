@@ -73,19 +73,22 @@ class SyntaxCheck extends PropSpec with Matchers with PropertyChecks {
     if (r0 == r1) r1 else sys.error(s"CharSequence/String parsing disagree($r0, $r1): $s")
     if (r1 == r2) r1 else sys.error(s"String/ByteBuffer parsing disagree($r1, $r2): $s")
 
-    locally {
-      val async = AsyncParser[Unit](AsyncParser.SingleValue)
-      val r3 = async.absorb(s, NoOpVisitor).isRight && async.finish(NoOpVisitor).isRight
-      if (r1 == r3) r1 else sys.error(s"Sync/Async parsing disagree($r1, $r3): $s")
-    }
-
-    locally {
-      val async = AsyncParser[Unit](AsyncParser.SingleValue)
-      val r3 = s.getBytes(StandardCharsets.UTF_8).foldLeft(true) { (isValid, byte) =>
-        isValid && async.absorb(Array(byte), NoOpVisitor).isRight
-      } && async.finish(NoOpVisitor).isRight
-      if (r1 == r3) r1 else sys.error(s"Sync/Async parsing disagree($r1, $r3): $s")
-    }
+    // Removed AsyncParser due to https://github.com/lihaoyi/upickle/issues/252,
+    // so that when we fix it, we can make binary incompatible changes without breaking
+    // an existing (broken) copy in the v1 release.
+    //    locally {
+    //      val async = AsyncParser[Unit](AsyncParser.SingleValue)
+    //      val r3 = async.absorb(s, NoOpVisitor).isRight && async.finish(NoOpVisitor).isRight
+    //      if (r1 == r3) r1 else sys.error(s"Sync/Async parsing disagree($r1, $r3): $s")
+    //    }
+    //
+    //    locally {
+    //      val async = AsyncParser[Unit](AsyncParser.SingleValue)
+    //      val r3 = s.getBytes(StandardCharsets.UTF_8).foldLeft(true) { (isValid, byte) =>
+    //        isValid && async.absorb(Array(byte), NoOpVisitor).isRight
+    //      } && async.finish(NoOpVisitor).isRight
+    //      if (r1 == r3) r1 else sys.error(s"Sync/Async parsing disagree($r1, $r3): $s")
+    //    }
   }
 
   property("syntax-checking") {
