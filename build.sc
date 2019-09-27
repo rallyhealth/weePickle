@@ -2,6 +2,9 @@ import mill._
 import mill.scalalib._
 import mill.scalalib.publish._
 import mill.scalajslib._
+import $ivy.`com.typesafe::mima-reporter:0.3.0`
+import com.typesafe.tools.mima.lib.MiMaLib
+import com.typesafe.tools.mima.core._
 
 val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
 
@@ -22,12 +25,12 @@ trait CommonPublishModule extends CommonModule with PublishModule with CrossScal
   protected def shade(name: String) = name + "-v1"
   def pomSettings = PomSettings(
     description = artifactName(),
-    organization = "com.lihaoyi",
-    url = "https://github.com/lihaoyi/upickle",
+    organization = "com.rallyhealth",
+    url = "https://github.com/rallyhealth/upickle",
     licenses = Seq(License.MIT),
     scm = SCM(
-      "git://github.com/lihaoyi/upickle.git",
-      "scm:git://github.com/lihaoyi/upickle.git"
+      "git://github.com/rallyhealth/upickle.git",
+      "scm:git://github.com/rallyhealth/upickle.git"
     ),
     developers = Seq(
       Developer("lihaoyi", "Li Haoyi","https://github.com/lihaoyi")
@@ -55,11 +58,16 @@ trait CommonTestModule extends CommonModule with TestModule{
   )
 }
 
-trait CommonJvmModule extends CommonPublishModule{
+trait CommonJvmModule extends CommonPublishModule with MiMa {
   def platformSegment = "jvm"
   def millSourcePath = super.millSourcePath / os.up
   trait Tests extends super.Tests with CommonTestModule{
     def platformSegment = "jvm"
+
+    override def test(args: String*) = T.command{
+//      reportBinaryIssues() // TODO enable once a previous version is published.
+      super.test(args: _*)()
+    }
   }
 }
 
@@ -189,7 +197,6 @@ object upack extends Module {
     }
   }
 }
-
 
 object ujson extends Module{
   trait JsonModule extends CommonPublishModule{
@@ -351,4 +358,62 @@ object bench extends Module {
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",
     )
   }
+}
+
+trait MiMa extends ScalaModule with PublishModule {
+  def previousVersions = T {
+    Seq("1.0.0")
+  }
+
+  def reportBinaryIssues = T {
+    val msgs: Seq[String] = for {
+      (prevArtifact, problems) <- mimaReportBinaryIssues()
+        if problems.nonEmpty
+    } yield {
+      s"""Compared to artifact: ${prevArtifact}
+         |found ${problems.size} binary incompatibilities:
+         |${problems.mkString("\n")}""".stripMargin
+    }
+
+    if (msgs.nonEmpty) {
+      sys.error(msgs.mkString("\n"))
+    }
+  }
+
+  def mimaBinaryIssueFilters: Seq[ProblemFilter] = Seq.empty
+
+  def previousDeps = T {
+    Agg.from(previousVersions().map { version =>
+      ivy"${pomSettings().organization}:${artifactId()}:${version}"
+    })
+  }
+
+  def previousArtifacts = T {
+    resolveDeps(previousDeps)().filter(_.path.segments.contains(artifactId()))
+  }
+
+  def mimaReportBinaryIssues: T[List[(String, List[String])]] = T {
+    val currentClassfiles = compile().classes.path
+    val classpath = runClasspath()
+
+    val lib = {
+      com.typesafe.tools.mima.core.Config.setup("sbt-mima-plugin", Array.empty)
+      val cpstring = classpath
+        .map(_.path)
+        .filter(os.exists)
+        .mkString(System.getProperty("path.separator"))
+      new MiMaLib(
+        com.typesafe.tools.mima.core.reporterClassPath(cpstring)
+      )
+    }
+
+    previousArtifacts().toList.map { path =>
+      val problems =
+        lib.collectProblems(path.path.toString, currentClassfiles.toString)
+      path.path.toString -> problems.filter { problem =>
+        mimaBinaryIssueFilters.forall(_.apply(problem))
+      }.map(_.description("current"))
+    }
+  }
+
 }
