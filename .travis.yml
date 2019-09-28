@@ -1,6 +1,10 @@
 sudo: false
 language: scala
 
+env:
+  - PLATFORM=jvm
+  - PLATFORM=js
+
 script:
-- ./mill -i __.test.test
+- ./mill -i __.$PLATFORM.__.test.test
 
