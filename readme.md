@@ -40,12 +40,7 @@ brew install mill
 #### IntelliJ
 You can generate an IntelliJ project structure with:
 ```
-mill mill.scalalib.GenIdea/idea
-```
-
-The generated modules use overlapping directories which will confuse IntelliJ. You can get to a mostly working state with:
-```
-rm .idea_modules/*.js-* .idea_modules/*-2.11* .idea_modules/*-2.13*
+./genIdea.sh
 ```
 
 #### Compile

@@ -1,13 +1,13 @@
 package com.rallyhealth.upack.v1
 
-import com.rallyhealth.upickle.v1.core.Visitor
+import com.rallyhealth.upickle.v1.core.{JsonPointerVisitor, Visitor}
 
 trait Readable {
-  def transform[T](f: Visitor[_, T]): T
+  def transform[T](v: Visitor[_, T]): T
 }
 
 object Readable {
   implicit def fromByteArray(s: Array[Byte]) = new Readable{
-    def transform[T](f: Visitor[_, T]): T = new MsgPackReader(0, s).parse(f)
+    def transform[T](v: Visitor[_, T]): T = new MsgPackReader(0, s).parse(JsonPointerVisitor(v))
   }
 }

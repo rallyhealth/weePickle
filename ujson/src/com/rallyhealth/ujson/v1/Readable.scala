@@ -2,7 +2,9 @@ package com.rallyhealth.ujson.v1
 
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
-import com.rallyhealth.upickle.v1.core.{Visitor, ObjArrVisitor}
+
+import com.rallyhealth.upickle.v1.core.{JsonPointerVisitor, Visitor}
+
 trait Readable {
   def transform[T](f: Visitor[_, T]): T
 }
@@ -10,7 +12,7 @@ trait Readable {
 object Readable {
   case class fromTransformer[T](t: T, w: Transformer[T]) extends Readable{
     def transform[T](f: Visitor[_, T]): T = {
-      w.transform(t, f)
+      w.transform(t, JsonPointerVisitor(f))
     }
   }
   implicit def fromString(s: String) = new fromTransformer(s, StringParser)

@@ -161,8 +161,8 @@ object Visitor{
     override def visitFloat64(d: Double, index: Int) = {
       delegatedReader.visitFloat64(d, index)
     }
-    override def visitObject(length: Int, index: Int) = delegatedReader.visitObject(-1, index)
-    override def visitArray(length: Int, index: Int) = delegatedReader.visitArray(-1, index)
+    override def visitObject(length: Int, index: Int) = delegatedReader.visitObject(length, index)
+    override def visitArray(length: Int, index: Int) = delegatedReader.visitArray(length, index)
 
     override def visitFloat32(d: Float, index: Int) = delegatedReader.visitFloat32(d, index)
     override def visitInt32(i: Int, index: Int) = delegatedReader.visitInt32(i, index)
@@ -173,6 +173,33 @@ object Visitor{
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = delegatedReader.visitBinary(bytes, offset, len, index)
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = delegatedReader.visitExt(tag, bytes, offset, len, index)
   }
+
+  class ArrDelegate[T, J](protected val arrVisitor: ArrVisitor[T, J]) extends ArrVisitor[T, J] {
+
+    override def subVisitor: Visitor[Nothing, Any] = arrVisitor.subVisitor
+
+    override def visitValue(v: T, index: Int): Unit = arrVisitor.visitValue(v, index)
+
+    override def visitEnd(index: Int): J = arrVisitor.visitEnd(index)
+
+    override def toString: String = arrVisitor.toString
+  }
+
+  class ObjDelegate[T, J](protected val objVisitor: ObjVisitor[T, J]) extends ObjVisitor[T, J] {
+
+    override def visitKey(index: Int): Visitor[_, _] = objVisitor.visitKey(index)
+
+    override def visitKeyValue(s: Any): Unit = objVisitor.visitKeyValue(s)
+
+    override def subVisitor: Visitor[Nothing, Any] = objVisitor.subVisitor
+
+    override def visitValue(v: T, index: Int): Unit = objVisitor.visitValue(v, index)
+
+    override def visitEnd(index: Int): J = objVisitor.visitEnd(index)
+
+    override def toString: String = objVisitor.toString
+  }
+
 
   abstract class MapReader[-T, V, Z](delegatedReader: Visitor[T, V]) extends Visitor[T, Z] {
 
