@@ -15,7 +15,12 @@ package com.rallyhealth.upickle.v1.core
   * would forward all `visitFloat32`/`visitInt`/etc. methods to `visitFloat64`
   *
   * @see [[http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html]]
-  * @tparam T ???
+  * @tparam T the result of [[ObjArrVisitor.subVisitor]] which is passed back into
+  *           a [[ArrVisitor]] and [[ObjVisitor]] via [[ObjArrVisitor.visitValue()]].
+  *           For example, this might be a ujson.Str that gets passed into an
+  *           [[ObjVisitor]] that's building up a ujson.Obj to be returned on [[ObjVisitor.visitEnd()]].
+  *           Often [[T]] will be the same type as [[J]] for visitors that return things,
+  *           or else [[Any]] by visitors that do their work by side-effecting instead of returning [[J]].
   * @tparam J the result of visiting elements (e.g. a json AST or side-effecting writer)
   */
 trait Visitor[-T, +J] {
@@ -264,7 +269,6 @@ object Visitor{
 trait ObjVisitor[-T, +J] extends ObjArrVisitor[T, J] {
 
   /**
-    * @param s     the value of the key
     * @param index json source position at the start of the key being visited
     */
   def visitKey(index: Int): Visitor[_, _]
