@@ -113,17 +113,17 @@ object ExampleTests extends TestSuite {
     test("binary"){
       import com.rallyhealth.upickle.v1.default._
 
-      writeBinary(1)                          ==> Array(1)
+      writeMsgPack(1)                          ==> Array(1)
 
-      writeBinary(Seq(1, 2, 3))               ==> Array(0x93.toByte, 1, 2, 3)
+      writeMsgPack(Seq(1, 2, 3))               ==> Array(0x93.toByte, 1, 2, 3)
 
-      readBinary[Seq[Int]](Array[Byte](0x93.toByte, 1, 2, 3))  ==> List(1, 2, 3)
+      readMsgPack[Seq[Int]](Array[Byte](0x93.toByte, 1, 2, 3))  ==> List(1, 2, 3)
 
       val serializedTuple = Array[Byte](0x93.toByte, 1, 0xa3.toByte, 111, 109, 103, 0xc3.toByte)
 
-      writeBinary((1, "omg", true))           ==> serializedTuple
+      writeMsgPack((1, "omg", true))           ==> serializedTuple
 
-      readBinary[(Int, String, Boolean)](serializedTuple) ==> (1, "omg", true)
+      readMsgPack[(Int, String, Boolean)](serializedTuple) ==> (1, "omg", true)
     }
     test("more"){
       import com.rallyhealth.upickle.v1.default._
@@ -380,8 +380,8 @@ object ExampleTests extends TestSuite {
 
     test("msgReadWrite"){
       val big = Big(1, true, "lol", 'Z', Thing(7, ""))
-      val msg: com.rallyhealth.upack.v1.Msg = com.rallyhealth.upickle.v1.default.writeMsg(big)
-      com.rallyhealth.upickle.v1.default.readBinary[Big](msg) ==> big
+      val msg: com.rallyhealth.upack.v1.Msg = com.rallyhealth.upickle.v1.default.writeMsgAst(big)
+      com.rallyhealth.upickle.v1.default.readMsgPack[Big](msg) ==> big
     }
 
     test("msgInsideValue"){
@@ -390,9 +390,9 @@ object ExampleTests extends TestSuite {
         com.rallyhealth.upack.v1.Arr(com.rallyhealth.upack.v1.Int32(1), com.rallyhealth.upack.v1.Int32(2))
       )
 
-      val binary: Array[Byte] = com.rallyhealth.upickle.v1.default.writeBinary(msgSeq)
+      val binary: Array[Byte] = com.rallyhealth.upickle.v1.default.writeMsgPack(msgSeq)
 
-      com.rallyhealth.upickle.v1.default.readBinary[Seq[com.rallyhealth.upack.v1.Msg]](binary) ==> msgSeq
+      com.rallyhealth.upickle.v1.default.readMsgPack[Seq[com.rallyhealth.upack.v1.Msg]](binary) ==> msgSeq
     }
 
     test("msgToValueon"){
@@ -575,8 +575,8 @@ object ExampleTests extends TestSuite {
       write(Array[Byte](1, 2, 3, 4)) ==> "[1,2,3,4]"
       read[Array[Byte]]("[1,2,3,4]") ==> Array(1, 2, 3, 4)
 
-      writeBinary(Array[Byte](1, 2, 3, 4)) ==> Array(0xc4.toByte, 4, 1, 2, 3, 4)
-      readBinary[Array[Byte]](Array[Byte](0xc4.toByte, 4, 1, 2, 3, 4)) ==> Array(1, 2, 3, 4)
+      writeMsgPack(Array[Byte](1, 2, 3, 4)) ==> Array(0xc4.toByte, 4, 1, 2, 3, 4)
+      readMsgPack[Array[Byte]](Array[Byte](0xc4.toByte, 4, 1, 2, 3, 4)) ==> Array(1, 2, 3, 4)
     }
   }
 }

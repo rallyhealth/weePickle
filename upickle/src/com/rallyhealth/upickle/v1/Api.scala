@@ -24,7 +24,7 @@ trait Api
   /**
     * Reads the given MessagePack input into a Scala value
     */
-  def readBinary[T: Reader](s: com.rallyhealth.upack.v1.Readable): T = s.transform(reader[T])
+  def readMsgPack[T: Reader](s: com.rallyhealth.upack.v1.Readable): T = s.transform(reader[T])
 
   /**
     * Reads the given JSON input into a Scala value
@@ -44,7 +44,7 @@ trait Api
   /**
     * Write the given Scala value as a MessagePack binary
     */
-  def writeBinary[T: Writer](t: T): Array[Byte] = {
+  def writeMsgPack[T: Writer](t: T): Array[Byte] = {
     transform(t).to(new com.rallyhealth.upack.v1.MsgPackWriter(new ByteArrayOutputStream())).toByteArray
   }
 
@@ -56,7 +56,7 @@ trait Api
   /**
     * Write the given Scala value as a MessagePack struct
     */
-  def writeMsg[T: Writer](t: T): com.rallyhealth.upack.v1.Msg = transform(t).to[com.rallyhealth.upack.v1.Msg]
+  def writeMsgAst[T: Writer](t: T): com.rallyhealth.upack.v1.Msg = transform(t).to[com.rallyhealth.upack.v1.Msg]
 
   /**
     * Write the given Scala value as a JSON string to the given Writer
@@ -70,7 +70,7 @@ trait Api
   /**
     * Write the given Scala value as a MessagePack binary to the given OutputStream
     */
-  def writeBinaryTo[T: Writer](t: T, out: java.io.OutputStream): Unit = {
+  def writeMsgPackTo[T: Writer](t: T, out: java.io.OutputStream): Unit = {
     transform(t).to(new com.rallyhealth.upack.v1.MsgPackWriter(out))
   }
 

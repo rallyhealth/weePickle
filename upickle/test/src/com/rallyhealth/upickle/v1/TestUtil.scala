@@ -37,9 +37,9 @@ class TestUtil[Api <: com.rallyhealth.upickle.v1.Api](val api: Api){
     assert(normalizedReadWrittenT == normalizedT)
 
     // Test binary round tripping
-    val writtenBinary = api.writeBinary(t)
+    val writtenBinary = api.writeMsgPack(t)
     // println(com.rallyhealth.upickle.v1.core.Util.bytesToString(writtenBinary))
-    val roundTrippedBinary = api.readBinary[T](writtenBinary)
+    val roundTrippedBinary = api.readMsgPack[T](writtenBinary)
     (roundTrippedBinary, t) match{
       case (lhs: Array[_], rhs: Array[_]) => assert(lhs.toSeq == rhs.toSeq)
       case _ => assert(roundTrippedBinary == t)
@@ -48,7 +48,7 @@ class TestUtil[Api <: com.rallyhealth.upickle.v1.Api](val api: Api){
 
     // Test binary-JSON equivalence
     if (checkBinaryJson){
-      val rewrittenBinary = api.writeBinary(roundTrippedBinary)
+      val rewrittenBinary = api.writeMsgPack(roundTrippedBinary)
 
       val writtenBinaryStr = com.rallyhealth.upickle.v1.core.Util.bytesToString(writtenBinary)
       val rewrittenBinaryStr = com.rallyhealth.upickle.v1.core.Util.bytesToString(rewrittenBinary)

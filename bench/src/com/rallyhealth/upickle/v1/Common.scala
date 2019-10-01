@@ -20,7 +20,7 @@ object Common{
     ADT0()
   )
   val benchmarkSampleJson = com.rallyhealth.upickle.v1.default.write(benchmarkSampleData)
-  val benchmarkSampleMsgPack = com.rallyhealth.upickle.v1.default.writeBinary(benchmarkSampleData)
+  val benchmarkSampleMsgPack = com.rallyhealth.upickle.v1.default.writeMsgPack(benchmarkSampleData)
 
   def circe(duration: Int) = {
     import io.circe._
@@ -92,8 +92,8 @@ object Common{
   def upickleBinaryDefault(duration: Int) = {
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.upickle.v1.default.readBinary[Data](_),
-      com.rallyhealth.upickle.v1.default.writeBinary(_)
+      com.rallyhealth.upickle.v1.default.readMsgPack[Data](_),
+      com.rallyhealth.upickle.v1.default.writeMsgPack(_)
     )
   }
 
@@ -205,8 +205,8 @@ object Common{
     implicit lazy val rw9: com.rallyhealth.upickle.v1.default.ReadWriter[ADT0] = com.rallyhealth.upickle.v1.default.macroRW
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.upickle.v1.default.readBinary[Data](_),
-      com.rallyhealth.upickle.v1.default.writeBinary(_)
+      com.rallyhealth.upickle.v1.default.readMsgPack[Data](_),
+      com.rallyhealth.upickle.v1.default.writeMsgPack(_)
     )
   }
 
