@@ -35,7 +35,7 @@ class JmhBench {
 
   @Benchmark
   def writeMsgPack(bh: Blackhole): Unit = {
-    bh.consume(upickle.v1.default.writeBinary(Common.benchmarkSampleData))
+    bh.consume(upickle.v1.default.writeMsgPack(Common.benchmarkSampleData))
   }
 
   @Benchmark
@@ -45,6 +45,6 @@ class JmhBench {
 
   @Benchmark
   def readMsgPack(bh: Blackhole): Unit = {
-    bh.consume(upickle.v1.default.readBinary[Common.Data](Common.benchmarkSampleMsgPack))
+    bh.consume(upickle.v1.default.readMsgPack[Common.Data](Common.benchmarkSampleMsgPack))
   }
 }
