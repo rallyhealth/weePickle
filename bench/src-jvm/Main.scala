@@ -1,4 +1,4 @@
-package com.rallyhealth.upickle.v1
+package com.rallyhealth.weepickle.v1
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.`type`.TypeReference
@@ -36,13 +36,13 @@ object Main{
 //      Main.jacksonModuleScala(duration)
 //      Common.playJson(duration)
 //      Common.circe(duration)
-      Common.upickleDefault(duration)
-      Common.upickleBinaryDefault(duration)
+      Common.weepickleDefault(duration)
+      Common.weepickleBinaryDefault(duration)
 //      Common.genCodec(duration)
 //      Common.playJsonCached(duration)
 //      Common.circeCached(duration)
-      Common.upickleDefaultCached(duration)
-      Common.upickleDefaultBinaryCached(duration)
+      Common.weepickleDefaultCached(duration)
+      Common.weepickleDefaultBinaryCached(duration)
 //      Common.genCodecCached(duration)
       println()
     }

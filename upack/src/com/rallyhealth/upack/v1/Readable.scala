@@ -1,6 +1,6 @@
 package com.rallyhealth.upack.v1
 
-import com.rallyhealth.upickle.v1.core.{JsonPointerVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{JsonPointerVisitor, Visitor}
 
 trait Readable {
   def transform[T](v: Visitor[_, T]): T

@@ -1,9 +1,9 @@
 package com.rallyhealth.ujson
 
-import com.rallyhealth.upickle.v1.core.NoOpVisitor
+import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 
 package object v1{
-  def transform[T](t: Readable, v: com.rallyhealth.upickle.v1.core.Visitor[_, T]) = t.transform(v)
+  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v1.core.Visitor[_, T]) = t.transform(v)
 
   /**
     * Read the given JSON input as a JSON struct

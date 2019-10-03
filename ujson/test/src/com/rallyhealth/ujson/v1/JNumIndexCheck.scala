@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import com.rallyhealth.upickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 object JNumIndexCheckFacade extends JsVisitor[Boolean, Boolean] {
   def visitArray(length: Int, index: Int)  = new ArrVisitor[Boolean, Boolean] {
     var failed = false

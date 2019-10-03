@@ -1,12 +1,12 @@
 package com.rallyhealth.ujson.v1
 
 import com.rallyhealth.ujson.v1._
-import com.rallyhealth.upickle.v1.core.{ArrVisitor, ObjVisitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor}
 
 import scala.scalajs.js
 
 object WebJson extends com.rallyhealth.ujson.v1.Transformer[js.Any]{
-  def transform[T](j: js.Any, f: com.rallyhealth.upickle.v1.core.Visitor[_, T]): T = {
+  def transform[T](j: js.Any, f: com.rallyhealth.weepickle.v1.core.Visitor[_, T]): T = {
     (j: Any) match{
       case s: String => f.visitString(s, -1)
       case n: Double => f.visitFloat64(n, -1)
@@ -42,7 +42,7 @@ object WebJson extends com.rallyhealth.ujson.v1.Transformer[js.Any]{
       val out = js.Dictionary[js.Any]()
       var currentKey: String = _
       def subVisitor = Builder.this
-      def visitKey(index: Int) = com.rallyhealth.upickle.v1.core.StringVisitor
+      def visitKey(index: Int) = com.rallyhealth.weepickle.v1.core.StringVisitor
       def visitKeyValue(s: Any): Unit = currentKey = s.toString
       def visitValue(v: js.Any, index: Int): Unit = {
         out(currentKey) = v

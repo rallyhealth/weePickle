@@ -1,6 +1,6 @@
 package com.rallyhealth.ujson.v1.circe
 
-import com.rallyhealth.upickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 import io.circe.{Json, JsonNumber}
 
 import scala.collection.mutable.ArrayBuffer

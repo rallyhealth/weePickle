@@ -2,8 +2,8 @@ package com.rallyhealth.ujson.v1
 
 
 
-import com.rallyhealth.upickle.v1.core.Util
-import com.rallyhealth.upickle.v1.core.{ObjArrVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.Util
+import com.rallyhealth.weepickle.v1.core.{ObjArrVisitor, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -115,7 +115,7 @@ sealed trait Value extends Readable {
 }
 
 /**
-* A very small, very simple JSON AST that uPickle uses as part of its
+* A very small, very simple JSON AST that weepickle uses as part of its
 * serialization process. A common standard between the Jawn AST (which
 * we don't use so we don't pull in the bulk of Spire) and the Javascript
 * JSON AST.
@@ -187,10 +187,10 @@ object Value extends AstTransformer[Value]{
   def visitString(s: CharSequence, index: Int) = Str(s.toString)
 
   /**
-    * Thrown when uPickle tries to convert a JSON blob into a given data
+    * Thrown when weepickle tries to convert a JSON blob into a given data
     * structure but fails because part the blob is invalid
     *
-    * @param data The section of the JSON blob that uPickle tried to convert.
+    * @param data The section of the JSON blob that weepickle tried to convert.
     *             This could be the entire blob, or it could be some subtree.
     * @param msg Human-readable text saying what went wrong
     */

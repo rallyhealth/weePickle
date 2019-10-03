@@ -1,4 +1,7 @@
-## Shaded fork of uPickle
+weePickle is a fork of uPickle, stabilized with MiMa and shading.
+It can be used safely within libraries without causing dependency hell.
+
+## Shading + [SemVer](https://semver.org/) + [MiMa](https://github.com/lightbend/mima)
 
 Many of Rally Health's libraries need to work with JSON. However, we have
 found (through long painful experience) that letting them use Play-Json
@@ -8,16 +11,16 @@ Play requires upgrading much of our ecosystem, which is a hassle. We want
 to decouple our libraries from Play as much as possible, to reduce this
 friction.
 
-So we are encouraging libraries to make use of uPickle instead: it's
+So we are encouraging libraries to make use of weePickle instead: it's
 popular, well-supported and fast.
 
 However, if we allowed libraries to simply pick random versions of
-uPickle, we'd be right back where we were with Play-Json: if different
+weePickle, we'd be right back where we were with Play-Json: if different
 libraries used different versions, we could wind up with evictions and
-runtime collisions, since uPickle isn't shaded.
+runtime collisions, since weePickle isn't shaded.
 
 So this is a shaded fork of uPickle. It is hard-shaded (instead of using
-sbt-assembly or something like that) because uPickle includes macros with
+sbt-assembly or something like that) because weePickle includes macros with
 hard-coded paths, so automatic shading isn't likely to work correctly.
 
 ## Differences
@@ -25,12 +28,12 @@ The upstream https://github.com/lihaoyi/upickle macros serialize some things dif
 than other common libs like circe and play-json. Many of the differences have 
 well-reasoned motivations, but hinder adoption as a drop-in replacement.
 
-In https://github.com/rallyhealth/upickle, the macros have been changed to work
+In https://github.com/rallyhealth/weePickle, the macros have been changed to work
 more like circe and play-json, as described [here](differences.md).
 
-### Building uPickle
+### Building weePickle
 
-uPickle is based on Mill, not sbt. (There is an sbt file, but it's just
+weePickle is based on Mill, not sbt. (There is an sbt file, but it's just
 for the documentation.) In order to build this, you will need to install
 Mill:
 ```
@@ -88,12 +91,12 @@ and it will generally show you what's broken.
 
 ### Original Readme
 
-uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
+weePickle: a simple Scala JSON and Binary (MessagePack) serialization library
 
-- [Documentation](https://lihaoyi.github.io/upickle)
+- [Documentation](https://lihaoyi.github.io/weePickle)
 
-If you use uPickle and like it, please support it by donating to lihaoyi's Patreon:
+If you use weePickle and like it, please support it by donating to lihaoyi's Patreon:
 
 - [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
 
-[![Build Status](https://travis-ci.org/rallyhealth/upickle.svg)](https://travis-ci.org/rallyhealth/upickle)
+[![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle)

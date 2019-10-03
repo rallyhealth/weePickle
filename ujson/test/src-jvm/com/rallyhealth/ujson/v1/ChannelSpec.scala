@@ -1,7 +1,7 @@
 package com.rallyhealth.ujson.v1
 
 import org.scalatest._
-import com.rallyhealth.upickle.v1.core.NoOpVisitor
+import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 
 class ChannelSpec extends PropSpec with Matchers {
 

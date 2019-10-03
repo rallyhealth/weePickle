@@ -2,7 +2,7 @@ package com.rallyhealth.ujson.v1.play
 
 
 import play.api.libs.json._
-import com.rallyhealth.upickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 
 import scala.collection.mutable.ArrayBuffer
 

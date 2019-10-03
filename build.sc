@@ -28,11 +28,11 @@ trait CommonPublishModule extends CommonModule with PublishModule with CrossScal
   def pomSettings = PomSettings(
     description = artifactName(),
     organization = "com.rallyhealth",
-    url = "https://github.com/rallyhealth/upickle",
+    url = "https://github.com/rallyhealth/weePickle",
     licenses = Seq(License.MIT),
     scm = SCM(
-      "git://github.com/rallyhealth/upickle.git",
-      "scm:git://github.com/rallyhealth/upickle.git"
+      "git://github.com/rallyhealth/weePickle.git",
+      "scm:git://github.com/rallyhealth/weePickle.git"
     ),
     developers = Seq(
       Developer("lihaoyi", "Li Haoyi","https://github.com/lihaoyi")
@@ -92,7 +92,7 @@ object core extends Module {
 
   object js extends Cross[CoreJsModule](scalaVersions: _*)
   class CoreJsModule(val crossScalaVersion: String) extends CommonJsModule {
-    def artifactName = shade("upickle-core")
+    def artifactName = shade("weepickle-core")
     def ivyDeps = Agg(
       ivy"org.scala-lang.modules::scala-collection-compat::2.1.2"
     )
@@ -102,7 +102,7 @@ object core extends Module {
 
   object jvm extends Cross[CoreJvmModule](scalaVersions: _*)
   class CoreJvmModule(val crossScalaVersion: String) extends CommonJvmModule {
-    def artifactName = shade("upickle-core")
+    def artifactName = shade("weepickle-core")
     def ivyDeps = Agg(
       ivy"org.scala-lang.modules::scala-collection-compat:2.1.2"
     )
@@ -123,8 +123,8 @@ object implicits extends Module {
     }
     def generatedSources = T{
       val dir = T.ctx().dest
-      val file = dir / "upickle" / "Generated.scala"
-      ammonite.ops.mkdir(dir / "upickle")
+      val file = dir / "weepickle" / "Generated.scala"
+      ammonite.ops.mkdir(dir / "weepickle")
       val tuples = (1 to 22).map{ i =>
         def commaSeparated(s: Int => String) = (1 to i).map(s).mkString(", ")
         val writerTypes = commaSeparated(j => s"T$j: Writer")
@@ -143,14 +143,14 @@ object implicits extends Module {
       }
 
       ammonite.ops.write(file, s"""
-      package com.rallyhealth.upickle.v1.implicits
+      package com.rallyhealth.weepickle.v1.implicits
       import acyclic.file
       import language.experimental.macros
       /**
        * Auto-generated picklers and unpicklers, used for creating the 22
        * versions of tuple-picklers and case-class picklers
        */
-      trait Generated extends com.rallyhealth.upickle.v1.core.Types{
+      trait Generated extends com.rallyhealth.weepickle.v1.core.Types{
         ${tuples.mkString("\n")}
       }
     """)
@@ -161,7 +161,7 @@ object implicits extends Module {
   object js extends Cross[JsModule](scalaVersions: _*)
   class JsModule(val crossScalaVersion: String) extends ImplicitsModule with CommonJsModule{
     def moduleDeps = Seq(core.js())
-    def artifactName = shade("upickle-implicits")
+    def artifactName = shade("weepickle-implicits")
 
     object test extends Tests {
       def moduleDeps = super.moduleDeps ++ Seq(ujson.js().test, core.js().test)
@@ -171,7 +171,7 @@ object implicits extends Module {
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends ImplicitsModule with CommonJvmModule{
     def moduleDeps = Seq(core.jvm())
-    def artifactName = shade("upickle-implicits")
+    def artifactName = shade("weepickle-implicits")
     object test extends Tests {
       def moduleDeps = super.moduleDeps ++ Seq(ujson.jvm().test, core.jvm().test)
     }
@@ -275,8 +275,8 @@ object ujson extends Module{
   }
 }
 
-trait UpickleModule extends CommonPublishModule{
-  def artifactName = shade("upickle")
+trait weepickleModule extends CommonPublishModule{
+  def artifactName = shade("weepickle")
   def compileIvyDeps = Agg(
     ivy"com.lihaoyi::acyclic:${if (isScalaOld()) "0.1.8" else "0.2.0"}",
     ivy"org.scala-lang:scala-reflect:${scalaVersion()}",
@@ -291,9 +291,9 @@ trait UpickleModule extends CommonPublishModule{
 }
 
 
-object upickle extends Module{
+object weepickle extends Module{
   object jvm extends Cross[JvmModule](scalaVersions: _*)
-  class JvmModule(val crossScalaVersion: String) extends UpickleModule with CommonJvmModule{
+  class JvmModule(val crossScalaVersion: String) extends weepickleModule with CommonJvmModule{
     def moduleDeps = Seq(ujson.jvm(), upack.jvm(), implicits.jvm())
 
     object test extends Tests with CommonModule{
@@ -310,7 +310,7 @@ object upickle extends Module{
   }
 
   object js extends Cross[JsModule](scalaVersions: _*)
-  class JsModule(val crossScalaVersion: String) extends UpickleModule with CommonJsModule {
+  class JsModule(val crossScalaVersion: String) extends weepickleModule with CommonJsModule {
     def moduleDeps = Seq(ujson.js(), upack.js(), implicits.js())
 
     object test extends Tests with CommonModule{
@@ -337,7 +337,7 @@ object bench extends Module {
   object js extends BenchModule with ScalaJSModule {
     def scalaJSVersion = "0.6.28"
     def platformSegment = "js"
-    def moduleDeps = Seq(upickle.js("2.13.0").test)
+    def moduleDeps = Seq(weepickle.js("2.13.0").test)
     def run(args: String*) = T.command {
       finalMainClassOpt() match{
         case Left(err) => mill.eval.Result.Failure(err)
@@ -354,7 +354,7 @@ object bench extends Module {
 
   object jvm extends BenchModule with Jmh{
     def platformSegment = "jvm"
-    def moduleDeps = Seq(upickle.jvm("2.13.0").test)
+    def moduleDeps = Seq(weepickle.jvm("2.13.0").test)
     def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",

@@ -6,7 +6,7 @@ import org.scalacheck.Gen._
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop._
-import com.rallyhealth.upickle.v1.core.NoOpVisitor
+import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 
 import scala.util.Try
 

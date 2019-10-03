@@ -1,5 +1,5 @@
 package com.rallyhealth.upack.v1
-import com.rallyhealth.upickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 import com.rallyhealth.upack.v1.{MsgPackKeys => MPK}
 
 import scala.annotation.switch

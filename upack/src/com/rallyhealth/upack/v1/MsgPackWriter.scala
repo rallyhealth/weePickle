@@ -2,7 +2,7 @@ package com.rallyhealth.upack.v1
 import java.io.ByteArrayOutputStream
 
 import com.rallyhealth.upack.v1.{MsgPackKeys => MPK}
-import com.rallyhealth.upickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream())
     extends MsgVisitor[T, T] {
   override def visitArray(length: Int, index: Int) = new ArrVisitor[T, T] {

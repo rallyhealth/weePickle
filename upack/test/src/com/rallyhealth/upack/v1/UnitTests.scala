@@ -1,5 +1,5 @@
 package com.rallyhealth.upack.v1
-import com.rallyhealth.upickle.v1.core.Abort
+import com.rallyhealth.weepickle.v1.core.Abort
 import utest._
 
 object UnitTests extends TestSuite{
@@ -7,7 +7,7 @@ object UnitTests extends TestSuite{
     test("compositeKeys"){
       val msg = Obj(Arr(Int32(1), Int32(2)) -> Int32(1))
       val written = com.rallyhealth.upack.v1.write(msg)
-      val writtenStr = com.rallyhealth.upickle.v1.core.Util.bytesToString(written)
+      val writtenStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(written)
       writtenStr ==> "81-92-01-02-01"
 
       com.rallyhealth.upack.v1.read(written) ==> msg

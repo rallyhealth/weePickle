@@ -1,7 +1,7 @@
 package com.rallyhealth.ujson.v1.argonaut
 
 import argonaut.{Json, JsonNumber, JsonObject}
-import com.rallyhealth.upickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

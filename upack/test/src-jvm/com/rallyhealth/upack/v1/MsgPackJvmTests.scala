@@ -1,7 +1,7 @@
 package com.rallyhealth.upack.v1
 import java.io.ByteArrayOutputStream
 
-import com.rallyhealth.upickle.v1.core.Util
+import com.rallyhealth.weepickle.v1.core.Util
 import utest._
 
 import scala.collection.mutable

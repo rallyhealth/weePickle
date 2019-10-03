@@ -3,7 +3,7 @@ package com.rallyhealth.ujson.v1
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
 
-import com.rallyhealth.upickle.v1.core.{JsonPointerVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{JsonPointerVisitor, Visitor}
 
 trait Readable {
   def transform[T](f: Visitor[_, T]): T

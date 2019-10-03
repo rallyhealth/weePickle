@@ -1,7 +1,7 @@
 package com.rallyhealth.ujson.v1.json4s
 
 import org.json4s.JsonAST._
-import com.rallyhealth.upickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 
 object Json4sJson extends Json4sJson(false, false)
 
@@ -36,7 +36,7 @@ class Json4sJson(useBigDecimalForDouble: Boolean, useBigIntForLong: Boolean)
   def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
     if (decIndex == -1 && expIndex == -1) {
       if (useBigIntForLong) JInt(BigInt(s.toString))
-      else JLong(com.rallyhealth.upickle.v1.core.Util.parseLong(s, 0, s.length))
+      else JLong(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length))
     } else {
       if (useBigDecimalForDouble) JDecimal(BigDecimal(s.toString))
       else JDouble(s.toString.toDouble)

@@ -2,7 +2,7 @@ package com.rallyhealth.ujson.v1
 
 import java.io.ByteArrayOutputStream
 
-import com.rallyhealth.upickle.v1.core.{Visitor, ArrVisitor, ObjVisitor}
+import com.rallyhealth.weepickle.v1.core.{Visitor, ArrVisitor, ObjVisitor}
 
 import scala.annotation.switch
 

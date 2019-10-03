@@ -1,6 +1,6 @@
 package com.rallyhealth.upack.v1
 
-import com.rallyhealth.upickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -133,10 +133,10 @@ object Bool{
 
 object Msg extends MsgVisitor[Msg, Msg]{
   /**
-    * Thrown when uPickle tries to convert a JSON blob into a given data
+    * Thrown when weepickle tries to convert a JSON blob into a given data
     * structure but fails because part the blob is invalid
     *
-    * @param data The section of the JSON blob that uPickle tried to convert.
+    * @param data The section of the JSON blob that weepickle tried to convert.
     *             This could be the entire blob, or it could be some subtree.
     * @param msg Human-readable text saying what went wrong
     */

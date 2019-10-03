@@ -1,9 +1,9 @@
 package com.rallyhealth.ujson.v1
 
 import com.rallyhealth.ujson.v1._
-import com.rallyhealth.upickle.v1.core.Util.reject
+import com.rallyhealth.weepickle.v1.core.Util.reject
 import scala.collection.mutable
-import com.rallyhealth.upickle.v1.core.{Visitor, ObjVisitor, ArrVisitor, Abort, AbortException}
+import com.rallyhealth.weepickle.v1.core.{Visitor, ObjVisitor, ArrVisitor, Abort, AbortException}
 
 /**
   * A version of [[com.rallyhealth.ujson.v1.Value]] that keeps the index positions of the various AST

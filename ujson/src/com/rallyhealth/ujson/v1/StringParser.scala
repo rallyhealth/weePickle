@@ -1,6 +1,6 @@
 package com.rallyhealth.ujson.v1
 
-import com.rallyhealth.upickle.v1.core.{Visitor, ObjArrVisitor}
+import com.rallyhealth.weepickle.v1.core.{Visitor, ObjArrVisitor}
 
 /**
  * Basic in-memory string parsing.
