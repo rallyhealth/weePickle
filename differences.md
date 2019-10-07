@@ -92,3 +92,50 @@ case class Maybe(@dropDefault m: Option[Int] = None)
 | `write(Maybe(None))`   | `{}`          | `{}`                |
 | `read({})`             | `Maybe(None)` | `Maybe(None)`       |
 | `read({"maybe":null})` | `Maybe(None)` | `Maybe(None)`       |
+
+## `discriminator`
+The `@discriminator` annotation that can be used to override the default `"$type"` discriminator tag at a per-schema level.
+
+Instead of:
+```json
+{
+  "$type": "place",
+  "locations": [
+    {
+      "$type": "lab",
+      "labStuff": "..."
+    },
+    {
+      "$type": "hospital",
+      "hospitalStuff": "..."
+    }
+  ]
+}
+```
+
+... you can have:
+```json
+{
+  "providerType": "place",
+  "locations": [
+    {
+      "locationType": "lab",
+      "labStuff": "..."
+    },
+    {
+      "locationType": "hospital",
+      "hospitalStuff": "..."
+    }
+  ]
+}
+```
+
+with `@discriminator` annotations on the sealed parent type:
+```scala
+@discriminator("locationType") sealed trait ProviderLocation
+@key("hospital") case class Hospital() extends ProviderLocation
+@key("lab") case class Lab() extends ProviderLocation
+
+@discriminator("providerType") sealed trait Provider
+@key("place") case class Place(locations: Seq[ProviderLocation]) extends Provider
+```

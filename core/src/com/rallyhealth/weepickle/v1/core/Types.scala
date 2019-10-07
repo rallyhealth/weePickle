@@ -43,6 +43,7 @@ trait Types{ types =>
 
       case (r1: TaggedReader[T], w1: TaggedWriter[T]) =>
         new TaggedReadWriter[T] {
+          override val tagName: String = findTagName(Seq(r1, w1))
           def findReader(s: String) = r1.findReader(s)
           def findWriter(v: Any) = w1.findWriter(v)
         }
@@ -130,6 +131,15 @@ trait Types{ types =>
     }
   }
 
+  private def findTagName(ts: Seq[Tagged]): String = {
+    val tagName = ts.head.tagName
+    for (t <- ts.iterator.drop(1)) {
+      // Enforce consistent tag names.
+      if (t.tagName != tagName) throw new IllegalArgumentException(s"Inconsistent tag names: [$tagName, ${t.tagName}]")
+    }
+    tagName
+  }
+
   class TupleNWriter[V](val writers: Array[Writer[_]], val f: V => Array[Any]) extends Writer[V]{
     def write0[R](out: Visitor[_, R], v: V): R = {
       if (v == null) out.visitNull(-1)
@@ -187,8 +197,20 @@ trait Types{ types =>
   abstract class CaseR[V] extends SimpleReader[V]{
     override def expectedMsg = "expected dictionary"
     trait CaseObjectContext extends ObjVisitor[Any, V]{
+
+      /**
+        * Stores a value for a specific field index. Implemented by macroR.
+        */
       def storeAggregatedValue(currentIndex: Int, v: Any): Unit
+
+      /**
+        * Bitset supporting up to 64 fields.
+        */
       var found = 0L
+
+      /**
+        * Set by [[visitKeyValue]]
+        */
       var currentIndex = -1
       def visitValue(v: Any, index: Int): Unit = {
         if (currentIndex != -1 && ((found & (1L << currentIndex)) == 0)) {
@@ -232,7 +254,7 @@ trait Types{ types =>
   def taggedExpectedMsg: String
   def taggedArrayContext[T](taggedReader: TaggedReader[T], index: Int): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
   def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
-  def taggedWrite[T, R](w: CaseW[T], tag: String, out: Visitor[_, R], v: T): R
+  def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_, R], v: T): R
 
   private[this] def scanChildren[T, V](xs: Seq[T])(f: T => V) = {
     var x: V = null.asInstanceOf[V]
@@ -243,7 +265,18 @@ trait Types{ types =>
     }
     x
   }
-  trait TaggedReader[T] extends SimpleReader[T]{
+  trait Tagged {
+
+    /**
+      * Name of the object key used to identify the subclass tag.
+      * Readers will fast path if this is the first field of the object.
+      * Otherwise, Readers will have to buffer the content and find the tag later.
+      * While naming, consider that some implementations (e.g. vpack) may sort object keys,
+      * so symbol prefixes work well for ensuring the tag is the first property.
+      */
+    def tagName: String
+  }
+  trait TaggedReader[T] extends SimpleReader[T] with Tagged {
     def findReader(s: String): Reader[T]
 
     override def expectedMsg = taggedExpectedMsg
@@ -251,30 +284,32 @@ trait Types{ types =>
     override def visitObject(length: Int, index: Int) = taggedObjectContext(this, index)
   }
   object TaggedReader{
-    class Leaf[T](tag: String, r: Reader[T]) extends TaggedReader[T]{
+    class Leaf[T](override val tagName: String, tag: String, r: Reader[T]) extends TaggedReader[T]{
       def findReader(s: String) = if (s == tag) r else null
     }
     class Node[T](rs: TaggedReader[_ <: T]*) extends TaggedReader[T]{
+      override val tagName: String = findTagName(rs)
       def findReader(s: String) = scanChildren(rs)(_.findReader(s)).asInstanceOf[Reader[T]]
     }
   }
 
-  trait TaggedWriter[T] extends Writer[T]{
+  trait TaggedWriter[T] extends Writer[T] with Tagged {
     def findWriter(v: Any): (String, CaseW[T])
     def write0[R](out: Visitor[_, R], v: T): R = {
       val (tag, w) = findWriter(v)
-      taggedWrite(w, tag, out, v)
+      taggedWrite(w, tagName, tag, out, v)
 
     }
   }
   object TaggedWriter{
-    class Leaf[T](c: ClassTag[_], tag: String, r: CaseW[T]) extends TaggedWriter[T]{
+    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T]) extends TaggedWriter[T]{
       def findWriter(v: Any) = {
         if (c.runtimeClass.isInstance(v)) tag -> r
         else null
       }
     }
     class Node[T](rs: TaggedWriter[_ <: T]*) extends TaggedWriter[T]{
+      override val tagName: String = findTagName(rs)
       def findWriter(v: Any) = scanChildren(rs)(_.findWriter(v)).asInstanceOf[(String, CaseW[T])]
     }
   }
@@ -285,7 +320,7 @@ trait Types{ types =>
 
   }
   object TaggedReadWriter{
-    class Leaf[T](c: ClassTag[_], tag: String, r: CaseW[T] with Reader[T]) extends TaggedReadWriter[T]{
+    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T] with Reader[T]) extends TaggedReadWriter[T]{
       def findReader(s: String) = if (s == tag) r else null
       def findWriter(v: Any) = {
         if (c.runtimeClass.isInstance(v)) (tag -> r)
@@ -293,6 +328,7 @@ trait Types{ types =>
       }
     }
     class Node[T](rs: TaggedReadWriter[_ <: T]*) extends TaggedReadWriter[T]{
+      override val tagName: String = findTagName(rs)
       def findReader(s: String) = scanChildren(rs)(_.findReader(s)).asInstanceOf[Reader[T]]
       def findWriter(v: Any) = scanChildren(rs)(_.findWriter(v)).asInstanceOf[(String, CaseW[T])]
     }

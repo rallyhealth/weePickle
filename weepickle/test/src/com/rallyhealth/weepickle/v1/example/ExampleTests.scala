@@ -9,7 +9,7 @@ import com.rallyhealth.weepickle.v1.default.{macroRW, ReadWriter => RW}
 import com.rallyhealth.ujson.v1.{IncompleteParseException, ParseException, Readable}
 import com.rallyhealth.ujson.v1.{BytesRenderer, StringRenderer, Value}
 import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
-import com.rallyhealth.weepickle.v1.implicits.dropDefault
+import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
   object Thing{
@@ -63,6 +63,7 @@ object Keyed{
   }
 }
 object KeyedTag{
+  @discriminator("customDiscriminator")
   sealed trait A
   object A{
     implicit val rw: RW[A] = RW.merge(B.rw, macroRW[C.type])
@@ -295,8 +296,8 @@ object ExampleTests extends TestSuite {
         read[KeyBar]("""{"hehehe": 10}""")    ==> KeyBar(10)
       }
       test("tag"){
-        write(B(10))                          ==> """{"$type":"Bee","i":10}"""
-        read[B]("""{"$type":"Bee","i":10}""") ==> B(10)
+        write(B(10))                          ==> """{"customDiscriminator":"Bee","i":10}"""
+        read[B]("""{"customDiscriminator":"Bee","i":10}""") ==> B(10)
       }
       test("snakeCase"){
         object SnakePickle extends com.rallyhealth.weepickle.v1.AttributeTagged{
