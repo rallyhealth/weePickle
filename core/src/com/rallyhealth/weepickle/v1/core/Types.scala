@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 /**
 * Basic functionality to be able to read and write objects. Kept as a trait so
 * other internal files can use it, while also mixing it into the `com.rallyhealth.weepickle.v1`
-* package to form the public API1
+* package to form the public API.
 */
 trait Types{ types =>
 
@@ -15,14 +15,14 @@ trait Types{ types =>
     * A combined [[Reader]] and [[Writer]], along with some utility methods.
     */
   trait ReadWriter[T] extends Reader[T] with Writer[T]{
-    override def narrow[K] = this.asInstanceOf[ReadWriter[K]]
+    override def narrow[K]: ReadWriter[K] = this.asInstanceOf[ReadWriter[K]]
     def bimap[V](f: V => T, g: T => V): ReadWriter[V] = {
       new Visitor.MapReader[Any, T, V](ReadWriter.this) with ReadWriter[V]{
-        def write0[Z](out: Visitor[_, Z], v: V) = {
+        def write0[Z](out: Visitor[_, Z], v: V): Z = {
           ReadWriter.this.write(out, f(v.asInstanceOf[V]))
         }
 
-        override def mapNonNullsFunction(t: T) = g(t)
+        override def mapNonNullsFunction(t: T): V = g(t)
       }
     }
   }
@@ -44,13 +44,13 @@ trait Types{ types =>
       case (r1: TaggedReader[T], w1: TaggedWriter[T]) =>
         new TaggedReadWriter[T] {
           override val tagName: String = findTagName(Seq(r1, w1))
-          def findReader(s: String) = r1.findReader(s)
-          def findWriter(v: Any) = w1.findWriter(v)
+          def findReader(s: String): Reader[T] = r1.findReader(s)
+          def findWriter(v: Any): (String, CaseW[T]) = w1.findWriter(v)
         }
 
       case _ =>
         new Visitor.Delegate[Any, T](r0) with ReadWriter[T]{
-          def write0[V](out: Visitor[_, V], v: T) = w0.write(out, v)
+          def write0[V](out: Visitor[_, V], v: T): V = w0.write(out, v)
         }
     }
   }
@@ -77,14 +77,14 @@ trait Types{ types =>
       def mapNonNullsFunction(v: T): Z = f(v)
     }
 
-    def narrow[K <: T] = this.asInstanceOf[Reader[K]]
+    def narrow[K <: T]: Reader[K] = this.asInstanceOf[Reader[K]]
   }
 
   object Reader{
-    class Delegate[T, V](delegatedReader: Visitor[T, V])
-      extends Visitor.Delegate[T, V](delegatedReader) with Reader[V]{
-      override def visitObject(length: Int, index: Int) = super.visitObject(length, index).asInstanceOf[ObjVisitor[Any, V]]
-      override def visitArray(length: Int, index: Int) = super.visitArray(length, index).asInstanceOf[ArrVisitor[Any, V]]
+    class Delegate[T, J](delegatedReader: Visitor[T, J])
+      extends Visitor.Delegate[T, J](delegatedReader) with Reader[J]{
+      override def visitObject(length: Int, index: Int): ObjVisitor[Any, J] = super.visitObject(length, index).asInstanceOf[ObjVisitor[Any, J]]
+      override def visitArray(length: Int, index: Int): ArrVisitor[Any, J] = super.visitArray(length, index).asInstanceOf[ArrVisitor[Any, J]]
     }
 
     abstract class MapReader[-T, V, Z](delegatedReader: Visitor[T, V])
@@ -234,10 +234,10 @@ trait Types{ types =>
   }
   class SingletonR[T](t: T) extends CaseR[T]{
     override def expectedMsg = "expected dictionary"
-    override def visitObject(length: Int, index: Int) = new ObjVisitor[Any, T] {
-      def subVisitor = NoOpVisitor
+    override def visitObject(length: Int, index: Int): ObjVisitor[Any, T] = new ObjVisitor[Any, T] {
+      def subVisitor: Visitor[_, _] = NoOpVisitor
 
-      def visitKey(index: Int) = NoOpVisitor
+      def visitKey(index: Int): Visitor[_, _] = NoOpVisitor
       def visitKeyValue(s: Any) = ()
 
       def visitValue(v: Any, index: Int): Unit = ()

@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
 trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
   implicit val UnitReader: Reader[Unit] = new SimpleReader[Unit] {
     override def expectedMsg = "expected unit"
-    override def visitObject(length: Int, index: Int) = new ObjVisitor[Any, Unit] {
+    override def visitObject(length: Int, index: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {
       def subVisitor = NoOpVisitor
 
       def visitValue(v: Any, index: Int): Unit = ()
@@ -129,7 +129,7 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
                 (implicit k: Reader[K], v: Reader[V]): Reader[M[K, V]] = {
     if (k ne StringReader) SeqLikeReader[Array, (K, V)].map(x => make(x))
     else new SimpleReader[M[K, V]]{
-      override def visitObject(length: Int, index: Int) = new ObjVisitor[Any, M[K, V]] {
+      override def visitObject(length: Int, index: Int): ObjVisitor[Any, M[K, V]] = new ObjVisitor[Any, M[K, V]] {
         val strings = mutable.Buffer.empty[K]
         val values = mutable.Buffer.empty[V]
         def subVisitor = v
@@ -181,7 +181,7 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
       override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = {
         bytes.slice(offset, offset + len).asInstanceOf[Array[T]]
       }
-      override def visitArray(length: Int, index: Int) = new ArrVisitor[Any, Array[T]] {
+      override def visitArray(length: Int, index: Int): ArrVisitor[Any, Array[T]] = new ArrVisitor[Any, Array[T]] {
         val b = mutable.ArrayBuilder.make[T]
 
         def visitValue(v: Any, index: Int): Unit = {
@@ -195,7 +195,7 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
     }
     else new SimpleReader[Array[T]] {
       override def expectedMsg = "expected sequence"
-      override def visitArray(length: Int, index: Int) = new ArrVisitor[Any, Array[T]] {
+      override def visitArray(length: Int, index: Int): ArrVisitor[Any, Array[T]] = new ArrVisitor[Any, Array[T]] {
         val b = mutable.ArrayBuilder.make[T]
 
         def visitValue(v: Any, index: Int): Unit = {
@@ -210,7 +210,7 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
   implicit def SeqLikeReader[C[_], T](implicit r: Reader[T],
                                       factory: Factory[T, C[T]]): Reader[C[T]] = new SimpleReader[C[T]] {
     override def expectedMsg = "expected sequence"
-    override def visitArray(length: Int, index: Int) = new ArrVisitor[Any, C[T]] {
+    override def visitArray(length: Int, index: Int): ArrVisitor[Any, C[T]] = new ArrVisitor[Any, C[T]] {
       val b = factory.newBuilder
 
       def visitValue(v: Any, index: Int): Unit = {
@@ -248,9 +248,9 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
   implicit val InfiniteDurationReader = DurationReader.narrow[Duration.Infinite]
   implicit val FiniteDurationReader = DurationReader.narrow[FiniteDuration]
 
-  implicit def EitherReader[T1: Reader, T2: Reader] = new SimpleReader[Either[T1, T2]]{
+  implicit def EitherReader[T1: Reader, T2: Reader]: SimpleReader[Either[T1, T2]] = new SimpleReader[Either[T1, T2]]{
     override def expectedMsg = "expected sequence"
-    override def visitArray(length: Int, index: Int) = new ArrVisitor[Any, Either[T1, T2]] {
+    override def visitArray(length: Int, index: Int): ArrVisitor[Any, Either[T1, T2]] = new ArrVisitor[Any, Either[T1, T2]] {
       var right: java.lang.Boolean = null
       var value: Either[T1, T2] = _
       def visitValue(v: Any, index: Int): Unit = right match {

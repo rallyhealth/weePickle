@@ -2,7 +2,7 @@ package com.rallyhealth.weepickle.v1.core
 
 object Util {
 
-  val hexes = Array[String](
+  private final val Hexes = Array[String](
     "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "0a", "0b", "0c", "0d", "0e", "0f",
     "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "1a", "1b", "1c", "1d", "1e", "1f",
     "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "2a", "2b", "2c", "2d", "2e", "2f",
@@ -21,10 +21,10 @@ object Util {
     "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "fa", "fb", "fc", "fd", "fe", "ff"
   )
 
-  def bytesToString(bs: Array[Byte]) = bs.map(b => hexes(b & 0xFF)).mkString("-")
+  def bytesToString(bs: Array[Byte]) = bs.map(b => Hexes(b & 0xFF)).mkString("-")
   def stringToBytes(s: String) = s.split('-').map(Integer.parseInt(_, 16).toByte)
 
-  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
+  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int, index: Int): Long = {
     val expMul =
       if (expIndex == -1) 1
       else{
@@ -98,6 +98,6 @@ object Util {
 
   def reject(j: Int, path: List[Any]): PartialFunction[Throwable, Nothing] = {
     case e: Abort =>
-      throw new AbortException(e.msg, j, -1, -1, path, e)
+      throw AbortException(e.msg, j, -1, -1, path, e)
   }
 }

@@ -16,7 +16,7 @@ sealed trait Value extends Readable {
     * Returns the `String` value of this [[Value]], fails if it is not
     * a [[Str]]
     */
-  def str = this match{
+  def str: String = this match{
     case Str(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Str")
   }
@@ -24,7 +24,7 @@ sealed trait Value extends Readable {
   /**
     * Returns an Optional `String` value of this [[Value]] in case this [[Value]] is a 'String'.
     */
-  def strOpt = this match{
+  def strOpt: Option[String] = this match{
     case Str(value) => Some(value)
     case _ => None
   }
@@ -33,14 +33,14 @@ sealed trait Value extends Readable {
     * Returns the key/value map of this [[Value]], fails if it is not
     * a [[Obj]]
     */
-  def obj = this match{
+  def obj: mutable.LinkedHashMap[String, Value] = this match{
     case Obj(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Obj")
   }
   /**
     * Returns an Optional key/value map of this [[Value]] in case this [[Value]] is a 'Obj'.
     */
-  def objOpt = this match{
+  def objOpt: Option[mutable.LinkedHashMap[String, Value]] = this match{
     case Obj(value) => Some(value)
     case _ => None
   }
@@ -48,14 +48,14 @@ sealed trait Value extends Readable {
     * Returns the elements of this [[Value]], fails if it is not
     * a [[Arr]]
     */
-  def arr = this match{
+  def arr: ArrayBuffer[Value] = this match{
     case Arr(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Arr")
   }
   /**
     * Returns The optional elements of this [[Value]] in case this [[Value]] is a 'Arr'.
     */
-  def arrOpt = this match{
+  def arrOpt: Option[ArrayBuffer[Value]] = this match{
     case Arr(value) => Some(value)
     case _ => None
   }
@@ -63,14 +63,14 @@ sealed trait Value extends Readable {
     * Returns the `Double` value of this [[Value]], fails if it is not
     * a [[Num]]
     */
-  def num = this match{
+  def num: Double = this match{
     case Num(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Num")
   }
   /**
     * Returns an Option[Double] in case this [[Value]] is a 'Num'.
     */
-  def numOpt = this match{
+  def numOpt: Option[Double] = this match{
     case Num(value) => Some(value)
     case _ => None
   }
@@ -85,14 +85,14 @@ sealed trait Value extends Readable {
   /**
     * Returns an Optional `Boolean` value of this [[Value]] in case this [[Value]] is a 'Bool'.
     */
-  def boolOpt = this match{
+  def boolOpt: Option[Boolean] = this match{
     case Bool(value) => Some(value)
     case _ => None
   }
   /**
     * Returns true if the value of this [[Value]] is com.rallyhealth.ujson.v1.Null, false otherwise
     */
-  def isNull = this match {
+  def isNull: Boolean = this match {
     case Null => true
     case _ => false
   }
@@ -109,9 +109,9 @@ sealed trait Value extends Readable {
     */
   def update(s: Value.Selector, f: Value => Value): Unit = s(this) = f(s(this))
 
-  def transform[T](f: Visitor[_, T]) = Value.transform(this, f)
+  def transform[T](f: Visitor[_, T]): T = Value.transform(this, f)
   override def toString = render()
-  def render(indent: Int = -1, escapeUnicode: Boolean = false) = this.transform(StringRenderer(indent, escapeUnicode)).toString
+  def render(indent: Int = -1, escapeUnicode: Boolean = false): String = this.transform(StringRenderer(indent, escapeUnicode)).toString
 }
 
 /**
@@ -138,18 +138,18 @@ object Value extends AstTransformer[Value]{
   }
 
   implicit def JsonableSeq[T](items: TraversableOnce[T])
-                             (implicit f: T => Value) = Arr.from(items.map(f))
+                             (implicit f: T => Value): Arr = Arr.from(items.map(f))
   implicit def JsonableDict[T](items: TraversableOnce[(String, T)])
-                              (implicit f: T => Value)= Obj.from(items.map(x => (x._1, f(x._2))))
-  implicit def JsonableBoolean(i: Boolean) = if (i) True else False
-  implicit def JsonableByte(i: Byte) = Num(i)
-  implicit def JsonableShort(i: Short) = Num(i)
-  implicit def JsonableInt(i: Int) = Num(i)
-  implicit def JsonableLong(i: Long) = Str(i.toString)
-  implicit def JsonableFloat(i: Float) = Num(i)
-  implicit def JsonableDouble(i: Double) = Num(i)
-  implicit def JsonableNull(i: Null) = Null
-  implicit def JsonableString(s: CharSequence) = Str(s.toString)
+                              (implicit f: T => Value): Obj = Obj.from(items.map(x => (x._1, f(x._2))))
+  implicit def JsonableBoolean(i: Boolean): Bool = if (i) True else False
+  implicit def JsonableByte(i: Byte): Num = Num(i)
+  implicit def JsonableShort(i: Short): Num = Num(i)
+  implicit def JsonableInt(i: Int): Num = Num(i)
+  implicit def JsonableLong(i: Long): Str = Str(i.toString)
+  implicit def JsonableFloat(i: Float): Num = Num(i)
+  implicit def JsonableDouble(i: Double): Num = Num(i)
+  implicit def JsonableNull(i: Null): Null.type = Null
+  implicit def JsonableString(s: CharSequence): Str = Str(s.toString)
 
 
   def transform[T](j: Value, f: Visitor[_, T]): T = {
@@ -175,14 +175,14 @@ object Value extends AstTransformer[Value]{
   def visitTrue(index: Int) = True
 
 
-  override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
+  override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int): Num = {
     Num(
       if (decIndex != -1 || expIndex != -1) s.toString.toDouble
       else Util.parseIntegralNum(s, decIndex, expIndex, index)
     )
   }
 
-  override def visitFloat64(d: Double, index: Int) = Num(d)
+  override def visitFloat64(d: Double, index: Int): Num = Num(d)
 
   def visitString(s: CharSequence, index: Int) = Str(s.toString)
 

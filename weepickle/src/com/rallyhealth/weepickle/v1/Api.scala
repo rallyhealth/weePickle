@@ -31,7 +31,7 @@ trait Api
     */
   def read[T: Reader](s: com.rallyhealth.ujson.v1.Readable): T = s.transform(reader[T])
 
-  def reader[T: Reader] = implicitly[Reader[T]]
+  def reader[T: Reader]: Reader[T] = implicitly[Reader[T]]
 
   /**
     * Write the given Scala value as a JSON string
@@ -74,9 +74,9 @@ trait Api
     transform(t).to(new com.rallyhealth.upack.v1.MsgPackWriter(out))
   }
 
-  def writer[T: Writer] = implicitly[Writer[T]]
+  def writer[T: Writer]: Writer[T] = implicitly[Writer[T]]
 
-  def readwriter[T: ReadWriter] = implicitly[ReadWriter[T]]
+  def readwriter[T: ReadWriter]: ReadWriter[T] = implicitly[ReadWriter[T]]
 
   case class transform[T: Writer](t: T) extends com.rallyhealth.upack.v1.Readable with com.rallyhealth.ujson.v1.Readable {
     def transform[V](f: Visitor[_, V]): V = writer[T].transform(t, f)
@@ -138,7 +138,7 @@ trait AttributeTagged extends Api{
   }
 
   def taggedExpectedMsg = "expected dictionary"
-  override def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int) = {
+  override def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int): ObjVisitor[Any, T] = {
     new ObjVisitor[Any, T]{
       private[this] var fastPath = false
       private[this] var context: ObjVisitor[Any, _] = null

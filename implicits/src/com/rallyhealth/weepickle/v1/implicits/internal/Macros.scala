@@ -74,7 +74,7 @@ object Macros {
       * fill in all the generic type parameters that are based on the super-type's
       * concrete type
       */
-    def fleshedOutSubtypes(tpe: TypeRef) = {
+    def fleshedOutSubtypes(tpe: TypeRef): Set[c.universe.Type] = {
       // Get ready to run this twice because for some reason scalac always
       // drops the type arguments from the subclasses the first time we
       // run this in 2.10.x
@@ -97,7 +97,7 @@ object Macros {
       impl
     }
 
-    def deriveObject(tpe: c.Type) = {
+    def deriveObject(tpe: c.Type): c.universe.Tree = {
       val mod = tpe.typeSymbol.asClass.module
       val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
       val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
@@ -196,7 +196,7 @@ object Macros {
                 mappedArgs,
                 argSyms.map(_.typeSignature).map(func),
                 hasDefaults,
-                argSyms.map(shouldOmitDefault),
+                argSyms.map(shouldDropDefault),
                 tpe,
                 argSyms.exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
               )
@@ -247,7 +247,7 @@ object Macros {
       * Over time, consumers will transition to tolerant weepickle readers, and we
       * can revisit this.
       */
-    def shouldOmitDefault(sym: c.Symbol): Boolean = {
+    def shouldDropDefault(sym: c.Symbol): Boolean = {
         sym.annotations
           .exists(_.tpe == typeOf[dropDefault])
     }
@@ -404,7 +404,7 @@ object Macros {
         """
 
         /**
-          * @see [[shouldOmitDefault()]]
+          * @see [[shouldDropDefault()]]
           */
         if (checkDefault(i)) q"""if (v.${TermName(rawArgs(i))} != ${defaults(i)}) $snippet"""
         else snippet

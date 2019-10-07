@@ -359,7 +359,7 @@ abstract class Parser[J] {
     case e: Abort =>
       val y = line() + 1
       val x = column(j) + 1
-      throw new AbortException(e.msg, j, y, x, path, e)
+      throw AbortException(e.msg, j, y, x, path, e)
   }
   /**
    * Tail-recursive parsing method to do the bulk of JSON parsing.

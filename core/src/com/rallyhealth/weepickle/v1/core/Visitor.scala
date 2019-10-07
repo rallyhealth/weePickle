@@ -111,8 +111,9 @@ trait Visitor[-T, +J] {
 /**
   * Base class for visiting elements of json arrays and objects.
   *
-  * @tparam T ???
-  * @tparam J the result of visiting elements (e.g. a json AST or side-effecting writer)
+  * @tparam T input result of visiting a child of this object or array.
+  *           object or array builders will typically insert this value into their internal Map or Seq.
+  * @tparam J output result of visiting elements (e.g. a json AST or side-effecting writer)
   */
 sealed trait ObjArrVisitor[-T, +J] {
 
@@ -149,10 +150,10 @@ sealed trait ObjArrVisitor[-T, +J] {
   /**
     * Casts [[T]] from _ to [[Any]].
     */
-  def narrow = this.asInstanceOf[ObjArrVisitor[Any, J]]
+  def narrow: ObjArrVisitor[Any, J] = this.asInstanceOf[ObjArrVisitor[Any, J]]
 }
 object Visitor{
-  class Delegate[T, V](delegatedReader: Visitor[T, V]) extends Visitor[T, V]{
+  class Delegate[T, J](delegatedReader: Visitor[T, J]) extends Visitor[T, J]{
 
     override def visitNull(index: Int) = delegatedReader.visitNull(index)
     override def visitTrue(index: Int) = delegatedReader.visitTrue(index)
@@ -166,8 +167,8 @@ object Visitor{
     override def visitFloat64(d: Double, index: Int) = {
       delegatedReader.visitFloat64(d, index)
     }
-    override def visitObject(length: Int, index: Int) = delegatedReader.visitObject(length, index)
-    override def visitArray(length: Int, index: Int) = delegatedReader.visitArray(length, index)
+    override def visitObject(length: Int, index: Int): ObjVisitor[T, J] = delegatedReader.visitObject(length, index)
+    override def visitArray(length: Int, index: Int): ArrVisitor[T, J] = delegatedReader.visitArray(length, index)
 
     override def visitFloat32(d: Float, index: Int) = delegatedReader.visitFloat32(d, index)
     override def visitInt32(i: Int, index: Int) = delegatedReader.visitInt32(i, index)
@@ -274,7 +275,7 @@ trait ObjVisitor[-T, +J] extends ObjArrVisitor[T, J] {
   def visitKey(index: Int): Visitor[_, _]
   def visitKeyValue(v: Any): Unit
   def isObj = true
-  override def narrow = this.asInstanceOf[ObjVisitor[Any, J]]
+  override def narrow: ObjVisitor[Any, J] = this.asInstanceOf[ObjVisitor[Any, J]]
 }
 
 /**
@@ -283,7 +284,7 @@ trait ObjVisitor[-T, +J] extends ObjArrVisitor[T, J] {
 trait ArrVisitor[-T, +J] extends ObjArrVisitor[T, J]{
   def isObj = false
 
-  override def narrow = this.asInstanceOf[ArrVisitor[Any, J]]
+  override def narrow: ArrVisitor[Any, J] = this.asInstanceOf[ArrVisitor[Any, J]]
 }
 
 /**

@@ -20,12 +20,12 @@ object NoOpVisitor extends NoOpVisitor[Unit](())
 object NullVisitor extends NoOpVisitor[Null](null)
 
 class NoOpVisitor[J](returnValue: J) extends Visitor[Any, J] {
-  def visitArray(length: Int, index: Int) = new ArrVisitor[Any, J] {
+  def visitArray(length: Int, index: Int): ArrVisitor[Any, J] = new ArrVisitor[Any, J] {
     def subVisitor = NoOpVisitor.this
     def visitValue(v: Any, index: Int): Unit = ()
     def visitEnd(index: Int): J = returnValue
   }
-  def visitObject(length: Int, index: Int) = new ObjVisitor[Any, J] {
+  def visitObject(length: Int, index: Int): ObjVisitor[Any, J] = new ObjVisitor[Any, J] {
     def subVisitor = NoOpVisitor.this
     def visitKey(index: Int) = NoOpVisitor
     def visitKeyValue(s: Any): Unit = ()
