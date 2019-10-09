@@ -1,12 +1,13 @@
 package com.rallyhealth.weepickle.v1.implicits
 
+import java.net.URI
 import java.util.UUID
 
 import com.rallyhealth.weepickle.v1.core.Visitor
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-trait Writers extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
+trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
   implicit val StringWriter: Writer[String] = new Writer[String] {
     def write0[R](out: Visitor[_, R], v: String): R = out.visitString(v, -1)
   }
@@ -48,6 +49,7 @@ trait Writers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
   implicit val BigIntWriter: Writer[BigInt] = StringWriter.comap[BigInt](_.toString)
   implicit val BigDecimalWriter: Writer[BigDecimal] = StringWriter.comap[BigDecimal](_.toString)
   implicit val SymbolWriter: Writer[Symbol] = StringWriter.comap[Symbol](_.name)
+  implicit val UriWriter: Writer[URI] = StringWriter.comap[URI](_.toString)
 
   implicit def OptionWriter[T: Writer]: Writer[Option[T]] = implicitly[Writer[T]].comap[Option[T]] {
     case None => null.asInstanceOf[T]

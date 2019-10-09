@@ -1,7 +1,7 @@
 weePickle is a fork of uPickle, stabilized with MiMa and shading.
 It can be used safely within libraries without causing dependency hell.
 
-## Shading + [SemVer](https://semver.org/) + [MiMa](https://github.com/lightbend/mima)
+## [Shading](https://github.com/rallyhealth/sbt-shading) + [SemVer](https://semver.org/) + [MiMa](https://github.com/lightbend/mima)
 
 Many of Rally Health's libraries need to work with JSON. However, we have
 found (through long painful experience) that letting them use Play-Json

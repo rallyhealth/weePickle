@@ -1,6 +1,9 @@
 package com.rallyhealth.weepickle.v1
+
+import java.net.URI
+
+import com.rallyhealth.weepickle.v1.TestUtil._
 import utest._
-import TestUtil._
 
 object PrimitiveTests extends TestSuite {
 
@@ -76,10 +79,6 @@ object PrimitiveTests extends TestSuite {
       test("nan") - assert(
         com.rallyhealth.weepickle.v1.default.write(Double.NaN) == "\"NaN\""
       )
-
-
-
-
     }
 
     test("Short"){
@@ -120,5 +119,7 @@ object PrimitiveTests extends TestSuite {
         for(i <- Char.MinValue until 55296/*Char.MaxValue*/) rwNoBinaryJson(i)
       }
     }
+
+    test("URI") - rw(URI.create("http://www.example.com/path?query=1&param=two#frag"), "\"http://www.example.com/path?query=1&param=two#frag\"")
   }
 }

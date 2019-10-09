@@ -1,5 +1,6 @@
 package com.rallyhealth.weepickle.v1.implicits
 
+import java.net.URI
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -10,7 +11,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
+trait DefaultReaders extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
   implicit val UnitReader: Reader[Unit] = new SimpleReader[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int, index: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {
@@ -91,6 +92,7 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
     override def expectedMsg = "expected string"
     override def visitString(s: CharSequence, index: Int) = s.toString
   }
+
   class MapStringReader[T](f: CharSequence => T) extends SimpleReader[T] {
     override def expectedMsg = "expected string"
     override def visitString(s: CharSequence, index: Int) = f(s)
@@ -123,6 +125,7 @@ trait Readers extends com.rallyhealth.weepickle.v1.core.Types with Generated wit
   implicit val BigIntReader: Reader[BigInt] = new MapStringReader(s => BigInt(s.toString))
   implicit val BigDecimalReader: Reader[BigDecimal] = new MapStringReader(s => BigDecimal(s.toString))
   implicit val SymbolReader: Reader[Symbol] = new MapStringReader(s => Symbol(s.toString))
+  implicit val UriReader: Reader[URI] = new MapStringReader(s => URI.create(s.toString))
 
   def MapReader0[M[A, B] <: collection.Map[A, B], K, V]
                 (make: Iterable[(K, V)] => M[K, V])
