@@ -1,6 +1,6 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
-import com.rallyhealth.weepickle.v1.core.NoOpVisitor
+import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 
 import scala.util.Try
 

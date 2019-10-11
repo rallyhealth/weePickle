@@ -1,6 +1,6 @@
-package com.rallyhealth.upack.v1
+package com.rallyhealth.upack.v0
 
-import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v0.core.Visitor
 
 /**
   * A [[Visitor]] specialized to work with msgpack types. Forwards the

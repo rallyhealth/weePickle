@@ -1,4 +1,4 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}

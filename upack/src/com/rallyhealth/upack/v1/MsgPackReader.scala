@@ -1,6 +1,6 @@
-package com.rallyhealth.upack.v1
-import com.rallyhealth.weepickle.v1.core.Visitor
-import com.rallyhealth.upack.v1.{MsgPackKeys => MPK}
+package com.rallyhealth.upack.v0
+import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.upack.v0.{MsgPackKeys => MPK}
 
 import scala.annotation.switch
 class MsgPackReader(index0: Int = 0, input: Array[Byte]) {

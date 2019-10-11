@@ -1,4 +1,4 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import java.io._
 

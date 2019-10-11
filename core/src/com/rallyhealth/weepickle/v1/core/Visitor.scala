@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1.core
+package com.rallyhealth.weepickle.v0.core
 
 /**
   * Standard set of hooks weepickle uses to traverse over a structured data.

@@ -1,12 +1,12 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
-import com.rallyhealth.ujson.v1._
-import com.rallyhealth.weepickle.v1.core.Util.reject
+import com.rallyhealth.ujson.v0._
+import com.rallyhealth.weepickle.v0.core.Util.reject
 import scala.collection.mutable
-import com.rallyhealth.weepickle.v1.core.{Visitor, ObjVisitor, ArrVisitor, Abort, AbortException}
+import com.rallyhealth.weepickle.v0.core.{Visitor, ObjVisitor, ArrVisitor, Abort, AbortException}
 
 /**
-  * A version of [[com.rallyhealth.ujson.v1.Value]] that keeps the index positions of the various AST
+  * A version of [[com.rallyhealth.ujson.v0.Value]] that keeps the index positions of the various AST
   * nodes it is constructing. Usually not necessary, but sometimes useful if you
   * want to work with an AST but still provide source-index error positions if
   * something goes wrong

@@ -1,8 +1,8 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 import acyclic.file
 import utest._
-import com.rallyhealth.weepickle.v1.TestUtil._
-import com.rallyhealth.weepickle.v1.default.{read, write}
+import com.rallyhealth.weepickle.v0.TestUtil._
+import com.rallyhealth.weepickle.v0.default.{read, write}
 
 object Custom {
   trait ThingBase{
@@ -20,7 +20,7 @@ object Custom {
   class Thing2(val i: Int, val s: String) extends ThingBase
 
   abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T){
-    implicit val thing2Writer = com.rallyhealth.weepickle.v1.default.readwriter[String].bimap[T](
+    implicit val thing2Writer = com.rallyhealth.weepickle.v0.default.readwriter[String].bimap[T](
       t => t.i + " " + t.s,
       str => {
         val Array(i, s) = str.toString.split(" ", 2)
@@ -38,7 +38,7 @@ object Custom {
 //// this can be un-sealed as long as `derivedSubclasses` is defined in the companion
 sealed trait TypedFoo
 object TypedFoo{
-  import com.rallyhealth.weepickle.v1.default._
+  import com.rallyhealth.weepickle.v0.default._
   implicit val readWriter: ReadWriter[TypedFoo] = ReadWriter.merge(
     macroRW[Bar], macroRW[Baz], macroRW[Quz]
   )
@@ -55,9 +55,9 @@ object MacroTests extends TestSuite {
 //  case class A_(objects: Option[C_]); case class C_(nodes: Option[C_])
 
 //  implicitly[Reader[A_]]
-//  implicitly[com.rallyhealth.weepickle.v1.old.Writer[com.rallyhealth.weepickle.v1.MixedIn.Obj.ClsB]]
+//  implicitly[com.rallyhealth.weepickle.v0.old.Writer[com.rallyhealth.weepickle.v0.MixedIn.Obj.ClsB]]
 //  println(write(ADTs.ADTc(1, "lol", (1.1, 1.2))))
-//  implicitly[com.rallyhealth.weepickle.v1.old.Writer[ADTs.ADTc]]
+//  implicitly[com.rallyhealth.weepickle.v0.old.Writer[ADTs.ADTc]]
 
   val tests = Tests {
     test("mixedIn"){
@@ -72,7 +72,7 @@ object MacroTests extends TestSuite {
 //      sealed trait Base
 //      case object Child extends Base
 //      case class Wrapper(base: Base)
-//      test - com.rallyhealth.weepickle.v1.write(Wrapper(Child))
+//      test - com.rallyhealth.weepickle.v0.write(Wrapper(Child))
 //    }
 //
 
@@ -80,7 +80,7 @@ object MacroTests extends TestSuite {
     test("exponential"){
 
       // Doesn't even need to execute, as long as it can compile
-      val ww1 = implicitly[com.rallyhealth.weepickle.v1.default.Writer[Exponential.A1]]
+      val ww1 = implicitly[com.rallyhealth.weepickle.v0.default.Writer[Exponential.A1]]
     }
 
 
@@ -135,12 +135,12 @@ object MacroTests extends TestSuite {
         // class the instance belongs to.
         import Hierarchy._
         test("shallow"){
-          test - rw(B(1), """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.B", "i":1}""")
-          test - rw(C("a", "b"), """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.C", "s1":"a","s2":"b"}""")
-          test - rw(AnZ: Z, """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.AnZ"}""")
-          test - rw(AnZ, """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.AnZ"}""")
-          test - rw(Hierarchy.B(1): Hierarchy.A, """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.B", "i":1}""")
-          test - rw(C("a", "b"): A, """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.C", "s1":"a","s2":"b"}""")
+          test - rw(B(1), """{"$type": "com.rallyhealth.weepickle.v0.Hierarchy.B", "i":1}""")
+          test - rw(C("a", "b"), """{"$type": "com.rallyhealth.weepickle.v0.Hierarchy.C", "s1":"a","s2":"b"}""")
+          test - rw(AnZ: Z, """{"$type": "com.rallyhealth.weepickle.v0.Hierarchy.AnZ"}""")
+          test - rw(AnZ, """{"$type": "com.rallyhealth.weepickle.v0.Hierarchy.AnZ"}""")
+          test - rw(Hierarchy.B(1): Hierarchy.A, """{"$type": "com.rallyhealth.weepickle.v0.Hierarchy.B", "i":1}""")
+          test - rw(C("a", "b"): A, """{"$type": "com.rallyhealth.weepickle.v0.Hierarchy.C", "s1":"a","s2":"b"}""")
 
         }
         test("tagLast"){
@@ -148,36 +148,36 @@ object MacroTests extends TestSuite {
           // the $type-tag appears later in the dict. It does this by a totally
           // different code-path than for tag-first dicts, using an intermediate
           // AST, so make sure that code path works too.
-          test - rw(C("a", "b"), """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")
-          test - rw(B(1), """{"i":1, "$type": "com.rallyhealth.weepickle.v1.Hierarchy.B"}""")
-          test - rw(C("a", "b"): A, """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")
+          test - rw(C("a", "b"), """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v0.Hierarchy.C"}""")
+          test - rw(B(1), """{"i":1, "$type": "com.rallyhealth.weepickle.v0.Hierarchy.B"}""")
+          test - rw(C("a", "b"): A, """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v0.Hierarchy.C"}""")
         }
         test("deep"){
           import DeepHierarchy._
 
-          test - rw(B(1), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.B", "i":1}""")
-          test - rw(B(1): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.B", "i":1}""")
-          test - rw(AnQ(1): Q, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":1}""")
-          test - rw(AnQ(1), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ","i":1}""")
+          test - rw(B(1), """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.B", "i":1}""")
+          test - rw(B(1): A, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.B", "i":1}""")
+          test - rw(AnQ(1): Q, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.AnQ", "i":1}""")
+          test - rw(AnQ(1), """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.AnQ","i":1}""")
 
-          test - rw(F(AnQ(1)), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":1}}""")
-          test - rw(F(AnQ(2)): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":2}}""")
-          test - rw(F(AnQ(3)): C, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":3}}""")
-          test - rw(D("1"), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.D", "s":"1"}""")
-          test - rw(D("1"): C, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.D", "s":"1"}""")
-          test - rw(D("1"): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.D", "s":"1"}""")
-          test - rw(E(true), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.E", "b":true}""")
-          test - rw(E(true): C, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.E","b":true}""")
-          test - rw(E(true): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.E", "b":true}""")
+          test - rw(F(AnQ(1)), """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v0.DeepHierarchy.AnQ", "i":1}}""")
+          test - rw(F(AnQ(2)): A, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v0.DeepHierarchy.AnQ", "i":2}}""")
+          test - rw(F(AnQ(3)): C, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v0.DeepHierarchy.AnQ", "i":3}}""")
+          test - rw(D("1"), """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.D", "s":"1"}""")
+          test - rw(D("1"): C, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.D", "s":"1"}""")
+          test - rw(D("1"): A, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.D", "s":"1"}""")
+          test - rw(E(true), """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.E", "b":true}""")
+          test - rw(E(true): C, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.E","b":true}""")
+          test - rw(E(true): A, """{"$type": "com.rallyhealth.weepickle.v0.DeepHierarchy.E", "b":true}""")
         }
       }
       test("singleton"){
         import Singletons._
 
-        rw(BB, """{"$type":"com.rallyhealth.weepickle.v1.Singletons.BB"}""")
-        rw(CC, """{"$type":"com.rallyhealth.weepickle.v1.Singletons.CC"}""")
-        rw(BB: AA, """{"$type":"com.rallyhealth.weepickle.v1.Singletons.BB"}""")
-        rw(CC: AA, """{"$type":"com.rallyhealth.weepickle.v1.Singletons.CC"}""")
+        rw(BB, """{"$type":"com.rallyhealth.weepickle.v0.Singletons.BB"}""")
+        rw(CC, """{"$type":"com.rallyhealth.weepickle.v0.Singletons.CC"}""")
+        rw(BB: AA, """{"$type":"com.rallyhealth.weepickle.v0.Singletons.BB"}""")
+        rw(CC: AA, """{"$type":"com.rallyhealth.weepickle.v0.Singletons.CC"}""")
       }
     }
     test("robustnessAgainstVaryingSchemas"){

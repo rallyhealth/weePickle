@@ -1,6 +1,6 @@
-package com.rallyhealth.weepickle.v1.core
+package com.rallyhealth.weepickle.v0.core
 
-import com.rallyhealth.weepickle.v1.core.JsonPointerVisitor._
+import com.rallyhealth.weepickle.v0.core.JsonPointerVisitor._
 
 import scala.annotation.tailrec
 import scala.util.control.{NoStackTrace, NonFatal}

@@ -1,5 +1,5 @@
-package com.rallyhealth.ujson.v1
-import com.rallyhealth.weepickle.v1.core.Visitor
+package com.rallyhealth.ujson.v0
+import com.rallyhealth.weepickle.v0.core.Visitor
 
 trait Transformer[I] {
   def transform[T](j: I, f: Visitor[_, T]): T

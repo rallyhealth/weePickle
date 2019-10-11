@@ -1,4 +1,4 @@
-package com.rallyhealth.upack.v1
+package com.rallyhealth.upack.v0
 
 object MsgPackKeys {
   final val PositiveFixInt = 0x7f

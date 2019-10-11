@@ -1,6 +1,6 @@
-package com.rallyhealth.upack.v1
+package com.rallyhealth.upack.v0
 
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -23,66 +23,66 @@ sealed trait Msg extends Readable{
 
   /**
     * Returns the `String` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Str]]
+    * a [[com.rallyhealth.upack.v0.Str]]
     */
   def binary = this match{
     case Binary(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Str")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Str")
   }
   /**
     * Returns the `String` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Str]]
+    * a [[com.rallyhealth.upack.v0.Str]]
     */
   def str = this match{
     case Str(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Str")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Str")
   }
   /**
     * Returns the key/value map of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Obj]]
+    * a [[com.rallyhealth.upack.v0.Obj]]
     */
   def obj = this match{
     case Obj(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Obj")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Obj")
   }
   /**
     * Returns the elements of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Arr]]
+    * a [[com.rallyhealth.upack.v0.Arr]]
     */
   def arr = this match{
     case Arr(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Arr")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Arr")
   }
   /**
     * Returns the `Double` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Int32]], [[com.rallyhealth.upack.v1.Int64]] or [[com.rallyhealth.upack.v1.UInt64]]
+    * a [[com.rallyhealth.upack.v0.Int32]], [[com.rallyhealth.upack.v0.Int64]] or [[com.rallyhealth.upack.v0.UInt64]]
     */
   def int32 = this match{
     case Int32(value) => value
     case Int64(value) => value.toInt
     case UInt64(value) => value.toInt
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Num")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Num")
   }
   /**
     * Returns the `Double` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Int32]], [[com.rallyhealth.upack.v1.Int64]] or [[com.rallyhealth.upack.v1.UInt64]]
+    * a [[com.rallyhealth.upack.v0.Int32]], [[com.rallyhealth.upack.v0.Int64]] or [[com.rallyhealth.upack.v0.UInt64]]
     */
   def int64 = this match{
     case Int32(value) => value.toLong
     case Int64(value) => value
     case UInt64(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Num")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Num")
   }
   /**
     * Returns the `Boolean` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.upack.v1.Bool]]
+    * a [[com.rallyhealth.upack.v0.Bool]]
     */
   def bool = this match{
     case Bool(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Bool")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Bool")
   }
   /**
-    * Returns true if the value of this [[Msg]] is com.rallyhealth.ujson.v1.Null, false otherwise
+    * Returns true if the value of this [[Msg]] is com.rallyhealth.ujson.v0.Null, false otherwise
     */
   def isNull = this match {
     case Null => true

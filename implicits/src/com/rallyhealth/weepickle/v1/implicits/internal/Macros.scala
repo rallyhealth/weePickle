@@ -1,10 +1,10 @@
-package com.rallyhealth.weepickle.v1.implicits.internal
+package com.rallyhealth.weepickle.v0.implicits.internal
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import compat._
 import acyclic.file
-import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key}
+import com.rallyhealth.weepickle.v0.implicits.{discriminator, dropDefault, key}
 
 import language.higherKinds
 import language.existentials
@@ -29,7 +29,7 @@ object Macros {
         val clsSymbol = tpe.typeSymbol.asClass
         val msg = "[error] The companion symbol could not be determined for " +
           s"[[${clsSymbol.name}]]. This may be due to a bug in scalac (SI-7567) " +
-          "that arises when a case class within a function is com.rallyhealth.weepickle.v1. As a " +
+          "that arises when a case class within a function is com.rallyhealth.weepickle.v0. As a " +
           "workaround, move the declaration to the module-level."
         Left(msg)
       }else{
@@ -295,7 +295,7 @@ object Macros {
                 yield cq"$i => ${aggregates(i)} = v.asInstanceOf[${argTypes(i)}]"
               }
             }
-            def visitKey(index: Int) = com.rallyhealth.weepickle.v1.core.StringVisitor
+            def visitKey(index: Int) = com.rallyhealth.weepickle.v0.core.StringVisitor
             def visitKeyValue(s: Any) = {
               currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
                 case ..${
@@ -325,7 +325,7 @@ object Macros {
                     yield cq"$i => ${mappedArgs(i)}"
                   }
                 }
-                throw new com.rallyhealth.weepickle.v1.core.Abort(
+                throw new com.rallyhealth.weepickle.v0.core.Abort(
                   "missing keys in dictionary: " + keys.mkString(", ")
                 )
               }
@@ -339,8 +339,8 @@ object Macros {
               )
             }
 
-            def subVisitor: com.rallyhealth.weepickle.v1.core.Visitor[_, _] = currentIndex match{
-              case -1 => com.rallyhealth.weepickle.v1.core.NoOpVisitor
+            def subVisitor: com.rallyhealth.weepickle.v0.core.Visitor[_, _] = currentIndex match{
+              case -1 => com.rallyhealth.weepickle.v0.core.NoOpVisitor
               case ..${
                 for (i <- rawArgs.indices)
                 yield cq"$i => ${localReaders(i)} "
@@ -417,7 +417,7 @@ object Macros {
             }
             n
           }
-          def writeToObject[R](ctx: com.rallyhealth.weepickle.v1.core.ObjVisitor[_, R],
+          def writeToObject[R](ctx: com.rallyhealth.weepickle.v0.core.ObjVisitor[_, R],
                                v: $targetType): Unit = {
             ..${(0 until rawArgs.length).map(write)}
 

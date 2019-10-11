@@ -1,3 +1,3 @@
-package com.rallyhealth.weepickle.v1.implicits
+package com.rallyhealth.weepickle.v0.implicits
 
 trait Readers extends DefaultReaders

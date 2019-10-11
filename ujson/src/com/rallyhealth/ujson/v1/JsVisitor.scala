@@ -1,6 +1,6 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
 
 /**
   * A [[Visitor]] specialized to work with JSON types. Forwards the

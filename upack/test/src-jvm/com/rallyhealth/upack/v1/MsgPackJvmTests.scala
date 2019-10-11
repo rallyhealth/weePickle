@@ -1,7 +1,7 @@
-package com.rallyhealth.upack.v1
+package com.rallyhealth.upack.v0
 import java.io.ByteArrayOutputStream
 
-import com.rallyhealth.weepickle.v1.core.Util
+import com.rallyhealth.weepickle.v0.core.Util
 import utest._
 
 import scala.collection.mutable
@@ -14,7 +14,7 @@ object MsgPackJvmTests extends TestSuite{
     while(p.currentIndex < bytes.length){
       output.append(p.parse(Msg))
     }
-    com.rallyhealth.upack.v1.Arr(output)
+    com.rallyhealth.upack.v0.Arr(output)
   }
   val tests = Tests{
     test("hello"){
@@ -24,18 +24,18 @@ object MsgPackJvmTests extends TestSuite{
       val casesJson = "upack/test/resources/cases.json"
       val casesMsg = "upack/test/resources/cases.msg"
       val casesCompactMsg = "upack/test/resources/cases_compact.msg"
-      val expectedJson = com.rallyhealth.ujson.v1.read(readBytes(casesJson))
+      val expectedJson = com.rallyhealth.ujson.v0.read(readBytes(casesJson))
       val msg = readMsgs(casesMsg)
       val msgCompact = readMsgs(casesCompactMsg)
-      val jsonMsg = com.rallyhealth.upack.v1.transform(msg, com.rallyhealth.ujson.v1.Value)
-      val jsonMsgCompact = com.rallyhealth.upack.v1.transform(msgCompact, com.rallyhealth.ujson.v1.Value)
-      val writtenMsg = Util.bytesToString(com.rallyhealth.upack.v1.write(msg))
+      val jsonMsg = com.rallyhealth.upack.v0.transform(msg, com.rallyhealth.ujson.v0.Value)
+      val jsonMsgCompact = com.rallyhealth.upack.v0.transform(msgCompact, com.rallyhealth.ujson.v0.Value)
+      val writtenMsg = Util.bytesToString(com.rallyhealth.upack.v0.write(msg))
       val rewrittenMsg = Util.bytesToString(
-        com.rallyhealth.upack.v1.write(com.rallyhealth.upack.v1.read(com.rallyhealth.upack.v1.write(msg)))
+        com.rallyhealth.upack.v0.write(com.rallyhealth.upack.v0.read(com.rallyhealth.upack.v0.write(msg)))
       )
-      val writtenMsgCompact = Util.bytesToString(com.rallyhealth.upack.v1.write(msgCompact))
+      val writtenMsgCompact = Util.bytesToString(com.rallyhealth.upack.v0.write(msgCompact))
       val rewrittenMsgCompact = Util.bytesToString(
-        com.rallyhealth.upack.v1.write(com.rallyhealth.upack.v1.read(com.rallyhealth.upack.v1.write(msgCompact)))
+        com.rallyhealth.upack.v0.write(com.rallyhealth.upack.v0.read(com.rallyhealth.upack.v0.write(msgCompact)))
       )
       assert(
         expectedJson == jsonMsg,

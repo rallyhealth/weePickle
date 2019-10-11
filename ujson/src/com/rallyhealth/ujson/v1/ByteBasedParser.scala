@@ -1,4 +1,4 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import scala.annotation.{switch, tailrec}
 
@@ -45,7 +45,7 @@ trait ByteBasedParser[J] extends Parser[J] {
     // one go.
 
     var j = i + 1
-    val sb = new com.rallyhealth.ujson.v1.util.CharBuilder
+    val sb = new com.rallyhealth.ujson.v0.util.CharBuilder
 
     var c: Int = byte(j) & 0xff
     while (c != 34) { // "

@@ -1,4 +1,4 @@
-package com.rallyhealth.ujson.v1.util
+package com.rallyhealth.ujson.v0.util
 
 /**
  * CharBuilder is a specialized way to build Strings.
@@ -6,7 +6,7 @@ package com.rallyhealth.ujson.v1.util
  * It wraps a (growable) array of characters, and can transform
  * additional String or Char data to be added to its buffer.
  */
-private[v1] final class CharBuilder {
+private[v0] final class CharBuilder {
   @inline final def INITIALSIZE = 32
 
   private var cs = new Array[Char](INITIALSIZE)

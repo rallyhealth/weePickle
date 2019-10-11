@@ -1,21 +1,21 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 
 import utest._
-import com.rallyhealth.weepickle.v1.default.read
+import com.rallyhealth.weepickle.v0.default.read
 import acyclic.file
-import com.rallyhealth.ujson.v1.{IncompleteParseException, ParseException}
-import com.rallyhealth.weepickle.v1.core.AbortException
+import com.rallyhealth.ujson.v0.{IncompleteParseException, ParseException}
+import com.rallyhealth.weepickle.v0.core.AbortException
 case class Fee(i: Int, s: String)
 sealed trait Fi
 object Fi{
-  implicit def rw2: com.rallyhealth.weepickle.v1.default.ReadWriter[Fi] = com.rallyhealth.weepickle.v1.default.ReadWriter.merge(Fo.rw2, Fum.rw2)
+  implicit def rw2: com.rallyhealth.weepickle.v0.default.ReadWriter[Fi] = com.rallyhealth.weepickle.v0.default.ReadWriter.merge(Fo.rw2, Fum.rw2)
   case class Fo(i: Int) extends Fi
   object Fo{
-    implicit def rw2: com.rallyhealth.weepickle.v1.default.ReadWriter[Fo] = com.rallyhealth.weepickle.v1.default.macroRW
+    implicit def rw2: com.rallyhealth.weepickle.v0.default.ReadWriter[Fo] = com.rallyhealth.weepickle.v0.default.macroRW
   }
   case class Fum(s: String) extends Fi
   object Fum{
-    implicit def rw2: com.rallyhealth.weepickle.v1.default.ReadWriter[Fum] = com.rallyhealth.weepickle.v1.default.macroRW
+    implicit def rw2: com.rallyhealth.weepickle.v0.default.ReadWriter[Fum] = com.rallyhealth.weepickle.v0.default.macroRW
   }
 }
 /**
@@ -27,7 +27,7 @@ object FailureTests extends TestSuite {
 
   def tests = Tests {
 //    test("test"){
-//      read[com.rallyhealth.ujson.v1.Value](""" {unquoted_key: "keys must be quoted"} """)
+//      read[com.rallyhealth.ujson.v0.Value](""" {unquoted_key: "keys must be quoted"} """)
 //    }
 
     test("jsonFailures"){
@@ -74,7 +74,7 @@ object FailureTests extends TestSuite {
       val res =
         for(failureCase <- failureCases)
         yield try {
-          intercept[ParseException] { read[com.rallyhealth.ujson.v1.Value](failureCase) }
+          intercept[ParseException] { read[com.rallyhealth.ujson.v0.Value](failureCase) }
           None
         }catch{
           case _:Throwable =>
@@ -83,13 +83,13 @@ object FailureTests extends TestSuite {
 
       val nonFailures = res.flatten
       assert(nonFailures.isEmpty)
-      intercept[IncompleteParseException]{read[com.rallyhealth.ujson.v1.Value](""" {"Comma instead if closing brace": true, """)}
-      intercept[IncompleteParseException]{read[com.rallyhealth.ujson.v1.Value](""" ["Unclosed array" """)}
+      intercept[IncompleteParseException]{read[com.rallyhealth.ujson.v0.Value](""" {"Comma instead if closing brace": true, """)}
+      intercept[IncompleteParseException]{read[com.rallyhealth.ujson.v0.Value](""" ["Unclosed array" """)}
     }
 
     test("facadeFailures"){
-      def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v1.default.Reader](s: String, msgs: String*) = {
-        val err = intercept[AbortException] { com.rallyhealth.weepickle.v1.default.read[T](s) }
+      def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v0.default.Reader](s: String, msgs: String*) = {
+        val err = intercept[AbortException] { com.rallyhealth.weepickle.v0.default.read[T](s) }
         for (msg <- msgs) assert(err.getMessage.contains(msg))
         err
       }
@@ -103,8 +103,8 @@ object FailureTests extends TestSuite {
         }
 
         test("taggedInvalidBody"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 53")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 53")
+          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v0.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 53")
+          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v0.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 53")
         }
       }
     }
@@ -113,34 +113,34 @@ object FailureTests extends TestSuite {
       compileError("""read[Object]("")""")
 //      compileError("""read[Array[Object]]("")""").msg
       // Make sure this doesn't hang the compiler =/
-      compileError("implicitly[com.rallyhealth.weepickle.v1.default.Reader[Nothing]]")
+      compileError("implicitly[com.rallyhealth.weepickle.v0.default.Reader[Nothing]]")
     }
     test("expWholeNumbers"){
-      com.rallyhealth.weepickle.v1.default.read[Byte]("0e0") ==> 0.toByte
-      com.rallyhealth.weepickle.v1.default.read[Short]("0e0") ==> 0
-      com.rallyhealth.weepickle.v1.default.read[Char]("0e0") ==> 0.toChar
-      com.rallyhealth.weepickle.v1.default.read[Int]("0e0") ==> 0
-      com.rallyhealth.weepickle.v1.default.read[Long]("0e0") ==> 0
+      com.rallyhealth.weepickle.v0.default.read[Byte]("0e0") ==> 0.toByte
+      com.rallyhealth.weepickle.v0.default.read[Short]("0e0") ==> 0
+      com.rallyhealth.weepickle.v0.default.read[Char]("0e0") ==> 0.toChar
+      com.rallyhealth.weepickle.v0.default.read[Int]("0e0") ==> 0
+      com.rallyhealth.weepickle.v0.default.read[Long]("0e0") ==> 0
 
-      com.rallyhealth.weepickle.v1.default.read[Byte]("10e1") ==> 100
-      com.rallyhealth.weepickle.v1.default.read[Short]("10e1") ==> 100
-      com.rallyhealth.weepickle.v1.default.read[Char]("10e1") ==> 100
-      com.rallyhealth.weepickle.v1.default.read[Int]("10e1") ==> 100
-      com.rallyhealth.weepickle.v1.default.read[Long]("10e1") ==> 100
+      com.rallyhealth.weepickle.v0.default.read[Byte]("10e1") ==> 100
+      com.rallyhealth.weepickle.v0.default.read[Short]("10e1") ==> 100
+      com.rallyhealth.weepickle.v0.default.read[Char]("10e1") ==> 100
+      com.rallyhealth.weepickle.v0.default.read[Int]("10e1") ==> 100
+      com.rallyhealth.weepickle.v0.default.read[Long]("10e1") ==> 100
 
-      com.rallyhealth.weepickle.v1.default.read[Byte]("10.1e1") ==> 101
-      com.rallyhealth.weepickle.v1.default.read[Short]("10.1e1") ==> 101
-      com.rallyhealth.weepickle.v1.default.read[Char]("10.1e1") ==> 101
-      com.rallyhealth.weepickle.v1.default.read[Int]("10.1e1") ==> 101
-      com.rallyhealth.weepickle.v1.default.read[Long]("10.1e1") ==> 101
+      com.rallyhealth.weepickle.v0.default.read[Byte]("10.1e1") ==> 101
+      com.rallyhealth.weepickle.v0.default.read[Short]("10.1e1") ==> 101
+      com.rallyhealth.weepickle.v0.default.read[Char]("10.1e1") ==> 101
+      com.rallyhealth.weepickle.v0.default.read[Int]("10.1e1") ==> 101
+      com.rallyhealth.weepickle.v0.default.read[Long]("10.1e1") ==> 101
 
       // Not supporting these for now, since AFAIK none of the
       // JSON serializers I know generate numbers of this form
-      //      com.rallyhealth.weepickle.v1.default.read[Byte]("10e-1") ==> 1
-      //      com.rallyhealth.weepickle.v1.default.read[Short]("10e-1") ==> 1
-      //      com.rallyhealth.weepickle.v1.default.read[Char]("10e-1") ==> 1
-      //      com.rallyhealth.weepickle.v1.default.read[Int]("10e-1") ==> 1
-      //      com.rallyhealth.weepickle.v1.default.read[Long]("10e-1") ==> 1
+      //      com.rallyhealth.weepickle.v0.default.read[Byte]("10e-1") ==> 1
+      //      com.rallyhealth.weepickle.v0.default.read[Short]("10e-1") ==> 1
+      //      com.rallyhealth.weepickle.v0.default.read[Char]("10e-1") ==> 1
+      //      com.rallyhealth.weepickle.v0.default.read[Int]("10e-1") ==> 1
+      //      com.rallyhealth.weepickle.v0.default.read[Long]("10e-1") ==> 1
     }
     test("tooManyFields"){
       val b63 = Big63(
@@ -177,13 +177,13 @@ object FailureTests extends TestSuite {
         57, 58, 59, 60, 61, 62, 63,
         64
       )
-      implicit val b63rw: com.rallyhealth.weepickle.v1.default.ReadWriter[Big63] = com.rallyhealth.weepickle.v1.default.macroRW
-      implicit val b64rw: com.rallyhealth.weepickle.v1.default.ReadWriter[Big64] = com.rallyhealth.weepickle.v1.default.macroRW
-      val written63 = com.rallyhealth.weepickle.v1.default.write(b63)
-      assert(com.rallyhealth.weepickle.v1.default.read[Big63](written63) == b63)
-      val written64 = com.rallyhealth.weepickle.v1.default.write(b64)
-      assert(com.rallyhealth.weepickle.v1.default.read[Big64](written64) == b64)
-      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v1.default.ReadWriter[Big65] = com.rallyhealth.weepickle.v1.default.macroRW}")
+      implicit val b63rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Big63] = com.rallyhealth.weepickle.v0.default.macroRW
+      implicit val b64rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Big64] = com.rallyhealth.weepickle.v0.default.macroRW
+      val written63 = com.rallyhealth.weepickle.v0.default.write(b63)
+      assert(com.rallyhealth.weepickle.v0.default.read[Big63](written63) == b63)
+      val written64 = com.rallyhealth.weepickle.v0.default.write(b64)
+      assert(com.rallyhealth.weepickle.v0.default.read[Big64](written64) == b64)
+      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Big65] = com.rallyhealth.weepickle.v0.default.macroRW}")
       assert(err.msg.contains("weepickle does not support serializing case classes with >64 fields"))
     }
   }

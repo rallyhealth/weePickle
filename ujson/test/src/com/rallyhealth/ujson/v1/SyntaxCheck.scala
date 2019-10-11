@@ -1,4 +1,4 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import java.nio.charset.StandardCharsets
 
@@ -6,7 +6,7 @@ import org.scalacheck.Gen._
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop._
-import com.rallyhealth.weepickle.v1.core.NoOpVisitor
+import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 
 import scala.util.Try
 
@@ -75,7 +75,7 @@ class SyntaxCheck extends PropSpec with Matchers with PropertyChecks {
 
     // Removed AsyncParser due to https://github.com/lihaoyi/upickle/issues/252,
     // so that when we fix it, we can make binary incompatible changes without breaking
-    // an existing (broken) copy in the v1 release.
+    // an existing (broken) copy in the v0 release.
     //    locally {
     //      val async = AsyncParser[Unit](AsyncParser.SingleValue)
     //      val r3 = async.absorb(s, NoOpVisitor).isRight && async.finish(NoOpVisitor).isRight

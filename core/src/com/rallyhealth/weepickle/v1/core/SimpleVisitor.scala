@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1.core
+package com.rallyhealth.weepickle.v0.core
 
 /**
   * A visitor that throws an error for all the visit methods which it does not define,

@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 import utest._
 
 import scala.collection.compat._
@@ -170,24 +170,24 @@ object StructTests extends TestSuite {
 
     test("jsValue"){
       test("value"){
-        val value:com.rallyhealth.ujson.v1.Value = com.rallyhealth.ujson.v1.Str("test")
+        val value:com.rallyhealth.ujson.v0.Value = com.rallyhealth.ujson.v0.Str("test")
         rw(value, """ "test" """.trim)
       }
-      test("str") - rw(com.rallyhealth.ujson.v1.Str("test"), """"test"""")
-      test("num") - rw(com.rallyhealth.ujson.v1.Num(7), """7""")
+      test("str") - rw(com.rallyhealth.ujson.v0.Str("test"), """"test"""")
+      test("num") - rw(com.rallyhealth.ujson.v0.Num(7), """7""")
       test("obj"){
-        test("nested") - rw(com.rallyhealth.ujson.v1.Obj("foo" -> com.rallyhealth.ujson.v1.Null, "bar" -> com.rallyhealth.ujson.v1.Obj("baz" -> com.rallyhealth.ujson.v1.Str("str"))), """{"foo":null,"bar":{"baz":"str"}}""")
-        test("empty") - rw(com.rallyhealth.ujson.v1.Obj(), """{}""")
+        test("nested") - rw(com.rallyhealth.ujson.v0.Obj("foo" -> com.rallyhealth.ujson.v0.Null, "bar" -> com.rallyhealth.ujson.v0.Obj("baz" -> com.rallyhealth.ujson.v0.Str("str"))), """{"foo":null,"bar":{"baz":"str"}}""")
+        test("empty") - rw(com.rallyhealth.ujson.v0.Obj(), """{}""")
       }
       test("arr"){
-        test("nonEmpty") - rw(com.rallyhealth.ujson.v1.Arr(com.rallyhealth.ujson.v1.Num(5), com.rallyhealth.ujson.v1.Num(6)), """[5,6]""")
-        test("empty") - rw(com.rallyhealth.ujson.v1.Arr(), """[]""")
+        test("nonEmpty") - rw(com.rallyhealth.ujson.v0.Arr(com.rallyhealth.ujson.v0.Num(5), com.rallyhealth.ujson.v0.Num(6)), """[5,6]""")
+        test("empty") - rw(com.rallyhealth.ujson.v0.Arr(), """[]""")
       }
-      test("true") - rw(com.rallyhealth.ujson.v1.True, """true""")
-      test("true") - rw(com.rallyhealth.ujson.v1.Bool(true), """true""")
-      test("false") - rw(com.rallyhealth.ujson.v1.False, """false""")
-      test("false") - rw(com.rallyhealth.ujson.v1.Bool(false), """false""")
-      test("null") - rw(com.rallyhealth.ujson.v1.Null, """null""")
+      test("true") - rw(com.rallyhealth.ujson.v0.True, """true""")
+      test("true") - rw(com.rallyhealth.ujson.v0.Bool(true), """true""")
+      test("false") - rw(com.rallyhealth.ujson.v0.False, """false""")
+      test("false") - rw(com.rallyhealth.ujson.v0.Bool(false), """false""")
+      test("null") - rw(com.rallyhealth.ujson.v0.Null, """null""")
     }
   }
 }

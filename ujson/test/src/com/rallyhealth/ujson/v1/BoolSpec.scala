@@ -1,26 +1,26 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import org.scalatest._
 import org.scalatest.prop._
 
 class BoolSpec extends PropSpec with Matchers with PropertyChecks with Inside {
 
-  property("com.rallyhealth.ujson.v1.Bool apply") {
-    com.rallyhealth.ujson.v1.Bool(true) shouldBe com.rallyhealth.ujson.v1.True
-    com.rallyhealth.ujson.v1.Bool(false) shouldBe com.rallyhealth.ujson.v1.False
+  property("com.rallyhealth.ujson.v0.Bool apply") {
+    com.rallyhealth.ujson.v0.Bool(true) shouldBe com.rallyhealth.ujson.v0.True
+    com.rallyhealth.ujson.v0.Bool(false) shouldBe com.rallyhealth.ujson.v0.False
   }
 
-  property("com.rallyhealth.ujson.v1.Bool.value") {
+  property("com.rallyhealth.ujson.v0.Bool.value") {
     forAll { bool: Boolean =>
-      com.rallyhealth.ujson.v1.Bool(bool).value shouldBe bool
+      com.rallyhealth.ujson.v0.Bool(bool).value shouldBe bool
     }
   }
 
-  property("com.rallyhealth.ujson.v1.Bool unapply") {
+  property("com.rallyhealth.ujson.v0.Bool unapply") {
     forAll { bool: Boolean =>
-      val jsb = com.rallyhealth.ujson.v1.Bool(bool)
+      val jsb = com.rallyhealth.ujson.v0.Bool(bool)
       inside(jsb) {
-        case com.rallyhealth.ujson.v1.Bool(value) =>
+        case com.rallyhealth.ujson.v0.Bool(value) =>
           value shouldBe bool
           jsb.value shouldBe value
       }

@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1.implicits
+package com.rallyhealth.weepickle.v0.implicits
 
 import language.experimental.macros
 
@@ -37,7 +37,7 @@ object MacroImplicits{
   }
 
 }
-trait MacroImplicits{ this: com.rallyhealth.weepickle.v1.core.Types =>
+trait MacroImplicits{ this: com.rallyhealth.weepickle.v0.core.Types =>
   implicit def macroSingletonR[T <: Singleton]: Reader[T] = macro MacroImplicits.applyR[T]
   implicit def macroSingletonW[T <: Singleton]: Writer[T] = macro MacroImplicits.applyW[T]
   implicit def macroSingletonRW[T <: Singleton]: ReadWriter[T] = macro MacroImplicits.applyRW[T]

@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1.implicits
+package com.rallyhealth.weepickle.v0.implicits
 
 import scala.annotation.StaticAnnotation
 

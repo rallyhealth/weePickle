@@ -1,8 +1,8 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 
 import java.net.URI
 
-import com.rallyhealth.weepickle.v1.TestUtil._
+import com.rallyhealth.weepickle.v0.TestUtil._
 import utest._
 
 object PrimitiveTests extends TestSuite {
@@ -20,10 +20,10 @@ object PrimitiveTests extends TestSuite {
       test("quotes") - rw("i am a \"cow\"", """ "i am a \"cow\"" """)
       test("unicode"){
         rw("叉烧包")
-        com.rallyhealth.weepickle.v1.default.write("叉烧包") ==> "\"叉烧包\""
-        com.rallyhealth.weepickle.v1.default.write("叉烧包", escapeUnicode = true) ==> "\"\\u53c9\\u70e7\\u5305\""
-        com.rallyhealth.weepickle.v1.default.read[String]("\"\\u53c9\\u70e7\\u5305\"") ==> "叉烧包"
-        com.rallyhealth.weepickle.v1.default.read[String]("\"叉烧包\"") ==> "叉烧包"
+        com.rallyhealth.weepickle.v0.default.write("叉烧包") ==> "\"叉烧包\""
+        com.rallyhealth.weepickle.v0.default.write("叉烧包", escapeUnicode = true) ==> "\"\\u53c9\\u70e7\\u5305\""
+        com.rallyhealth.weepickle.v0.default.read[String]("\"\\u53c9\\u70e7\\u5305\"") ==> "叉烧包"
+        com.rallyhealth.weepickle.v0.default.read[String]("\"叉烧包\"") ==> "叉烧包"
       }
       test("null") - rw(null: String, "null")
       test("chars"){
@@ -33,7 +33,7 @@ object PrimitiveTests extends TestSuite {
       }
     }
     test("Symbol"){
-      test("plain") - rw('i_am_a_cow, """ "i_am_a_cow" """)(com.rallyhealth.weepickle.v1.default.SymbolReader, com.rallyhealth.weepickle.v1.default.SymbolWriter)
+      test("plain") - rw('i_am_a_cow, """ "i_am_a_cow" """)(com.rallyhealth.weepickle.v0.default.SymbolReader, com.rallyhealth.weepickle.v0.default.SymbolWriter)
       test("unicode") - rw('叉烧包, """ "叉烧包" """)
       test("null") - rw(null: Symbol, "null")
     }
@@ -77,7 +77,7 @@ object PrimitiveTests extends TestSuite {
       test("fractional") - rw(125123.1542312, """125123.1542312""")
       test("negative") - rw(-125123.1542312, """-125123.1542312""")
       test("nan") - assert(
-        com.rallyhealth.weepickle.v1.default.write(Double.NaN) == "\"NaN\""
+        com.rallyhealth.weepickle.v0.default.write(Double.NaN) == "\"NaN\""
       )
     }
 
@@ -107,7 +107,7 @@ object PrimitiveTests extends TestSuite {
       test("inf") - rw(Float.PositiveInfinity, """ "Infinity" """)
       "neg-inf" - rw(Float.NegativeInfinity, """ "-Infinity" """)
       test("nan") - assert(
-        com.rallyhealth.weepickle.v1.default.write(Float.NaN) == "\"NaN\""
+        com.rallyhealth.weepickle.v0.default.write(Float.NaN) == "\"NaN\""
       )
     }
 

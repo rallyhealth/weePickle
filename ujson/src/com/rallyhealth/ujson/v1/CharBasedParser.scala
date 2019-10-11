@@ -1,4 +1,4 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import scala.annotation.switch
 
@@ -13,7 +13,7 @@ import scala.annotation.switch
  */
 trait CharBasedParser[J] extends Parser[J] {
 
-  private[this] final val charBuilder = new com.rallyhealth.ujson.v1.util.CharBuilder()
+  private[this] final val charBuilder = new com.rallyhealth.ujson.v0.util.CharBuilder()
 
   /**
    * See if the string has any escape sequences. If not, return the

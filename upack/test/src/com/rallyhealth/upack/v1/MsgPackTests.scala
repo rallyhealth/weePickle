@@ -1,7 +1,7 @@
-package com.rallyhealth.upack.v1
+package com.rallyhealth.upack.v0
 import java.io.ByteArrayOutputStream
 
-import com.rallyhealth.weepickle.v1.core.Util
+import com.rallyhealth.weepickle.v0.core.Util
 import utest._
 object MsgPackTests extends TestSuite{
   val tests = Tests{
@@ -18,18 +18,18 @@ object MsgPackTests extends TestSuite{
         println(k + " " + tag + " " + expectedJson + " " + packedStr)
         val packed = Util.stringToBytes(packedStr)
 
-        val jsonified0 = com.rallyhealth.upack.v1.transform(packed, com.rallyhealth.ujson.v1.Value)
+        val jsonified0 = com.rallyhealth.upack.v0.transform(packed, com.rallyhealth.ujson.v0.Value)
 
         val jsonified = tag match{
-          case "binary" => com.rallyhealth.ujson.v1.Str(Util.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
-          case "ext" => com.rallyhealth.ujson.v1.Arr(jsonified0(0), com.rallyhealth.ujson.v1.Str(Util.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray)))
+          case "binary" => com.rallyhealth.ujson.v0.Str(Util.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
+          case "ext" => com.rallyhealth.ujson.v0.Arr(jsonified0(0), com.rallyhealth.ujson.v0.Str(Util.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray)))
           case _ => jsonified0
         }
         assert(jsonified == expectedJson)
 
-        val msg = com.rallyhealth.upack.v1.read(packed)
+        val msg = com.rallyhealth.upack.v0.read(packed)
 
-        val rewrittenBytes = com.rallyhealth.upack.v1.write(msg)
+        val rewrittenBytes = com.rallyhealth.upack.v0.write(msg)
         val rewritten = Util.bytesToString(rewrittenBytes)
         val possibilities = testCase("msgpack").arr.map(_.str)
 
@@ -40,7 +40,7 @@ object MsgPackTests extends TestSuite{
 
   // Taken from:
   // https://github.com/kawanet/msgpack-test-suite/tree/e04f6edeaae589c768d6b70fcce80aa786b7800e
-  val unitCases = com.rallyhealth.ujson.v1.read("""
+  val unitCases = com.rallyhealth.ujson.v0.read("""
     {
       "10.nil.yaml": [
         {

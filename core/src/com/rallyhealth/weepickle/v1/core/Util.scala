@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1.core
+package com.rallyhealth.weepickle.v0.core
 
 object Util {
 

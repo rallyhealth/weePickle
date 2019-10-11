@@ -1,9 +1,9 @@
-package com.rallyhealth.weepickle.v1.example
+package com.rallyhealth.weepickle.v0.example
 
 import java.time._
 
 import acyclic.file
-import com.rallyhealth.weepickle.v1.TestUtil
+import com.rallyhealth.weepickle.v0.TestUtil
 import utest._
 
 object JvmPrimitiveTests extends TestSuite {

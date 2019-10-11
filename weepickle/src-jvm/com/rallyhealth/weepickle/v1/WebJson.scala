@@ -1,6 +1,6 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 
 
-trait WebJson extends com.rallyhealth.weepickle.v1.core.Types {
+trait WebJson extends com.rallyhealth.weepickle.v0.core.Types {
 
 }

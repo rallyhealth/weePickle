@@ -22,9 +22,9 @@ trait CommonModule extends ScalaModule {
   )
 }
 trait CommonPublishModule extends CommonModule with PublishModule with CrossScalaModule{
-  def publishVersion = "1.0.0-SNAPSHOT"
+  def publishVersion = "0.1.0"
 
-  protected def shade(name: String) = name + "-v1"
+  protected def shade(name: String) = name + "-v0"
   def pomSettings = PomSettings(
     description = artifactName(),
     organization = "com.rallyhealth",
@@ -143,14 +143,14 @@ object implicits extends Module {
       }
 
       ammonite.ops.write(file, s"""
-      package com.rallyhealth.weepickle.v1.implicits
+      package com.rallyhealth.weepickle.v0.implicits
       import acyclic.file
       import language.experimental.macros
       /**
        * Auto-generated picklers and unpicklers, used for creating the 22
        * versions of tuple-picklers and case-class picklers
        */
-      trait Generated extends com.rallyhealth.weepickle.v1.core.Types{
+      trait Generated extends com.rallyhealth.weepickle.v0.core.Types{
         ${tuples.mkString("\n")}
       }
     """)

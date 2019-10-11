@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.`type`.TypeReference
@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.util.TokenBuffer
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.rallyhealth.ujson.v1.StringRenderer
+import com.rallyhealth.ujson.v0.StringRenderer
 
 
 object Main{
@@ -48,15 +48,15 @@ object Main{
     }
   }
   def ujsonAst(duration: Int) = {
-    Common.bench0[String, com.rallyhealth.ujson.v1.Value](duration, Common.benchmarkSampleJson)(
-      com.rallyhealth.ujson.v1.read(_),
+    Common.bench0[String, com.rallyhealth.ujson.v0.Value](duration, Common.benchmarkSampleJson)(
+      com.rallyhealth.ujson.v0.read(_),
       _.render()
     )
   }
   def upackAst(duration: Int) = {
-    Common.bench0[Array[Byte], com.rallyhealth.upack.v1.Msg](duration, Common.benchmarkSampleMsgPack)(
-      com.rallyhealth.upack.v1.read(_),
-      com.rallyhealth.upack.v1.write(_)
+    Common.bench0[Array[Byte], com.rallyhealth.upack.v0.Msg](duration, Common.benchmarkSampleMsgPack)(
+      com.rallyhealth.upack.v0.read(_),
+      com.rallyhealth.upack.v0.write(_)
     )
   }
   def playJsonAst(duration: Int) = {
@@ -67,8 +67,8 @@ object Main{
   }
   def uJsonPlayJsonAst(duration: Int) = {
     Common.bench0[String, play.api.libs.json.JsValue](duration, Common.benchmarkSampleJson)(
-      com.rallyhealth.ujson.v1.play.PlayJson(_),
-      com.rallyhealth.ujson.v1.play.PlayJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.ujson.v0.play.PlayJson(_),
+      com.rallyhealth.ujson.v0.play.PlayJson.transform(_, StringRenderer()).toString
     )
   }
 
@@ -80,8 +80,8 @@ object Main{
   }
   def uJsonCirceJsonAst(duration: Int) = {
     Common.bench0[String, io.circe.Json](duration, Common.benchmarkSampleJson)(
-      com.rallyhealth.ujson.v1.circe.CirceJson(_),
-      com.rallyhealth.ujson.v1.circe.CirceJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.ujson.v0.circe.CirceJson(_),
+      com.rallyhealth.ujson.v0.circe.CirceJson.transform(_, StringRenderer()).toString
     )
   }
 
@@ -93,8 +93,8 @@ object Main{
   }
   def uJsonArgonautJsonAst(duration: Int) = {
     Common.bench0[String, argonaut.Json](duration, Common.benchmarkSampleJson)(
-      com.rallyhealth.ujson.v1.argonaut.ArgonautJson(_),
-      com.rallyhealth.ujson.v1.argonaut.ArgonautJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.ujson.v0.argonaut.ArgonautJson(_),
+      com.rallyhealth.ujson.v0.argonaut.ArgonautJson.transform(_, StringRenderer()).toString
     )
   }
   def json4sJsonAst(duration: Int) = {
@@ -105,8 +105,8 @@ object Main{
   }
   def uJsonJson4sJsonAst(duration: Int) = {
     Common.bench0[String, org.json4s.JsonAST.JValue](duration, Common.benchmarkSampleJson)(
-      com.rallyhealth.ujson.v1.json4s.Json4sJson(_),
-      com.rallyhealth.ujson.v1.json4s.Json4sJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.ujson.v0.json4s.Json4sJson(_),
+      com.rallyhealth.ujson.v0.json4s.Json4sJson.transform(_, StringRenderer()).toString
     )
   }
   def jacksonModuleScala(duration: Int) = {

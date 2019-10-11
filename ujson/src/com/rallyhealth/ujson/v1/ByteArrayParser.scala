@@ -1,8 +1,8 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import scala.annotation.{switch, tailrec}
 import java.nio.ByteBuffer
-import com.rallyhealth.weepickle.v1.core.{Visitor, ObjArrVisitor}
+import com.rallyhealth.weepickle.v0.core.{Visitor, ObjArrVisitor}
 /**
   * Basic ByteBuffer parser.
   *

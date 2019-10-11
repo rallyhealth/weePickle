@@ -1,15 +1,15 @@
-package com.rallyhealth.weepickle.v1.example
+package com.rallyhealth.weepickle.v0.example
 
 import java.io.StringWriter
 
 import acyclic.file
-import com.rallyhealth.weepickle.v1.{TestUtil, default}
+import com.rallyhealth.weepickle.v0.{TestUtil, default}
 import utest._
-import com.rallyhealth.weepickle.v1.default.{macroRW, ReadWriter => RW}
-import com.rallyhealth.ujson.v1.{IncompleteParseException, ParseException, Readable}
-import com.rallyhealth.ujson.v1.{BytesRenderer, StringRenderer, Value}
-import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
-import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
+import com.rallyhealth.weepickle.v0.default.{macroRW, ReadWriter => RW}
+import com.rallyhealth.ujson.v0.{IncompleteParseException, ParseException, Readable}
+import com.rallyhealth.ujson.v0.{BytesRenderer, StringRenderer, Value}
+import com.rallyhealth.weepickle.v0.core.{NoOpVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.implicits.{discriminator, dropDefault}
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
   object Thing{
@@ -57,7 +57,7 @@ object Defaults{
   }
 }
 object Keyed{
-  case class KeyBar(@com.rallyhealth.weepickle.v1.implicits.key("hehehe") kekeke: Int)
+  case class KeyBar(@com.rallyhealth.weepickle.v0.implicits.key("hehehe") kekeke: Int)
   object KeyBar{
     implicit val rw: RW[KeyBar] = macroRW
   }
@@ -68,7 +68,7 @@ object KeyedTag{
   object A{
     implicit val rw: RW[A] = RW.merge(B.rw, macroRW[C.type])
   }
-  @com.rallyhealth.weepickle.v1.implicits.key("Bee") case class B(i: Int) extends A
+  @com.rallyhealth.weepickle.v0.implicits.key("Bee") case class B(i: Int) extends A
   object B{
     implicit val rw: RW[B] = macroRW
   }
@@ -77,7 +77,7 @@ object KeyedTag{
 object Custom2{
   class CustomThing2(val i: Int, val s: String)
   object CustomThing2 {
-    implicit val rw = com.rallyhealth.weepickle.v1.default.readwriter[String].bimap[CustomThing2](
+    implicit val rw = com.rallyhealth.weepickle.v0.default.readwriter[String].bimap[CustomThing2](
       x => x.i + " " + x.s,
       str => {
         val Array(i, s) = str.split(" ", 2)
@@ -99,7 +99,7 @@ object ExampleTests extends TestSuite {
   import TestUtil._
   val tests = Tests {
     test("simple"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
 
       write(1)                          ==> "1"
 
@@ -112,7 +112,7 @@ object ExampleTests extends TestSuite {
       read[(Int, String, Boolean)]("""[1,"omg",true]""") ==> (1, "omg", true)
     }
     test("binary"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
 
       writeMsgPack(1)                          ==> Array(1)
 
@@ -127,7 +127,7 @@ object ExampleTests extends TestSuite {
       readMsgPack[(Int, String, Boolean)](serializedTuple) ==> (1, "omg", true)
     }
     test("more"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
       test("booleans"){
         write(true: Boolean)              ==> "true"
         write(false: Boolean)             ==> "false"
@@ -183,7 +183,7 @@ object ExampleTests extends TestSuite {
       }
 
       test("caseClass"){
-        import com.rallyhealth.weepickle.v1._
+        import com.rallyhealth.weepickle.v0._
         write(Thing(1, "gg"))             ==> """{"myFieldA":1,"myFieldB":"gg"}"""
         read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==> Thing(1, "gg")
         write(Big(1, true, "lol", 'Z', Thing(7, ""))) ==>
@@ -204,14 +204,14 @@ object ExampleTests extends TestSuite {
 
 
       test("sealed"){
-        write(IntThing(1)) ==> """{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.IntThing","i":1}"""
+        write(IntThing(1)) ==> """{"$type":"com.rallyhealth.weepickle.v0.example.Sealed.IntThing","i":1}"""
 
         write(TupleThing("naeem", (1, 2))) ==>
-          """{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.TupleThing","name":"naeem","t":[1,2]}"""
+          """{"$type":"com.rallyhealth.weepickle.v0.example.Sealed.TupleThing","name":"naeem","t":[1,2]}"""
 
         // You can read tagged value without knowing its
         // type in advance, just use type of the sealed trait
-        read[IntOrTuple]("""{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.IntThing","i":1}""") ==> IntThing(1)
+        read[IntOrTuple]("""{"$type":"com.rallyhealth.weepickle.v0.example.Sealed.IntThing","i":1}""") ==> IntThing(1)
 
       }
       test("recursive"){
@@ -231,7 +231,7 @@ object ExampleTests extends TestSuite {
       }
     }
     test("defaults"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
       test("omit") {
         // lihaoyi/upickle default behavior
         test("reading is tolerant"){
@@ -260,7 +260,7 @@ object ExampleTests extends TestSuite {
     }
 
     test("sources"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
       val original = """{"myFieldA":1,"myFieldB":"gg"}"""
       read[Thing](original) ==> Thing(1, "gg")
       read[Thing](original: CharSequence) ==> Thing(1, "gg")
@@ -268,7 +268,7 @@ object ExampleTests extends TestSuite {
     }
     test("mapped"){
       test("simple"){
-        import com.rallyhealth.weepickle.v1.default._
+        import com.rallyhealth.weepickle.v0.default._
         case class Wrap(i: Int)
         implicit val fooReadWrite: ReadWriter[Wrap] =
           readwriter[Int].bimap[Wrap](_.i, Wrap(_))
@@ -277,11 +277,11 @@ object ExampleTests extends TestSuite {
         read[Seq[Wrap]]("[1,10,100]") ==> Seq(Wrap(1), Wrap(10), Wrap(100))
       }
       test("Value"){
-        import com.rallyhealth.weepickle.v1.default._
+        import com.rallyhealth.weepickle.v0.default._
         case class Bar(i: Int, s: String)
         implicit val fooReadWrite: ReadWriter[Bar] =
-          readwriter[com.rallyhealth.ujson.v1.Value].bimap[Bar](
-            x => com.rallyhealth.ujson.v1.Arr(x.s, x.i),
+          readwriter[com.rallyhealth.ujson.v0.Value].bimap[Bar](
+            x => com.rallyhealth.ujson.v0.Arr(x.s, x.i),
             json => new Bar(json(1).num.toInt, json(0).str)
           )
 
@@ -290,7 +290,7 @@ object ExampleTests extends TestSuite {
       }
     }
     test("keyed"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
       test("attrs"){
         write(KeyBar(10))                     ==> """{"hehehe":10}"""
         read[KeyBar]("""{"hehehe": 10}""")    ==> KeyBar(10)
@@ -300,7 +300,7 @@ object ExampleTests extends TestSuite {
         read[B]("""{"customDiscriminator":"Bee","i":10}""") ==> B(10)
       }
       test("snakeCase"){
-        object SnakePickle extends com.rallyhealth.weepickle.v1.AttributeTagged{
+        object SnakePickle extends com.rallyhealth.weepickle.v0.AttributeTagged{
           def camelToSnake(s: String) = {
             s.split("(?=[A-Z])", -1).map(_.toLowerCase).mkString("_")
           }
@@ -321,10 +321,10 @@ object ExampleTests extends TestSuite {
         }
 
         // Default read-writing
-        com.rallyhealth.weepickle.v1.default.write(Thing(1, "gg")) ==>
+        com.rallyhealth.weepickle.v0.default.write(Thing(1, "gg")) ==>
           """{"myFieldA":1,"myFieldB":"gg"}"""
 
-        com.rallyhealth.weepickle.v1.default.read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==>
+        com.rallyhealth.weepickle.v0.default.read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==>
           Thing(1, "gg")
 
         implicit def thingRW: SnakePickle.ReadWriter[Thing] = SnakePickle.macroRW
@@ -338,10 +338,10 @@ object ExampleTests extends TestSuite {
       }
 
       test("stringLongs"){
-        com.rallyhealth.weepickle.v1.default.write(123: Long) ==> "123"
-        com.rallyhealth.weepickle.v1.default.write(Long.MaxValue) ==> "\"9223372036854775807\""
+        com.rallyhealth.weepickle.v0.default.write(123: Long) ==> "123"
+        com.rallyhealth.weepickle.v0.default.write(Long.MaxValue) ==> "\"9223372036854775807\""
 
-        object StringLongs extends com.rallyhealth.weepickle.v1.AttributeTagged{
+        object StringLongs extends com.rallyhealth.weepickle.v0.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {
             def write0[V](out: Visitor[_, V], v: Long) = out.visitString(v.toString, -1)
           }
@@ -350,7 +350,7 @@ object ExampleTests extends TestSuite {
         StringLongs.write(123: Long) ==> "\"123\""
         StringLongs.write(Long.MaxValue) ==> "\"9223372036854775807\""
 
-        object NumLongs extends com.rallyhealth.weepickle.v1.AttributeTagged{
+        object NumLongs extends com.rallyhealth.weepickle.v0.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {
             def write0[V](out: Visitor[_, V], v: Long) = out.visitFloat64String(v.toString, -1)
           }
@@ -363,78 +363,78 @@ object ExampleTests extends TestSuite {
     }
 
     test("transform"){
-      com.rallyhealth.weepickle.v1.default.transform(Foo(123)).to[Foo] ==> Foo(123)
+      com.rallyhealth.weepickle.v0.default.transform(Foo(123)).to[Foo] ==> Foo(123)
       val big = Big(1, true, "lol", 'Z', Thing(7, ""))
-      com.rallyhealth.weepickle.v1.default.transform(big).to[Big] ==> big
+      com.rallyhealth.weepickle.v0.default.transform(big).to[Big] ==> big
     }
     test("msgConstruction"){
-      val msg = com.rallyhealth.upack.v1.Arr(
-        com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Str("myFieldA") -> com.rallyhealth.upack.v1.Int32(1), com.rallyhealth.upack.v1.Str("myFieldB") -> com.rallyhealth.upack.v1.Str("g")),
-        com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Str("myFieldA") -> com.rallyhealth.upack.v1.Int32(2), com.rallyhealth.upack.v1.Str("myFieldB") -> com.rallyhealth.upack.v1.Str("k"))
+      val msg = com.rallyhealth.upack.v0.Arr(
+        com.rallyhealth.upack.v0.Obj(com.rallyhealth.upack.v0.Str("myFieldA") -> com.rallyhealth.upack.v0.Int32(1), com.rallyhealth.upack.v0.Str("myFieldB") -> com.rallyhealth.upack.v0.Str("g")),
+        com.rallyhealth.upack.v0.Obj(com.rallyhealth.upack.v0.Str("myFieldA") -> com.rallyhealth.upack.v0.Int32(2), com.rallyhealth.upack.v0.Str("myFieldB") -> com.rallyhealth.upack.v0.Str("k"))
       )
 
-      val binary: Array[Byte] = com.rallyhealth.upack.v1.write(msg)
+      val binary: Array[Byte] = com.rallyhealth.upack.v0.write(msg)
 
-      val read = com.rallyhealth.upack.v1.read(binary)
+      val read = com.rallyhealth.upack.v0.read(binary)
       assert(msg == read)
     }
 
     test("msgReadWrite"){
       val big = Big(1, true, "lol", 'Z', Thing(7, ""))
-      val msg: com.rallyhealth.upack.v1.Msg = com.rallyhealth.weepickle.v1.default.writeMsgAst(big)
-      com.rallyhealth.weepickle.v1.default.readMsgPack[Big](msg) ==> big
+      val msg: com.rallyhealth.upack.v0.Msg = com.rallyhealth.weepickle.v0.default.writeMsgAst(big)
+      com.rallyhealth.weepickle.v0.default.readMsgPack[Big](msg) ==> big
     }
 
     test("msgInsideValue"){
-      val msgSeq = Seq[com.rallyhealth.upack.v1.Msg](
-        com.rallyhealth.upack.v1.Str("hello world"),
-        com.rallyhealth.upack.v1.Arr(com.rallyhealth.upack.v1.Int32(1), com.rallyhealth.upack.v1.Int32(2))
+      val msgSeq = Seq[com.rallyhealth.upack.v0.Msg](
+        com.rallyhealth.upack.v0.Str("hello world"),
+        com.rallyhealth.upack.v0.Arr(com.rallyhealth.upack.v0.Int32(1), com.rallyhealth.upack.v0.Int32(2))
       )
 
-      val binary: Array[Byte] = com.rallyhealth.weepickle.v1.default.writeMsgPack(msgSeq)
+      val binary: Array[Byte] = com.rallyhealth.weepickle.v0.default.writeMsgPack(msgSeq)
 
-      com.rallyhealth.weepickle.v1.default.readMsgPack[Seq[com.rallyhealth.upack.v1.Msg]](binary) ==> msgSeq
+      com.rallyhealth.weepickle.v0.default.readMsgPack[Seq[com.rallyhealth.upack.v0.Msg]](binary) ==> msgSeq
     }
 
     test("msgToValueon"){
-      val msg = com.rallyhealth.upack.v1.Arr(
-        com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Str("myFieldA") -> com.rallyhealth.upack.v1.Int32(1), com.rallyhealth.upack.v1.Str("myFieldB") -> com.rallyhealth.upack.v1.Str("g")),
-        com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Str("myFieldA") -> com.rallyhealth.upack.v1.Int32(2), com.rallyhealth.upack.v1.Str("myFieldB") -> com.rallyhealth.upack.v1.Str("k"))
+      val msg = com.rallyhealth.upack.v0.Arr(
+        com.rallyhealth.upack.v0.Obj(com.rallyhealth.upack.v0.Str("myFieldA") -> com.rallyhealth.upack.v0.Int32(1), com.rallyhealth.upack.v0.Str("myFieldB") -> com.rallyhealth.upack.v0.Str("g")),
+        com.rallyhealth.upack.v0.Obj(com.rallyhealth.upack.v0.Str("myFieldA") -> com.rallyhealth.upack.v0.Int32(2), com.rallyhealth.upack.v0.Str("myFieldB") -> com.rallyhealth.upack.v0.Str("k"))
       )
 
-      val binary: Array[Byte] = com.rallyhealth.upack.v1.write(msg)
+      val binary: Array[Byte] = com.rallyhealth.upack.v0.write(msg)
 
-      // Can pretty-print starting from either the com.rallyhealth.upack.v1.Msg structs,
+      // Can pretty-print starting from either the com.rallyhealth.upack.v0.Msg structs,
       // or the raw binary data
-      com.rallyhealth.upack.v1.transform(msg, new com.rallyhealth.ujson.v1.StringRenderer()).toString ==>
+      com.rallyhealth.upack.v0.transform(msg, new com.rallyhealth.ujson.v0.StringRenderer()).toString ==>
         """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
 
-      com.rallyhealth.upack.v1.transform(binary, new com.rallyhealth.ujson.v1.StringRenderer()).toString ==>
+      com.rallyhealth.upack.v0.transform(binary, new com.rallyhealth.ujson.v0.StringRenderer()).toString ==>
         """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
 
       // Some messagepack structs cannot be converted to valid JSON, e.g.
       // they may have maps with non-string keys. These can still be pretty-printed:
-      val msg2 = com.rallyhealth.upack.v1.Obj(com.rallyhealth.upack.v1.Arr(com.rallyhealth.upack.v1.Int32(1), com.rallyhealth.upack.v1.Int32(2)) -> com.rallyhealth.upack.v1.Int32(1))
-      com.rallyhealth.upack.v1.transform(msg2, new com.rallyhealth.ujson.v1.StringRenderer()).toString ==> """{[1,2]:1}"""
+      val msg2 = com.rallyhealth.upack.v0.Obj(com.rallyhealth.upack.v0.Arr(com.rallyhealth.upack.v0.Int32(1), com.rallyhealth.upack.v0.Int32(2)) -> com.rallyhealth.upack.v0.Int32(1))
+      com.rallyhealth.upack.v0.transform(msg2, new com.rallyhealth.ujson.v0.StringRenderer()).toString ==> """{[1,2]:1}"""
     }
     test("json"){
       test("construction"){
-        import com.rallyhealth.ujson.v1.Value
+        import com.rallyhealth.ujson.v0.Value
 
-        val json0 = com.rallyhealth.ujson.v1.Arr(
-          com.rallyhealth.ujson.v1.Obj("myFieldA" -> com.rallyhealth.ujson.v1.Num(1), "myFieldB" -> com.rallyhealth.ujson.v1.Str("g")),
-          com.rallyhealth.ujson.v1.Obj("myFieldA" -> com.rallyhealth.ujson.v1.Num(2), "myFieldB" -> com.rallyhealth.ujson.v1.Str("k"))
+        val json0 = com.rallyhealth.ujson.v0.Arr(
+          com.rallyhealth.ujson.v0.Obj("myFieldA" -> com.rallyhealth.ujson.v0.Num(1), "myFieldB" -> com.rallyhealth.ujson.v0.Str("g")),
+          com.rallyhealth.ujson.v0.Obj("myFieldA" -> com.rallyhealth.ujson.v0.Num(2), "myFieldB" -> com.rallyhealth.ujson.v0.Str("k"))
         )
 
-        val json = com.rallyhealth.ujson.v1.Arr( // The `com.rallyhealth.ujson.v1.Num` and `com.rallyhealth.ujson.v1.Str` calls are optional
-          com.rallyhealth.ujson.v1.Obj("myFieldA" -> 1, "myFieldB" -> "g"),
-          com.rallyhealth.ujson.v1.Obj("myFieldA" -> 2, "myFieldB" -> "k")
+        val json = com.rallyhealth.ujson.v0.Arr( // The `com.rallyhealth.ujson.v0.Num` and `com.rallyhealth.ujson.v0.Str` calls are optional
+          com.rallyhealth.ujson.v0.Obj("myFieldA" -> 1, "myFieldB" -> "g"),
+          com.rallyhealth.ujson.v0.Obj("myFieldA" -> 2, "myFieldB" -> "k")
         )
 
         json0 ==> json
         json.toString ==> """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
 
-        val json2 = com.rallyhealth.ujson.v1.Obj(
+        val json2 = com.rallyhealth.ujson.v0.Obj(
           "hello" -> (0 until 5),
           "world" -> (0 until 5).map(i => (i.toString, i))
         )
@@ -443,50 +443,50 @@ object ExampleTests extends TestSuite {
       }
       test("simple"){
         val str = """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
-        val json = com.rallyhealth.ujson.v1.read(str)
+        val json = com.rallyhealth.ujson.v0.read(str)
         json(0)("myFieldA").num   ==> 1
         json(0)("myFieldB").str   ==> "g"
         json(1)("myFieldA").num   ==> 2
         json(1)("myFieldB").str   ==> "k"
 
-        com.rallyhealth.ujson.v1.write(json)         ==> str
+        com.rallyhealth.ujson.v0.write(json)         ==> str
       }
       test("mutable"){
         val str = """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
-        val json: com.rallyhealth.ujson.v1.Value = com.rallyhealth.ujson.v1.read(str)
+        val json: com.rallyhealth.ujson.v0.Value = com.rallyhealth.ujson.v0.read(str)
 
         json.arr.remove(1)
         json(0)("myFieldA") = 1337
         json(0)("myFieldB") = json(0)("myFieldB").str + "lols"
 
-        com.rallyhealth.ujson.v1.write(json) ==> """[{"myFieldA":1337,"myFieldB":"glols"}]"""
+        com.rallyhealth.ujson.v0.write(json) ==> """[{"myFieldA":1337,"myFieldB":"glols"}]"""
       }
       test("update"){
         val str = """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
-        val json: com.rallyhealth.ujson.v1.Value = com.rallyhealth.ujson.v1.read(str)
+        val json: com.rallyhealth.ujson.v0.Value = com.rallyhealth.ujson.v0.read(str)
 
         json(0)("myFieldA") = _.num + 100
         json(1)("myFieldB") = _.str + "lol"
 
         val expected = """[{"myFieldA":101,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"klol"}]"""
-        com.rallyhealth.ujson.v1.write(json) ==> expected
+        com.rallyhealth.ujson.v0.write(json) ==> expected
       }
       test("intermediate"){
         val data = Seq(Thing(1, "g"), Thing(2, "k"))
-        val json = com.rallyhealth.weepickle.v1.default.writeJs(data)
+        val json = com.rallyhealth.weepickle.v0.default.writeJs(data)
 
         json.arr.remove(1)
         json(0)("myFieldA") = 1337
 
-        com.rallyhealth.weepickle.v1.default.read[Seq[Thing]](json)   ==> Seq(Thing(1337, "g"))
+        com.rallyhealth.weepickle.v0.default.read[Seq[Thing]](json)   ==> Seq(Thing(1337, "g"))
       }
       test("copy"){
-        val data = com.rallyhealth.ujson.v1.Obj(
+        val data = com.rallyhealth.ujson.v0.Obj(
           "hello" -> 1,
           "world" -> 2
         )
 
-        val data2 = com.rallyhealth.ujson.v1.copy(data)
+        val data2 = com.rallyhealth.ujson.v0.copy(data)
 
         data("hello") = 3
         data2("hello").num ==> 1
@@ -494,55 +494,55 @@ object ExampleTests extends TestSuite {
     }
     test("transforms"){
       test("json"){
-        import com.rallyhealth.weepickle.v1.default._
-        transform(1).to[com.rallyhealth.ujson.v1.Value] ==> com.rallyhealth.ujson.v1.Num(1)
-        transform("hello").to[com.rallyhealth.ujson.v1.Value] ==> com.rallyhealth.ujson.v1.Str("hello")
-        transform(("hello", 9)).to[com.rallyhealth.ujson.v1.Value] ==> com.rallyhealth.ujson.v1.Arr("hello", 9)
-        transform(Thing(3, "3")).to[com.rallyhealth.ujson.v1.Value] ==>
-          com.rallyhealth.ujson.v1.Obj("myFieldA" -> 3, "myFieldB" -> "3")
+        import com.rallyhealth.weepickle.v0.default._
+        transform(1).to[com.rallyhealth.ujson.v0.Value] ==> com.rallyhealth.ujson.v0.Num(1)
+        transform("hello").to[com.rallyhealth.ujson.v0.Value] ==> com.rallyhealth.ujson.v0.Str("hello")
+        transform(("hello", 9)).to[com.rallyhealth.ujson.v0.Value] ==> com.rallyhealth.ujson.v0.Arr("hello", 9)
+        transform(Thing(3, "3")).to[com.rallyhealth.ujson.v0.Value] ==>
+          com.rallyhealth.ujson.v0.Obj("myFieldA" -> 3, "myFieldB" -> "3")
 
-        transform(com.rallyhealth.ujson.v1.Num(1)).to[Int] ==> 1
-        transform(com.rallyhealth.ujson.v1.Str("hello")).to[String] ==> "hello"
-        transform(com.rallyhealth.ujson.v1.Arr("hello", 9)).to[(String, Int)] ==> ("hello", 9)
-        transform(com.rallyhealth.ujson.v1.Obj("myFieldA" -> 3, "myFieldB" -> "3")).to[Thing] ==>
+        transform(com.rallyhealth.ujson.v0.Num(1)).to[Int] ==> 1
+        transform(com.rallyhealth.ujson.v0.Str("hello")).to[String] ==> "hello"
+        transform(com.rallyhealth.ujson.v0.Arr("hello", 9)).to[(String, Int)] ==> ("hello", 9)
+        transform(com.rallyhealth.ujson.v0.Obj("myFieldA" -> 3, "myFieldB" -> "3")).to[Thing] ==>
           Thing(3, "3")
       }
 
       test("defaultTransform"){
 
-        // com.rallyhealth.weepickle.v1.default.transform can be used to convert between
+        // com.rallyhealth.weepickle.v0.default.transform can be used to convert between
         // JSON-equivalent data-structures without an intermediate AST
-        com.rallyhealth.weepickle.v1.default.transform(Seq(1, 2, 3)).to[(Int, Int, Int)] ==> (1, 2, 3)
+        com.rallyhealth.weepickle.v0.default.transform(Seq(1, 2, 3)).to[(Int, Int, Int)] ==> (1, 2, 3)
 
         val bar = Bar("omg", Seq(Foo(1), Foo(2)))
 
-        com.rallyhealth.weepickle.v1.default.transform(bar).to[Map[String, com.rallyhealth.ujson.v1.Value]] ==>
-          Map[String, com.rallyhealth.ujson.v1.Value](
+        com.rallyhealth.weepickle.v0.default.transform(bar).to[Map[String, com.rallyhealth.ujson.v0.Value]] ==>
+          Map[String, com.rallyhealth.ujson.v0.Value](
             "name" -> "omg",
-            "foos" -> com.rallyhealth.ujson.v1.Arr(
-              com.rallyhealth.ujson.v1.Obj("i" -> 1),
-              com.rallyhealth.ujson.v1.Obj("i" -> 2)
+            "foos" -> com.rallyhealth.ujson.v0.Arr(
+              com.rallyhealth.ujson.v0.Obj("i" -> 1),
+              com.rallyhealth.ujson.v0.Obj("i" -> 2)
             )
           )
 
       }
       test("misc"){
         // It can be used for parsing JSON into an AST
-        val exampleAst = com.rallyhealth.ujson.v1.Arr(1, 2, 3)
+        val exampleAst = com.rallyhealth.ujson.v0.Arr(1, 2, 3)
 
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", Value) ==> exampleAst
+        com.rallyhealth.ujson.v0.transform("[1, 2, 3]", Value) ==> exampleAst
 
         // Rendering the AST to a string
-        com.rallyhealth.ujson.v1.transform(exampleAst, StringRenderer()).toString ==> "[1,2,3]"
+        com.rallyhealth.ujson.v0.transform(exampleAst, StringRenderer()).toString ==> "[1,2,3]"
 
         // Or to a byte array
-        com.rallyhealth.ujson.v1.transform(exampleAst, BytesRenderer()).toBytes ==> "[1,2,3]".getBytes
+        com.rallyhealth.ujson.v0.transform(exampleAst, BytesRenderer()).toBytes ==> "[1,2,3]".getBytes
 
         // Re-formatting JSON, either compacting it
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", StringRenderer()).toString ==> "[1,2,3]"
+        com.rallyhealth.ujson.v0.transform("[1, 2, 3]", StringRenderer()).toString ==> "[1,2,3]"
 
         // or indenting it
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", StringRenderer(indent = 4)).toString ==>
+        com.rallyhealth.ujson.v0.transform("[1, 2, 3]", StringRenderer(indent = 4)).toString ==>
           """[
             |    1,
             |    2,
@@ -550,29 +550,29 @@ object ExampleTests extends TestSuite {
             |]""".stripMargin
 
         // `transform` takes any `Transformable`, including byte arrays and files
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]".getBytes, StringRenderer()).toString ==> "[1,2,3]"
+        com.rallyhealth.ujson.v0.transform("[1, 2, 3]".getBytes, StringRenderer()).toString ==> "[1,2,3]"
 
       }
       test("validate"){
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", NoOpVisitor)
+        com.rallyhealth.ujson.v0.transform("[1, 2, 3]", NoOpVisitor)
 
         intercept[IncompleteParseException](
-          com.rallyhealth.ujson.v1.transform("[1, 2, 3", NoOpVisitor)
+          com.rallyhealth.ujson.v0.transform("[1, 2, 3", NoOpVisitor)
         )
         intercept[ParseException](
-          com.rallyhealth.ujson.v1.transform("[1, 2, 3]]", NoOpVisitor)
+          com.rallyhealth.ujson.v0.transform("[1, 2, 3]]", NoOpVisitor)
         )
       }
-      test("com.rallyhealth.weepickle.v1Default"){
-        com.rallyhealth.ujson.v1.transform("[1, 2, 3]", com.rallyhealth.weepickle.v1.default.reader[Seq[Int]]) ==>
+      test("com.rallyhealth.weepickle.v0Default"){
+        com.rallyhealth.ujson.v0.transform("[1, 2, 3]", com.rallyhealth.weepickle.v0.default.reader[Seq[Int]]) ==>
           Seq(1, 2, 3)
 
-        com.rallyhealth.ujson.v1.transform(com.rallyhealth.weepickle.v1.default.transform(Seq(1, 2, 3)), StringRenderer()).toString ==>
+        com.rallyhealth.ujson.v0.transform(com.rallyhealth.weepickle.v0.default.transform(Seq(1, 2, 3)), StringRenderer()).toString ==>
           "[1,2,3]"
       }
     }
     test("byteArrays"){
-      import com.rallyhealth.weepickle.v1.default._
+      import com.rallyhealth.weepickle.v0.default._
       write(Array[Byte](1, 2, 3, 4)) ==> "[1,2,3,4]"
       read[Array[Byte]]("[1,2,3,4]") ==> Array(1, 2, 3, 4)
 

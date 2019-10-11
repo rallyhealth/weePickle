@@ -1,7 +1,7 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import scala.annotation.switch
-import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v0.core.Visitor
 /**
  * SyncParser extends Parser to do all parsing synchronously.
  *

@@ -1,10 +1,10 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 
-import com.rallyhealth.weepickle.v1.ADTs.ADT0
-import com.rallyhealth.weepickle.v1.Common.{Data, bench}
-import com.rallyhealth.weepickle.v1.Defaults.ADTc
-import com.rallyhealth.weepickle.v1.Hierarchy.{A, B, C}
-import com.rallyhealth.weepickle.v1.Recursive.{End, LL, Node}
+import com.rallyhealth.weepickle.v0.ADTs.ADT0
+import com.rallyhealth.weepickle.v0.Common.{Data, bench}
+import com.rallyhealth.weepickle.v0.Defaults.ADTc
+import com.rallyhealth.weepickle.v0.Hierarchy.{A, B, C}
+import com.rallyhealth.weepickle.v0.Recursive.{End, LL, Node}
 import scala.scalajs.js
 object Main{
   def main(args: Array[String]): Unit = {
@@ -36,35 +36,35 @@ object Main{
     )
   }
   def weepickleWebDefault(duration: Int) = {
-    import com.rallyhealth.weepickle.v1.default.{ReadWriter => RW}
-    implicit def rw1: RW[Data] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw2: RW[A] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw3: RW[B] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw4: RW[C] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw5: RW[LL] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw6: RW[Node] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw7: RW[End.type] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw8: RW[ADTc] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit def rw9: RW[ADT0] = com.rallyhealth.weepickle.v1.default.macroRW
+    import com.rallyhealth.weepickle.v0.default.{ReadWriter => RW}
+    implicit def rw1: RW[Data] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw2: RW[A] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw3: RW[B] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw4: RW[C] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw5: RW[LL] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw6: RW[Node] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw7: RW[End.type] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw8: RW[ADTc] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw9: RW[ADT0] = com.rallyhealth.weepickle.v0.default.macroRW
     bench[String](duration)(
-      com.rallyhealth.weepickle.v1.default.web.read[Data],
-      com.rallyhealth.weepickle.v1.default.web.write(_)
+      com.rallyhealth.weepickle.v0.default.web.read[Data],
+      com.rallyhealth.weepickle.v0.default.web.write(_)
     )
   }
   def weepickleWebDefaultCached(duration: Int) = {
-    import com.rallyhealth.weepickle.v1.default.{ReadWriter => RW}
-    implicit lazy val rw1: RW[Data] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw2: RW[A] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw3: RW[B] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw4: RW[C] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw5: RW[LL] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw6: RW[Node] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw7: RW[End.type] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw8: RW[ADTc] = com.rallyhealth.weepickle.v1.default.macroRW
-    implicit lazy val rw9: RW[ADT0] = com.rallyhealth.weepickle.v1.default.macroRW
+    import com.rallyhealth.weepickle.v0.default.{ReadWriter => RW}
+    implicit lazy val rw1: RW[Data] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw2: RW[A] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw3: RW[B] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw4: RW[C] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw5: RW[LL] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw6: RW[Node] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw7: RW[End.type] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw8: RW[ADTc] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit lazy val rw9: RW[ADT0] = com.rallyhealth.weepickle.v0.default.macroRW
     bench[String](duration)(
-      com.rallyhealth.weepickle.v1.default.web.read[Data],
-      com.rallyhealth.weepickle.v1.default.web.write(_)
+      com.rallyhealth.weepickle.v0.default.web.read[Data],
+      com.rallyhealth.weepickle.v0.default.web.write(_)
     )
   }
 }

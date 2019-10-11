@@ -1,10 +1,10 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import java.nio.ByteBuffer
 
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
 object JNumIndexCheckFacade extends JsVisitor[Boolean, Boolean] {
   def visitArray(length: Int, index: Int)  = new ArrVisitor[Boolean, Boolean] {
     var failed = false

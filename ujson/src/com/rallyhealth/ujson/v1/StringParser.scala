@@ -1,6 +1,6 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
-import com.rallyhealth.weepickle.v1.core.{Visitor, ObjArrVisitor}
+import com.rallyhealth.weepickle.v0.core.{Visitor, ObjArrVisitor}
 
 /**
  * Basic in-memory string parsing.
@@ -14,7 +14,7 @@ import com.rallyhealth.weepickle.v1.core.{Visitor, ObjArrVisitor}
  * memory at once. So this limit will probably not be a problem in
  * practice.
  */
-private[v1] final class StringParser[J](s: String) extends SyncParser[J] with CharBasedParser[J] {
+private[v0] final class StringParser[J](s: String) extends SyncParser[J] with CharBasedParser[J] {
   var line = 0
   final def column(i: Int) = i
   final def newline(i: Int) { line += 1 }

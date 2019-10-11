@@ -1,8 +1,8 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 import java.io.ByteArrayOutputStream
 
-import com.rallyhealth.weepickle.v1.core.{Visitor, ArrVisitor, ObjVisitor}
+import com.rallyhealth.weepickle.v0.core.{Visitor, ArrVisitor, ObjVisitor}
 
 import scala.annotation.switch
 

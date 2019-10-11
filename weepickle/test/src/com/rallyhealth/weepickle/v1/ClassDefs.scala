@@ -1,12 +1,12 @@
-package com.rallyhealth.weepickle.v1
+package com.rallyhealth.weepickle.v0
 
-//import com.rallyhealth.weepickle.v1.ADTs.ADT0
+//import com.rallyhealth.weepickle.v0.ADTs.ADT0
 import default.{ReadWriter => RW, Reader => R, Writer => W}
-import com.rallyhealth.weepickle.v1.implicits.key
+import com.rallyhealth.weepickle.v0.implicits.key
 /*
  * A whole bunch of test data that can be used by client libraries to try out
  * their typeclass derivation to make sure it's doing the right thing. Contains
- * roughly the  whole range of interesting shapes of types supported by com.rallyhealth.weepickle.v1.
+ * roughly the  whole range of interesting shapes of types supported by com.rallyhealth.weepickle.v0.
  */
 
 object ADTs {
@@ -55,20 +55,20 @@ object ADTs {
 object Hierarchy {
   sealed trait A
   object A{
-    implicit def rw: com.rallyhealth.weepickle.v1.default.ReadWriter[A] = RW.merge(B.rw, C.rw)
+    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[A] = RW.merge(B.rw, C.rw)
   }
   case class B(i: Int) extends A
   object B{
-    implicit def rw: com.rallyhealth.weepickle.v1.default.ReadWriter[B] = default.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[B] = default.macroRW
   }
   case class C(s1: String, s2: String) extends A
   object C{
-    implicit def rw: com.rallyhealth.weepickle.v1.default.ReadWriter[C] = default.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[C] = default.macroRW
   }
 
   object Z{
-    implicit def rw: com.rallyhealth.weepickle.v1.default.ReadWriter[Z] = RW.merge(
-      implicitly[com.rallyhealth.weepickle.v1.default.ReadWriter[AnZ.type]]
+    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Z] = RW.merge(
+      implicitly[com.rallyhealth.weepickle.v0.default.ReadWriter[AnZ.type]]
     )
   }
   sealed trait Z //new line
@@ -471,4 +471,4 @@ object Ast{
   }
 }
 
-case class CaseClassWithJson(json: com.rallyhealth.ujson.v1.Value)
+case class CaseClassWithJson(json: com.rallyhealth.ujson.v0.Value)

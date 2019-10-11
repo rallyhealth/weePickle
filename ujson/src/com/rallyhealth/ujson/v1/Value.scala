@@ -1,9 +1,9 @@
-package com.rallyhealth.ujson.v1
+package com.rallyhealth.ujson.v0
 
 
 
-import com.rallyhealth.weepickle.v1.core.Util
-import com.rallyhealth.weepickle.v1.core.{ObjArrVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.Util
+import com.rallyhealth.weepickle.v0.core.{ObjArrVisitor, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -18,7 +18,7 @@ sealed trait Value extends Readable {
     */
   def str: String = this match{
     case Str(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Str")
+    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Str")
   }
 
   /**
@@ -35,7 +35,7 @@ sealed trait Value extends Readable {
     */
   def obj: mutable.LinkedHashMap[String, Value] = this match{
     case Obj(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Obj")
+    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Obj")
   }
   /**
     * Returns an Optional key/value map of this [[Value]] in case this [[Value]] is a 'Obj'.
@@ -50,7 +50,7 @@ sealed trait Value extends Readable {
     */
   def arr: ArrayBuffer[Value] = this match{
     case Arr(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Arr")
+    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Arr")
   }
   /**
     * Returns The optional elements of this [[Value]] in case this [[Value]] is a 'Arr'.
@@ -65,7 +65,7 @@ sealed trait Value extends Readable {
     */
   def num: Double = this match{
     case Num(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Num")
+    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Num")
   }
   /**
     * Returns an Option[Double] in case this [[Value]] is a 'Num'.
@@ -80,7 +80,7 @@ sealed trait Value extends Readable {
     */
   def bool = this match{
     case Bool(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v1.Bool")
+    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.ujson.v0.Bool")
   }
   /**
     * Returns an Optional `Boolean` value of this [[Value]] in case this [[Value]] is a 'Bool'.
@@ -90,7 +90,7 @@ sealed trait Value extends Readable {
     case _ => None
   }
   /**
-    * Returns true if the value of this [[Value]] is com.rallyhealth.ujson.v1.Null, false otherwise
+    * Returns true if the value of this [[Value]] is com.rallyhealth.ujson.v0.Null, false otherwise
     */
   def isNull: Boolean = this match {
     case Null => true
@@ -121,7 +121,7 @@ sealed trait Value extends Readable {
 * JSON AST.
 */
 object Value extends AstTransformer[Value]{
-  type Value = com.rallyhealth.ujson.v1.Value
+  type Value = com.rallyhealth.ujson.v0.Value
   sealed trait Selector{
     def apply(x: Value): Value
     def update(x: Value, y: Value): Unit

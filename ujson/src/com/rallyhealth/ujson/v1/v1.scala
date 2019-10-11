@@ -1,9 +1,9 @@
 package com.rallyhealth.ujson
 
-import com.rallyhealth.weepickle.v1.core.NoOpVisitor
+import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 
-package object v1{
-  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v1.core.Visitor[_, T]): T = t.transform(v)
+package object v0{
+  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v0.core.Visitor[_, T]): T = t.transform(v)
 
   /**
     * Read the given JSON input as a JSON struct
@@ -49,5 +49,5 @@ package object v1{
   def reformatTo(s: Readable, out: java.io.Writer, indent: Int = -1, escapeUnicode: Boolean = false): Unit = {
     transform(s, Renderer(out, indent, escapeUnicode)).toString
   }
-  // End com.rallyhealth.ujson.v1
+  // End com.rallyhealth.ujson.v0
 }

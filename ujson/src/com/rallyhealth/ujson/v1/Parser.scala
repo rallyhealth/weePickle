@@ -1,5 +1,5 @@
-package com.rallyhealth.ujson.v1
-import com.rallyhealth.weepickle.v1.core.{Visitor, ObjArrVisitor, Abort, AbortException, ObjVisitor}
+package com.rallyhealth.ujson.v0
+import com.rallyhealth.weepickle.v0.core.{Visitor, ObjArrVisitor, Abort, AbortException, ObjVisitor}
 import java.nio.charset.Charset
 
 import scala.annotation.{switch, tailrec}
