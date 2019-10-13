@@ -299,6 +299,12 @@ object AdvancedTests extends TestSuite {
         rw(header: Ast.Block.Sub, headerText)
         rw(header: Ast.Chain.Sub, headerText)
       }
+      test("scala-issue-11768"){
+        // Make sure this compiles
+        class Thing[T: com.rallyhealth.weepickle.v0.default.Writer, V: com.rallyhealth.weepickle.v0.default.Writer](t: Option[(V, T)]){
+          implicitly[com.rallyhealth.weepickle.v0.default.Writer[Option[(V, T)]]]
+        }
+      }
       //      test("companionImplicitPickedUp"){
       //        assert(implicitly[com.rallyhealth.weepickle.v0.default.Reader[TypedFoo]] eq TypedFoo.readWriter)
       //        assert(implicitly[com.rallyhealth.weepickle.v0.default.Writer[TypedFoo]] eq TypedFoo.readWriter)
