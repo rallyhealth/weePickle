@@ -6,7 +6,7 @@ import language.experimental.macros
 import language.higherKinds
 import com.rallyhealth.weepickle.v0.core._
 import scala.reflect.ClassTag
-import com.rallyhealth.ujson.v0.IndexedValue
+import com.rallyhealth.weejson.v0.IndexedValue
 /**
  * An instance of the com.rallyhealth.weepickle.v0 API. There's a default instance at
  * `com.rallyhealth.weepickle.v0.default`, but you can also implement it yourself to customize
@@ -24,12 +24,12 @@ trait Api
   /**
     * Reads the given MessagePack input into a Scala value
     */
-  def readMsgPack[T: Reader](s: com.rallyhealth.upack.v0.Readable): T = s.transform(reader[T])
+  def readMsgPack[T: Reader](s: com.rallyhealth.weepack.v0.Readable): T = s.transform(reader[T])
 
   /**
     * Reads the given JSON input into a Scala value
     */
-  def read[T: Reader](s: com.rallyhealth.ujson.v0.Readable): T = s.transform(reader[T])
+  def read[T: Reader](s: com.rallyhealth.weejson.v0.Readable): T = s.transform(reader[T])
 
   def reader[T: Reader]: Reader[T] = implicitly[Reader[T]]
 
@@ -39,24 +39,24 @@ trait Api
   def write[T: Writer](t: T,
                        indent: Int = -1,
                        escapeUnicode: Boolean = false): String = {
-    transform(t).to(com.rallyhealth.ujson.v0.StringRenderer(indent, escapeUnicode)).toString
+    transform(t).to(com.rallyhealth.weejson.v0.StringRenderer(indent, escapeUnicode)).toString
   }
   /**
     * Write the given Scala value as a MessagePack binary
     */
   def writeMsgPack[T: Writer](t: T): Array[Byte] = {
-    transform(t).to(new com.rallyhealth.upack.v0.MsgPackWriter(new ByteArrayOutputStream())).toByteArray
+    transform(t).to(new com.rallyhealth.weepack.v0.MsgPackWriter(new ByteArrayOutputStream())).toByteArray
   }
 
   /**
     * Write the given Scala value as a JSON struct
     */
-  def writeJs[T: Writer](t: T): com.rallyhealth.ujson.v0.Value = transform(t).to[com.rallyhealth.ujson.v0.Value]
+  def writeJs[T: Writer](t: T): com.rallyhealth.weejson.v0.Value = transform(t).to[com.rallyhealth.weejson.v0.Value]
 
   /**
     * Write the given Scala value as a MessagePack struct
     */
-  def writeMsgAst[T: Writer](t: T): com.rallyhealth.upack.v0.Msg = transform(t).to[com.rallyhealth.upack.v0.Msg]
+  def writeMsgAst[T: Writer](t: T): com.rallyhealth.weepack.v0.Msg = transform(t).to[com.rallyhealth.weepack.v0.Msg]
 
   /**
     * Write the given Scala value as a JSON string to the given Writer
@@ -65,20 +65,20 @@ trait Api
                          out: java.io.Writer,
                          indent: Int = -1,
                          escapeUnicode: Boolean = false): Unit = {
-    transform(t).to(new com.rallyhealth.ujson.v0.Renderer(out, indent = indent, escapeUnicode))
+    transform(t).to(new com.rallyhealth.weejson.v0.Renderer(out, indent = indent, escapeUnicode))
   }
   /**
     * Write the given Scala value as a MessagePack binary to the given OutputStream
     */
   def writeMsgPackTo[T: Writer](t: T, out: java.io.OutputStream): Unit = {
-    transform(t).to(new com.rallyhealth.upack.v0.MsgPackWriter(out))
+    transform(t).to(new com.rallyhealth.weepack.v0.MsgPackWriter(out))
   }
 
   def writer[T: Writer]: Writer[T] = implicitly[Writer[T]]
 
   def readwriter[T: ReadWriter]: ReadWriter[T] = implicitly[ReadWriter[T]]
 
-  case class transform[T: Writer](t: T) extends com.rallyhealth.upack.v0.Readable with com.rallyhealth.ujson.v0.Readable {
+  case class transform[T: Writer](t: T) extends com.rallyhealth.weepack.v0.Readable with com.rallyhealth.weejson.v0.Readable {
     def transform[V](f: Visitor[_, V]): V = writer[T].transform(t, f)
     def to[V](f: Visitor[_, V]): V = transform(f)
     def to[V](implicit f: Reader[V]): V = transform(f)

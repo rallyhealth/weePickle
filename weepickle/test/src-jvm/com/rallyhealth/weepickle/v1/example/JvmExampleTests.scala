@@ -3,10 +3,10 @@ package com.rallyhealth.weepickle.v0.example
 import java.io.StringWriter
 
 import acyclic.file
-import com.rallyhealth.ujson.v0.json4s.Json4sJson
+import com.rallyhealth.weejson.v0.json4s.Json4sJson
 import com.rallyhealth.weepickle.v0.TestUtil
 import utest._
-import com.rallyhealth.ujson.v0.StringRenderer
+import com.rallyhealth.weejson.v0.StringRenderer
 
 import Simple._
 
@@ -28,7 +28,7 @@ object JvmExampleTests extends TestSuite {
     }
     test("other"){
       test("argonaut"){
-        import com.rallyhealth.ujson.v0.argonaut.ArgonautJson
+        import com.rallyhealth.weejson.v0.argonaut.ArgonautJson
         val argJson: argonaut.Json = ArgonautJson(
           """["hello", "world"]"""
         )
@@ -49,7 +49,7 @@ object JvmExampleTests extends TestSuite {
         stringified ==> """["HELLO","WORLD"]"""
       }
       test("circe"){
-        import com.rallyhealth.ujson.v0.circe.CirceJson
+        import com.rallyhealth.weejson.v0.circe.CirceJson
         val circeJson: io.circe.Json = CirceJson(
           """["hello", "world"]"""
         )
@@ -95,7 +95,7 @@ object JvmExampleTests extends TestSuite {
         stringified ==> """["HELLO","WORLD"]"""
       }
       test("playJson"){
-        import com.rallyhealth.ujson.v0.play.PlayJson
+        import com.rallyhealth.weejson.v0.play.PlayJson
         import play.api.libs.json._
         val playJson: play.api.libs.json.JsValue = PlayJson(
           """["hello", "world"]"""
@@ -120,7 +120,7 @@ object JvmExampleTests extends TestSuite {
         stringified ==> """["HELLO","WORLD"]"""
       }
       test("crossAst"){
-        import com.rallyhealth.ujson.v0.circe.CirceJson
+        import com.rallyhealth.weejson.v0.circe.CirceJson
         val circeJson: io.circe.Json = CirceJson(
           """["hello", "world"]"""
         )
@@ -128,7 +128,7 @@ object JvmExampleTests extends TestSuite {
         val updatedCirceJson =
           circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
 
-        import com.rallyhealth.ujson.v0.play.PlayJson
+        import com.rallyhealth.weejson.v0.play.PlayJson
         import play.api.libs.json._
 
         val playJson: play.api.libs.json.JsValue = CirceJson.transform(

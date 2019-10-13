@@ -3,7 +3,7 @@ package com.rallyhealth.weepickle.v0
 import utest._
 import com.rallyhealth.weepickle.v0.default.read
 import acyclic.file
-import com.rallyhealth.ujson.v0.{IncompleteParseException, ParseException}
+import com.rallyhealth.weejson.v0.{IncompleteParseException, ParseException}
 import com.rallyhealth.weepickle.v0.core.AbortException
 case class Fee(i: Int, s: String)
 sealed trait Fi
@@ -27,7 +27,7 @@ object FailureTests extends TestSuite {
 
   def tests = Tests {
 //    test("test"){
-//      read[com.rallyhealth.ujson.v0.Value](""" {unquoted_key: "keys must be quoted"} """)
+//      read[com.rallyhealth.weejson.v0.Value](""" {unquoted_key: "keys must be quoted"} """)
 //    }
 
     test("jsonFailures"){
@@ -74,7 +74,7 @@ object FailureTests extends TestSuite {
       val res =
         for(failureCase <- failureCases)
         yield try {
-          intercept[ParseException] { read[com.rallyhealth.ujson.v0.Value](failureCase) }
+          intercept[ParseException] { read[com.rallyhealth.weejson.v0.Value](failureCase) }
           None
         }catch{
           case _:Throwable =>
@@ -83,8 +83,8 @@ object FailureTests extends TestSuite {
 
       val nonFailures = res.flatten
       assert(nonFailures.isEmpty)
-      intercept[IncompleteParseException]{read[com.rallyhealth.ujson.v0.Value](""" {"Comma instead if closing brace": true, """)}
-      intercept[IncompleteParseException]{read[com.rallyhealth.ujson.v0.Value](""" ["Unclosed array" """)}
+      intercept[IncompleteParseException]{read[com.rallyhealth.weejson.v0.Value](""" {"Comma instead if closing brace": true, """)}
+      intercept[IncompleteParseException]{read[com.rallyhealth.weejson.v0.Value](""" ["Unclosed array" """)}
     }
 
     test("facadeFailures"){

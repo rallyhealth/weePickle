@@ -116,8 +116,8 @@ object OptionsAsNullTests extends TestSuite {
         import OptionPickler._   // changed from weepickle.default._
         case class Bar(i: Int, s: String)
         implicit val fooReadWrite: ReadWriter[Bar] =
-          readwriter[com.rallyhealth.ujson.v0.Value].bimap[Bar](
-            x => com.rallyhealth.ujson.v0.Arr(x.s, x.i),
+          readwriter[com.rallyhealth.weejson.v0.Value].bimap[Bar](
+            x => com.rallyhealth.weejson.v0.Arr(x.s, x.i),
             json => new Bar(json(1).num.toInt, json(0).str)
           )
 

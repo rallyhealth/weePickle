@@ -65,11 +65,11 @@ object JsonTests extends TestSuite {
         |1e00,2e+00,2e-00
         |,"rosebud"]
       """.stripMargin
-    val parsed = com.rallyhealth.ujson.v0.read(ugly)
+    val parsed = com.rallyhealth.weejson.v0.read(ugly)
 
     test("correctness"){
-      val unparsed = com.rallyhealth.ujson.v0.write(parsed)
-      val reparsed = com.rallyhealth.ujson.v0.read(unparsed)
+      val unparsed = com.rallyhealth.weejson.v0.write(parsed)
+      val reparsed = com.rallyhealth.weejson.v0.read(unparsed)
       for (json <- Seq(parsed, reparsed)){
         assert(
           json(0).value == "JSON Test Pattern pass1",
@@ -83,15 +83,15 @@ object JsonTests extends TestSuite {
     }
     test("shortcuts"){
       test("positive"){
-        com.rallyhealth.ujson.v0.read("[1]").arr        ==> Seq(com.rallyhealth.ujson.v0.Num(1))
-        com.rallyhealth.ujson.v0.read("1").num          ==> 1
-        com.rallyhealth.ujson.v0.read("\"1\"").str      ==> "1"
-        com.rallyhealth.ujson.v0.read("{\"1\": 1}").obj ==> Map("1" -> com.rallyhealth.ujson.v0.Num(1))
+        com.rallyhealth.weejson.v0.read("[1]").arr        ==> Seq(com.rallyhealth.weejson.v0.Num(1))
+        com.rallyhealth.weejson.v0.read("1").num          ==> 1
+        com.rallyhealth.weejson.v0.read("\"1\"").str      ==> "1"
+        com.rallyhealth.weejson.v0.read("{\"1\": 1}").obj ==> Map("1" -> com.rallyhealth.weejson.v0.Num(1))
       }
       test("negative"){
-        intercept[com.rallyhealth.ujson.v0.Value.InvalidData]{com.rallyhealth.ujson.v0.read("[1]").obj}
-        intercept[com.rallyhealth.ujson.v0.Value.InvalidData]{com.rallyhealth.ujson.v0.read("1").obj}
-        intercept[com.rallyhealth.ujson.v0.Value.InvalidData]{com.rallyhealth.ujson.v0.read("\"1\"").obj}
+        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{com.rallyhealth.weejson.v0.read("[1]").obj}
+        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{com.rallyhealth.weejson.v0.read("1").obj}
+        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{com.rallyhealth.weejson.v0.read("\"1\"").obj}
 
       }
     }

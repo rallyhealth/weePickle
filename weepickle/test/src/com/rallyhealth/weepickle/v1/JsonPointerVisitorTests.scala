@@ -17,7 +17,7 @@ object JsonPointerVisitorTests extends TestSuite {
   override def tests: Tests = Tests {
     test("failures") {
       def assertPathFailure(json: String, expectedPath: String) = {
-        val cause = intercept[Exception](com.rallyhealth.ujson.v0.transform(json, rw))
+        val cause = intercept[Exception](com.rallyhealth.weejson.v0.transform(json, rw))
         val failureAtPath = findException(cause)
         failureAtPath.get.jsonPointer ==> expectedPath
       }

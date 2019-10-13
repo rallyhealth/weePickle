@@ -471,4 +471,4 @@ object Ast{
   }
 }
 
-case class CaseClassWithJson(json: com.rallyhealth.ujson.v0.Value)
+case class CaseClassWithJson(json: com.rallyhealth.weejson.v0.Value)

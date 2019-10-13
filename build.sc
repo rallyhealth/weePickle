@@ -164,7 +164,7 @@ object implicits extends Module {
     def artifactName = shade("weepickle-implicits")
 
     object test extends Tests {
-      def moduleDeps = super.moduleDeps ++ Seq(ujson.js().test, core.js().test)
+      def moduleDeps = super.moduleDeps ++ Seq(weejson.js().test, core.js().test)
     }
   }
 
@@ -173,36 +173,36 @@ object implicits extends Module {
     def moduleDeps = Seq(core.jvm())
     def artifactName = shade("weepickle-implicits")
     object test extends Tests {
-      def moduleDeps = super.moduleDeps ++ Seq(ujson.jvm().test, core.jvm().test)
+      def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm().test, core.jvm().test)
     }
   }
 }
 
-object upack extends Module {
+object weepack extends Module {
 
   object js extends Cross[JsModule](scalaVersions: _*)
   class JsModule(val crossScalaVersion: String) extends CommonJsModule {
     def moduleDeps = Seq(core.js())
-    def artifactName = shade("upack")
+    def artifactName = shade("weepack")
 
     object test extends Tests {
-      def moduleDeps = super.moduleDeps ++ Seq(ujson.js().test, core.js().test)
+      def moduleDeps = super.moduleDeps ++ Seq(weejson.js().test, core.js().test)
     }
   }
 
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends CommonJvmModule {
     def moduleDeps = Seq(core.jvm())
-    def artifactName = shade("upack")
+    def artifactName = shade("weepack")
     object test extends Tests with CommonModule  {
-      def moduleDeps = super.moduleDeps ++ Seq(ujson.jvm().test, core.jvm().test)
+      def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm().test, core.jvm().test)
     }
   }
 }
 
-object ujson extends Module{
+object weejson extends Module{
   trait JsonModule extends CommonPublishModule{
-    def artifactName = shade("ujson")
+    def artifactName = shade("weejson")
     trait JawnTestModule extends CommonTestModule{
       def ivyDeps = T{
         Agg(
@@ -229,16 +229,16 @@ object ujson extends Module{
 
   object argonaut extends Cross[ArgonautModule](scalaVersions: _*)
   class ArgonautModule(val crossScalaVersion: String) extends CommonPublishModule{
-    def artifactName = shade("ujson-argonaut")
+    def artifactName = shade("weejson-argonaut")
     def platformSegment = "jvm"
-    def moduleDeps = Seq(ujson.jvm())
+    def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = Agg(ivy"io.argonaut::argonaut:6.2.3")
   }
   object json4s extends Cross[Json4sModule](scalaVersions: _*)
   class Json4sModule(val crossScalaVersion: String) extends CommonPublishModule{
-    def artifactName = shade("ujson-json4s")
+    def artifactName = shade("weejson-json4s")
     def platformSegment = "jvm"
-    def moduleDeps = Seq(ujson.jvm())
+    def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = Agg(
       ivy"org.json4s::json4s-ast:3.6.7",
       ivy"org.json4s::json4s-native:3.6.7"
@@ -247,9 +247,9 @@ object ujson extends Module{
 
   object circe extends Cross[CirceModule](scalaVersions: _*)
   class CirceModule(val crossScalaVersion: String) extends CommonPublishModule{
-    def artifactName = shade("ujson-circe")
+    def artifactName = shade("weejson-circe")
     def platformSegment = "jvm"
-    def moduleDeps = Seq(ujson.jvm())
+    def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = T{
       Agg(ivy"io.circe::circe-parser:${if (isScalaOld()) "0.11.1" else "0.12.1"}")
     }
@@ -262,11 +262,11 @@ object ujson extends Module{
       if (isScalaOld()) "2.5.19" else "2.7.4"
     }
     def artifactName = T{
-      val name = "ujson-play" + playVersion().split('.').take(2).mkString // e.g. "25", "27"
+      val name = "weejson-play" + playVersion().split('.').take(2).mkString // e.g. "25", "27"
       shade(name)
     }
     def platformSegment = "jvm"
-    def moduleDeps = Seq(ujson.jvm())
+    def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = T{
       Agg(
         ivy"com.typesafe.play::play-json:${playVersion()}"
@@ -294,15 +294,15 @@ trait weepickleModule extends CommonPublishModule{
 object weepickle extends Module{
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends weepickleModule with CommonJvmModule{
-    def moduleDeps = Seq(ujson.jvm(), upack.jvm(), implicits.jvm())
+    def moduleDeps = Seq(weejson.jvm(), weepack.jvm(), implicits.jvm())
 
     object test extends Tests with CommonModule{
       def moduleDeps = {
         super.moduleDeps ++ Seq(
-          ujson.argonaut(),
-          ujson.circe(),
-          ujson.json4s(),
-          ujson.play(),
+          weejson.argonaut(),
+          weejson.circe(),
+          weejson.json4s(),
+          weejson.play(),
           core.jvm().test
         )
       }
@@ -311,7 +311,7 @@ object weepickle extends Module{
 
   object js extends Cross[JsModule](scalaVersions: _*)
   class JsModule(val crossScalaVersion: String) extends weepickleModule with CommonJsModule {
-    def moduleDeps = Seq(ujson.js(), upack.js(), implicits.js())
+    def moduleDeps = Seq(weejson.js(), weepack.js(), implicits.js())
 
     object test extends Tests with CommonModule{
       def moduleDeps = super.moduleDeps ++ Seq(core.js().test)

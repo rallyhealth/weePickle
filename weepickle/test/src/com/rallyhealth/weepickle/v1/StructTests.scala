@@ -170,24 +170,24 @@ object StructTests extends TestSuite {
 
     test("jsValue"){
       test("value"){
-        val value:com.rallyhealth.ujson.v0.Value = com.rallyhealth.ujson.v0.Str("test")
+        val value:com.rallyhealth.weejson.v0.Value = com.rallyhealth.weejson.v0.Str("test")
         rw(value, """ "test" """.trim)
       }
-      test("str") - rw(com.rallyhealth.ujson.v0.Str("test"), """"test"""")
-      test("num") - rw(com.rallyhealth.ujson.v0.Num(7), """7""")
+      test("str") - rw(com.rallyhealth.weejson.v0.Str("test"), """"test"""")
+      test("num") - rw(com.rallyhealth.weejson.v0.Num(7), """7""")
       test("obj"){
-        test("nested") - rw(com.rallyhealth.ujson.v0.Obj("foo" -> com.rallyhealth.ujson.v0.Null, "bar" -> com.rallyhealth.ujson.v0.Obj("baz" -> com.rallyhealth.ujson.v0.Str("str"))), """{"foo":null,"bar":{"baz":"str"}}""")
-        test("empty") - rw(com.rallyhealth.ujson.v0.Obj(), """{}""")
+        test("nested") - rw(com.rallyhealth.weejson.v0.Obj("foo" -> com.rallyhealth.weejson.v0.Null, "bar" -> com.rallyhealth.weejson.v0.Obj("baz" -> com.rallyhealth.weejson.v0.Str("str"))), """{"foo":null,"bar":{"baz":"str"}}""")
+        test("empty") - rw(com.rallyhealth.weejson.v0.Obj(), """{}""")
       }
       test("arr"){
-        test("nonEmpty") - rw(com.rallyhealth.ujson.v0.Arr(com.rallyhealth.ujson.v0.Num(5), com.rallyhealth.ujson.v0.Num(6)), """[5,6]""")
-        test("empty") - rw(com.rallyhealth.ujson.v0.Arr(), """[]""")
+        test("nonEmpty") - rw(com.rallyhealth.weejson.v0.Arr(com.rallyhealth.weejson.v0.Num(5), com.rallyhealth.weejson.v0.Num(6)), """[5,6]""")
+        test("empty") - rw(com.rallyhealth.weejson.v0.Arr(), """[]""")
       }
-      test("true") - rw(com.rallyhealth.ujson.v0.True, """true""")
-      test("true") - rw(com.rallyhealth.ujson.v0.Bool(true), """true""")
-      test("false") - rw(com.rallyhealth.ujson.v0.False, """false""")
-      test("false") - rw(com.rallyhealth.ujson.v0.Bool(false), """false""")
-      test("null") - rw(com.rallyhealth.ujson.v0.Null, """null""")
+      test("true") - rw(com.rallyhealth.weejson.v0.True, """true""")
+      test("true") - rw(com.rallyhealth.weejson.v0.Bool(true), """true""")
+      test("false") - rw(com.rallyhealth.weejson.v0.False, """false""")
+      test("false") - rw(com.rallyhealth.weejson.v0.Bool(false), """false""")
+      test("null") - rw(com.rallyhealth.weejson.v0.Null, """null""")
     }
   }
 }
