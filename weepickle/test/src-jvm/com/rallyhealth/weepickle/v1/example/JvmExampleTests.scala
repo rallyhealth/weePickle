@@ -15,7 +15,7 @@ object JvmExampleTests extends TestSuite {
   import TestUtil._
   val tests = Tests {
     test("sources"){
-      import com.rallyhealth.weepickle.v0.default._
+      import com.rallyhealth.weepickle.v0.WeePickle._
       val original = """{"myFieldA":1,"myFieldB":"gg"}"""
 
       import java.nio.file.Files
@@ -37,12 +37,12 @@ object JvmExampleTests extends TestSuite {
 
         val items: Seq[String] = ArgonautJson.transform(
           updatedArgJson,
-          com.rallyhealth.weepickle.v0.default.reader[Seq[String]]
+          com.rallyhealth.weepickle.v0.WeePickle.reader[Seq[String]]
         )
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v0.default.transform(items).to(ArgonautJson)
+        val rewritten = com.rallyhealth.weepickle.v0.WeePickle.transform(items).to(ArgonautJson)
 
         val stringified = ArgonautJson.transform(rewritten, StringRenderer()).toString
 
@@ -59,12 +59,12 @@ object JvmExampleTests extends TestSuite {
 
         val items: Seq[String] = CirceJson.transform(
           updatedCirceJson,
-          com.rallyhealth.weepickle.v0.default.reader[Seq[String]]
+          com.rallyhealth.weepickle.v0.WeePickle.reader[Seq[String]]
         )
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v0.default.transform(items).to(CirceJson)
+        val rewritten = com.rallyhealth.weepickle.v0.WeePickle.transform(items).to(CirceJson)
 
         val stringified = CirceJson.transform(rewritten, StringRenderer()).toString
 
@@ -83,12 +83,12 @@ object JvmExampleTests extends TestSuite {
 
         val items: Seq[String] = Json4sJson.transform(
           updatedJson4sJson,
-          com.rallyhealth.weepickle.v0.default.reader[Seq[String]]
+          com.rallyhealth.weepickle.v0.WeePickle.reader[Seq[String]]
         )
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v0.default.transform(items).to(Json4sJson)
+        val rewritten = com.rallyhealth.weepickle.v0.WeePickle.transform(items).to(Json4sJson)
 
         val stringified = Json4sJson.transform(rewritten, StringRenderer()).toString
 
@@ -108,12 +108,12 @@ object JvmExampleTests extends TestSuite {
 
         val items: Seq[String] = PlayJson.transform(
           updatedPlayJson,
-          com.rallyhealth.weepickle.v0.default.reader[Seq[String]]
+          com.rallyhealth.weepickle.v0.WeePickle.reader[Seq[String]]
         )
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v0.default.transform(items).to(PlayJson)
+        val rewritten = com.rallyhealth.weepickle.v0.WeePickle.transform(items).to(PlayJson)
 
         val stringified = PlayJson.transform(rewritten, StringRenderer()).toString
 

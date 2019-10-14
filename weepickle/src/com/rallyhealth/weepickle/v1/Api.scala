@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 import com.rallyhealth.weejson.v0.IndexedValue
 /**
  * An instance of the com.rallyhealth.weepickle.v0 API. There's a default instance at
- * `com.rallyhealth.weepickle.v0.default`, but you can also implement it yourself to customize
+ * `com.rallyhealth.weepickle.v0.WeePickle`, but you can also implement it yourself to customize
  * its behavior. Override the `annotate` methods to control how a sealed
  * trait instance is tagged during reading and writing.
  */
@@ -106,12 +106,6 @@ object Api{
     def objectTypeKeyReadMap(s: CharSequence): CharSequence = s
     def objectTypeKeyWriteMap(s: CharSequence): CharSequence = s
   }
-
-}
-/**
- * The default way of accessing com.rallyhealth.weepickle.v0
- */
-object default extends AttributeTagged{
 
 }
 

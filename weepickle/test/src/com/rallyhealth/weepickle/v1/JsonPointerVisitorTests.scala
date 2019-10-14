@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v0
 
 import com.rallyhealth._
+import com.rallyhealth.weejson.v0.WeeJson
 import com.rallyhealth.weepickle.v0.core.JsonPointerVisitor.JsonPointerException
 import com.rallyhealth.weepickle.v0.core.{JsonPointerVisitor, NoOpVisitor}
 import utest._
@@ -12,12 +13,12 @@ object JsonPointerVisitorTests extends TestSuite {
 
   case class Foo(foo: List[String], s: String, i: Int, b: Boolean)
 
-  implicit lazy val rw = weepickle.v0.default.macroRW[Foo]
+  implicit lazy val rw = weepickle.v0.WeePickle.macroRW[Foo]
 
   override def tests: Tests = Tests {
     test("failures") {
       def assertPathFailure(json: String, expectedPath: String) = {
-        val cause = intercept[Exception](com.rallyhealth.weejson.v0.transform(json, rw))
+        val cause = intercept[Exception](WeeJson.transform(json, rw))
         val failureAtPath = findException(cause)
         failureAtPath.get.jsonPointer ==> expectedPath
       }

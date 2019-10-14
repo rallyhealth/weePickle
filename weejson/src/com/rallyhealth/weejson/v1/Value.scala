@@ -3,7 +3,7 @@ package com.rallyhealth.weejson.v0
 
 
 import com.rallyhealth.weepickle.v0.core.Util
-import com.rallyhealth.weepickle.v0.core.{ObjArrVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.Visitor
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -33,14 +33,14 @@ sealed trait Value extends Readable {
     * Returns the key/value map of this [[Value]], fails if it is not
     * a [[Obj]]
     */
-  def obj: mutable.LinkedHashMap[String, Value] = this match{
+  def obj: mutable.Map[String, Value] = this match{
     case Obj(value) => value
     case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Obj")
   }
   /**
     * Returns an Optional key/value map of this [[Value]] in case this [[Value]] is a 'Obj'.
     */
-  def objOpt: Option[mutable.LinkedHashMap[String, Value]] = this match{
+  def objOpt: Option[mutable.Map[String, Value]] = this match{
     case Obj(value) => Some(value)
     case _ => None
   }
@@ -199,7 +199,7 @@ object Value extends AstTransformer[Value]{
 }
 
 case class Str(value: String) extends Value
-case class Obj(value: mutable.LinkedHashMap[String, Value]) extends Value
+case class Obj(value: mutable.Map[String, Value]) extends Value
 
 object Obj{
   implicit def from(items: TraversableOnce[(String, Value)]): Obj = {
@@ -225,7 +225,7 @@ object Arr{
   implicit def from[T <% Value](items: TraversableOnce[T]): Arr =
     Arr(items.map(x => x: Value).to(mutable.ArrayBuffer))
 
-  def apply(items: Value*): Arr = Arr(items.to(mutable.ArrayBuffer))
+  def apply(items: Value*): Arr = new Arr(items.to(mutable.ArrayBuffer))
 }
 case class Num(value: Double) extends Value
 sealed abstract class Bool extends Value{

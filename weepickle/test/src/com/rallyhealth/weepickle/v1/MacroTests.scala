@@ -2,7 +2,7 @@ package com.rallyhealth.weepickle.v0
 import acyclic.file
 import utest._
 import com.rallyhealth.weepickle.v0.TestUtil._
-import com.rallyhealth.weepickle.v0.default.{read, write}
+import com.rallyhealth.weepickle.v0.WeePickle.{read, write}
 
 object Custom {
   trait ThingBase{
@@ -20,7 +20,7 @@ object Custom {
   class Thing2(val i: Int, val s: String) extends ThingBase
 
   abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T){
-    implicit val thing2Writer = com.rallyhealth.weepickle.v0.default.readwriter[String].bimap[T](
+    implicit val thing2Writer = com.rallyhealth.weepickle.v0.WeePickle.readwriter[String].bimap[T](
       t => t.i + " " + t.s,
       str => {
         val Array(i, s) = str.toString.split(" ", 2)
@@ -38,7 +38,7 @@ object Custom {
 //// this can be un-sealed as long as `derivedSubclasses` is defined in the companion
 sealed trait TypedFoo
 object TypedFoo{
-  import com.rallyhealth.weepickle.v0.default._
+  import com.rallyhealth.weepickle.v0.WeePickle._
   implicit val readWriter: ReadWriter[TypedFoo] = ReadWriter.merge(
     macroRW[Bar], macroRW[Baz], macroRW[Quz]
   )
@@ -80,7 +80,7 @@ object MacroTests extends TestSuite {
     test("exponential"){
 
       // Doesn't even need to execute, as long as it can compile
-      val ww1 = implicitly[com.rallyhealth.weepickle.v0.default.Writer[Exponential.A1]]
+      val ww1 = implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[Exponential.A1]]
     }
 
 

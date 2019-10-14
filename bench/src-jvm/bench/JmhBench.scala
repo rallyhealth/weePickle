@@ -30,21 +30,21 @@ class JmhBench {
 
   @Benchmark
   def writeJson(bh: Blackhole): Unit = {
-    bh.consume(weepickle.v0.default.write(Common.benchmarkSampleData))
+    bh.consume(weepickle.v0.WeePickle.write(Common.benchmarkSampleData))
   }
 
   @Benchmark
   def writeMsgPack(bh: Blackhole): Unit = {
-    bh.consume(weepickle.v0.default.writeMsgPack(Common.benchmarkSampleData))
+    bh.consume(weepickle.v0.WeePickle.writeMsgPack(Common.benchmarkSampleData))
   }
 
   @Benchmark
   def readJson(bh: Blackhole): Unit = {
-    bh.consume(weepickle.v0.default.read[Common.Data](Common.benchmarkSampleJson))
+    bh.consume(weepickle.v0.WeePickle.read[Common.Data](Common.benchmarkSampleJson))
   }
 
   @Benchmark
   def readMsgPack(bh: Blackhole): Unit = {
-    bh.consume(weepickle.v0.default.readMsgPack[Common.Data](Common.benchmarkSampleMsgPack))
+    bh.consume(weepickle.v0.WeePickle.readMsgPack[Common.Data](Common.benchmarkSampleMsgPack))
   }
 }

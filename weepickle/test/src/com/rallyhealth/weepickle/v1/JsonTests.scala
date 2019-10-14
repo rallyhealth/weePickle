@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v0
 import utest._
 import acyclic.file
+import com.rallyhealth.weejson.v0.{Num, WeeJson}
 
 object JsonTests extends TestSuite {
   val tests = Tests {
@@ -65,11 +66,11 @@ object JsonTests extends TestSuite {
         |1e00,2e+00,2e-00
         |,"rosebud"]
       """.stripMargin
-    val parsed = com.rallyhealth.weejson.v0.read(ugly)
+    val parsed = WeeJson.read(ugly)
 
     test("correctness"){
-      val unparsed = com.rallyhealth.weejson.v0.write(parsed)
-      val reparsed = com.rallyhealth.weejson.v0.read(unparsed)
+      val unparsed = WeeJson.write(parsed)
+      val reparsed = WeeJson.read(unparsed)
       for (json <- Seq(parsed, reparsed)){
         assert(
           json(0).value == "JSON Test Pattern pass1",
@@ -83,15 +84,15 @@ object JsonTests extends TestSuite {
     }
     test("shortcuts"){
       test("positive"){
-        com.rallyhealth.weejson.v0.read("[1]").arr        ==> Seq(com.rallyhealth.weejson.v0.Num(1))
-        com.rallyhealth.weejson.v0.read("1").num          ==> 1
-        com.rallyhealth.weejson.v0.read("\"1\"").str      ==> "1"
-        com.rallyhealth.weejson.v0.read("{\"1\": 1}").obj ==> Map("1" -> com.rallyhealth.weejson.v0.Num(1))
+        WeeJson.read("[1]").arr        ==> Seq(Num(1))
+        WeeJson.read("1").num          ==> 1
+        WeeJson.read("\"1\"").str      ==> "1"
+        WeeJson.read("{\"1\": 1}").obj ==> Map("1" -> Num(1))
       }
       test("negative"){
-        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{com.rallyhealth.weejson.v0.read("[1]").obj}
-        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{com.rallyhealth.weejson.v0.read("1").obj}
-        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{com.rallyhealth.weejson.v0.read("\"1\"").obj}
+        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("[1]").obj}
+        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("1").obj}
+        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("\"1\"").obj}
 
       }
     }

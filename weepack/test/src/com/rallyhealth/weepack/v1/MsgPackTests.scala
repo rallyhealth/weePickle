@@ -1,6 +1,7 @@
 package com.rallyhealth.weepack.v0
 import java.io.ByteArrayOutputStream
 
+import com.rallyhealth.weejson.v0.WeeJson
 import com.rallyhealth.weepickle.v0.core.Util
 import utest._
 object MsgPackTests extends TestSuite{
@@ -18,7 +19,7 @@ object MsgPackTests extends TestSuite{
         println(k + " " + tag + " " + expectedJson + " " + packedStr)
         val packed = Util.stringToBytes(packedStr)
 
-        val jsonified0 = com.rallyhealth.weepack.v0.transform(packed, com.rallyhealth.weejson.v0.Value)
+        val jsonified0 = WeePack.transform(packed, com.rallyhealth.weejson.v0.Value)
 
         val jsonified = tag match{
           case "binary" => com.rallyhealth.weejson.v0.Str(Util.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
@@ -27,9 +28,9 @@ object MsgPackTests extends TestSuite{
         }
         assert(jsonified == expectedJson)
 
-        val msg = com.rallyhealth.weepack.v0.read(packed)
+        val msg = WeePack.read(packed)
 
-        val rewrittenBytes = com.rallyhealth.weepack.v0.write(msg)
+        val rewrittenBytes = WeePack.write(msg)
         val rewritten = Util.bytesToString(rewrittenBytes)
         val possibilities = testCase("msgpack").arr.map(_.str)
 
@@ -40,7 +41,7 @@ object MsgPackTests extends TestSuite{
 
   // Taken from:
   // https://github.com/kawanet/msgpack-test-suite/tree/e04f6edeaae589c768d6b70fcce80aa786b7800e
-  val unitCases = com.rallyhealth.weejson.v0.read("""
+  val unitCases = WeeJson.read("""
     {
       "10.nil.yaml": [
         {

@@ -4,7 +4,7 @@ import acyclic.file
 /**
 * Created by haoyi on 4/22/14.
 */
-object TestUtil extends TestUtil[com.rallyhealth.weepickle.v0.default.type](com.rallyhealth.weepickle.v0.default)
+object TestUtil extends TestUtil[com.rallyhealth.weepickle.v0.WeePickle.type](com.rallyhealth.weepickle.v0.WeePickle)
 class TestUtil[Api <: com.rallyhealth.weepickle.v0.Api](val api: Api){
 
   def rw[T: api.Reader: api.Writer](t: T, s: String*) = {

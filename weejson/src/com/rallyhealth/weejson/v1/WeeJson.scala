@@ -1,8 +1,8 @@
-package com.rallyhealth.weejson
+package com.rallyhealth.weejson.v0
 
 import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 
-package object v0{
+object WeeJson {
   def transform[T](t: Readable, v: com.rallyhealth.weepickle.v0.core.Visitor[_, T]): T = t.transform(v)
 
   /**

@@ -8,20 +8,20 @@ object shared {
     import common.Message
     case class That(common: Message)
     object That{
-      implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[That] = com.rallyhealth.weepickle.v0.default.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[That] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     }
   }
   object other {
     import common.Message
     case class Other(common: Message)
     object Other{
-      implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Other] = com.rallyhealth.weepickle.v0.default.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Other] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     }
   }
   object common {
     case class Message(content: String)
     object Message{
-      implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Message] = com.rallyhealth.weepickle.v0.default.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Message] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     }
   }
 }
@@ -30,35 +30,35 @@ object All {
   import shared.other._
   sealed trait Outers
   object Outers{
-    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Outers] = com.rallyhealth.weepickle.v0.default.ReadWriter.merge(
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Outers] = com.rallyhealth.weepickle.v0.WeePickle.ReadWriter.merge(
       Out1.rw
     )
   }
   case class Out1(a: Other) extends Outers
   object Out1{
-    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Out1] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Out1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
 
   import shared.that._
   import shared.common._
   sealed trait Inners extends Outers
   object Inners{
-    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Inners] = com.rallyhealth.weepickle.v0.default.ReadWriter.merge(
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Inners] = com.rallyhealth.weepickle.v0.WeePickle.ReadWriter.merge(
       Inner1.rw,
       Inner2.rw
     )
   }
   case class Inner1(b: That) extends Inners
   object Inner1{
-    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Inner1] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Inner1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
   case class Inner2(a: Message) extends Inners
   object Inner2{
-    implicit def rw: com.rallyhealth.weepickle.v0.default.ReadWriter[Inner2] = com.rallyhealth.weepickle.v0.default.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Inner2] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
 }
 
-import com.rallyhealth.weepickle.v0.default.{ReadWriter, macroRW}
+import com.rallyhealth.weepickle.v0.WeePickle.{ReadWriter, macroRW}
 sealed trait Gadt[T]
 object Gadt{
   implicit def rw[T]: ReadWriter[Gadt[T]] = macroRW[Gadt[_]].asInstanceOf[ReadWriter[Gadt[T]]]
@@ -107,8 +107,8 @@ object AdvancedTests extends TestSuite {
   import All._
   val tests = Tests {
     "complexTraits" - {
-      val reader = implicitly[com.rallyhealth.weepickle.v0.default.Reader[Outers]]
-      val writer = implicitly[com.rallyhealth.weepickle.v0.default.Writer[Outers]]
+      val reader = implicitly[com.rallyhealth.weepickle.v0.WeePickle.Reader[Outers]]
+      val writer = implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[Outers]]
       assert(reader != null)
       assert(writer != null)
     }
@@ -301,14 +301,14 @@ object AdvancedTests extends TestSuite {
       }
       test("scala-issue-11768"){
         // Make sure this compiles
-        class Thing[T: com.rallyhealth.weepickle.v0.default.Writer, V: com.rallyhealth.weepickle.v0.default.Writer](t: Option[(V, T)]){
-          implicitly[com.rallyhealth.weepickle.v0.default.Writer[Option[(V, T)]]]
+        class Thing[T: com.rallyhealth.weepickle.v0.WeePickle.Writer, V: com.rallyhealth.weepickle.v0.WeePickle.Writer](t: Option[(V, T)]){
+          implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[Option[(V, T)]]]
         }
       }
       //      test("companionImplicitPickedUp"){
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.default.Reader[TypedFoo]] eq TypedFoo.readWriter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.default.Writer[TypedFoo]] eq TypedFoo.readWriter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.default.ReadWriter[TypedFoo]] eq TypedFoo.readWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Reader[TypedFoo]] eq TypedFoo.readWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[TypedFoo]] eq TypedFoo.readWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[TypedFoo]] eq TypedFoo.readWriter)
       //      }
       //      test("companionImplicitWorks"){
       //

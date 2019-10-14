@@ -139,3 +139,6 @@ with `@discriminator` annotations on the sealed parent type:
 @discriminator("providerType") sealed trait Provider
 @key("place") case class Place(locations: Seq[ProviderLocation]) extends Provider
 ```
+
+## WeeJson/WeePack
+`WeeJson` and `WeePack` are accessible via named objects instead of package objects. For example: `WeeJson.read("{}")` instead of `ujson.read("{}")`. This makes them more easily importable and avoids naming collisions.

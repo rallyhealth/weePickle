@@ -1,6 +1,6 @@
 package com.rallyhealth.weepack.v0
-import java.io.ByteArrayOutputStream
 
+import com.rallyhealth.weejson.v0.WeeJson
 import com.rallyhealth.weepickle.v0.core.Util
 import utest._
 
@@ -24,18 +24,18 @@ object MsgPackJvmTests extends TestSuite{
       val casesJson = "weepack/test/resources/cases.json"
       val casesMsg = "weepack/test/resources/cases.msg"
       val casesCompactMsg = "weepack/test/resources/cases_compact.msg"
-      val expectedJson = com.rallyhealth.weejson.v0.read(readBytes(casesJson))
+      val expectedJson = WeeJson.read(readBytes(casesJson))
       val msg = readMsgs(casesMsg)
       val msgCompact = readMsgs(casesCompactMsg)
-      val jsonMsg = com.rallyhealth.weepack.v0.transform(msg, com.rallyhealth.weejson.v0.Value)
-      val jsonMsgCompact = com.rallyhealth.weepack.v0.transform(msgCompact, com.rallyhealth.weejson.v0.Value)
-      val writtenMsg = Util.bytesToString(com.rallyhealth.weepack.v0.write(msg))
+      val jsonMsg = WeePack.transform(msg, com.rallyhealth.weejson.v0.Value)
+      val jsonMsgCompact = WeePack.transform(msgCompact, com.rallyhealth.weejson.v0.Value)
+      val writtenMsg = Util.bytesToString(WeePack.write(msg))
       val rewrittenMsg = Util.bytesToString(
-        com.rallyhealth.weepack.v0.write(com.rallyhealth.weepack.v0.read(com.rallyhealth.weepack.v0.write(msg)))
+        WeePack.write(WeePack.read(WeePack.write(msg)))
       )
-      val writtenMsgCompact = Util.bytesToString(com.rallyhealth.weepack.v0.write(msgCompact))
+      val writtenMsgCompact = Util.bytesToString(WeePack.write(msgCompact))
       val rewrittenMsgCompact = Util.bytesToString(
-        com.rallyhealth.weepack.v0.write(com.rallyhealth.weepack.v0.read(com.rallyhealth.weepack.v0.write(msgCompact)))
+        WeePack.write(WeePack.read(WeePack.write(msgCompact)))
       )
       assert(
         expectedJson == jsonMsg,
