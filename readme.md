@@ -15,12 +15,12 @@ So we are encouraging libraries to make use of weePickle instead: it's
 popular, well-supported and fast.
 
 However, if we allowed libraries to simply pick random versions of
-weePickle, we'd be right back where we were with Play-Json: if different
+uPickle, we'd be right back where we were with Play-Json: if different
 libraries used different versions, we could wind up with evictions and
-runtime collisions, since weePickle isn't shaded.
+runtime collisions, since uPickle isn't shaded.
 
 So this is a shaded fork of uPickle. It is hard-shaded (instead of using
-sbt-assembly or something like that) because weePickle includes macros with
+sbt-assembly or something like that) because uPickle includes macros with
 hard-coded paths, so automatic shading isn't likely to work correctly.
 
 ## Differences
@@ -91,11 +91,11 @@ and it will generally show you what's broken.
 
 ### Original Readme
 
-weePickle: a simple Scala JSON and Binary (MessagePack) serialization library
+uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
 
-- [Documentation](https://lihaoyi.github.io/weePickle)
+- [Documentation](https://lihaoyi.github.io/uPickle)
 
-If you use weePickle and like it, please support it by donating to lihaoyi's Patreon:
+If you use uPickle and like it, please support it by donating to lihaoyi's Patreon:
 
 - [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
 
