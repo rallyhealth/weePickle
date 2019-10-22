@@ -1,9 +1,10 @@
 package com.rallyhealth.weejson.v0
-import com.rallyhealth.weepickle.v0.core.{Visitor, ObjArrVisitor}
+import com.rallyhealth.weepickle.v0.core.{ObjArrVisitor, Visitor}
 import java.io.{File, FileInputStream}
 import java.lang.Integer.{bitCount, highestOneBit}
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
+import java.nio.charset.StandardCharsets
 
 object FileParser extends Transformer[java.io.File]{
   def transform[T](j: java.io.File, f: Visitor[_, T]) = PathParser.transform(j.toPath, f)
@@ -35,7 +36,7 @@ object ChannelParser extends Transformer[ReadableByteChannel]{
       val bytes = new Array[Byte](f.length.toInt)
       val fis = new FileInputStream(f)
       fis.read(bytes)
-      new StringParser[J](new String(bytes, "UTF-8"))
+      new StringParser[J](new String(bytes, StandardCharsets.UTF_8))
     } else {
       new ChannelParser[J](new FileInputStream(f).getChannel, bufferSize)
     }
@@ -165,15 +166,15 @@ final class ChannelParser[J](ch: ReadableByteChannel, bufferSize: Int) extends S
       grow()
       at(i, k)
     } else if (k <= Bufsize) {
-      new String(curr, i, len, utf8)
+      new String(curr, i, len, StandardCharsets.UTF_8)
     } else if (i >= Bufsize) {
-      new String(next, i - Bufsize, len, utf8)
+      new String(next, i - Bufsize, len, StandardCharsets.UTF_8)
     } else {
       val arr = new Array[Byte](len)
       val mid = Bufsize - i
       System.arraycopy(curr, i, arr, 0, mid)
       System.arraycopy(next, 0, arr, mid, k - Bufsize)
-      new String(arr, utf8)
+      new String(arr, StandardCharsets.UTF_8)
     }
   }
 

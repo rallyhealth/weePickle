@@ -1,6 +1,5 @@
 package com.rallyhealth.weejson.v0
-import com.rallyhealth.weepickle.v0.core.{Visitor, ObjArrVisitor, Abort, AbortException, ObjVisitor}
-import java.nio.charset.Charset
+import com.rallyhealth.weepickle.v0.core._
 
 import scala.annotation.{switch, tailrec}
 
@@ -33,8 +32,6 @@ case class IncompleteParseException(msg: String, cause: Throwable)
  * may eventually be relaxed.
  */
 abstract class Parser[J] {
-
-  protected[this] final val utf8 = Charset.forName("UTF-8")
 
   /**
    * Read the byte/char at 'i' as a Char.
@@ -89,15 +86,6 @@ abstract class Parser[J] {
   protected[this] def newline(i: Int): Unit
   protected[this] def line(): Int
   protected[this] def column(i: Int): Int
-
-  protected[this] final val HexChars: Array[Int] = {
-    val arr = new Array[Int](128)
-    var i = 0
-    while (i < 10) { arr(i + '0') = i; i += 1 }
-    i = 0
-    while (i < 16) { arr(i + 'a') = 10 + i; arr(i + 'A') = 10 + i; i += 1 }
-    arr
-  }
 
   /**
    * Used to generate error messages with character info and offsets.
@@ -263,7 +251,7 @@ abstract class Parser[J] {
    * This is why it can only return Char instead of Int.
    */
   protected[this] final def descape(s: CharSequence): Char = {
-    val hc = HexChars
+    val hc = Parser.HexChars
     var i = 0
     var x = 0
     while (i < 4) {
@@ -477,4 +465,17 @@ abstract class Parser[J] {
       rparse(KEY, i, stack, path)
     }
   }
+}
+
+object Parser {
+
+  private[Parser] final val HexChars: Array[Int] = {
+    val arr = new Array[Int](128)
+    var i = 0
+    while (i < 10) { arr(i + '0') = i; i += 1 }
+    i = 0
+    while (i < 16) { arr(i + 'a') = 10 + i; arr(i + 'A') = 10 + i; i += 1 }
+    arr
+  }
+
 }

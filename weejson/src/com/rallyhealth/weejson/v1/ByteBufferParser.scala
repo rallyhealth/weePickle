@@ -1,7 +1,8 @@
 package com.rallyhealth.weejson.v0
-import com.rallyhealth.weepickle.v0.core.{Visitor, ObjArrVisitor}
-import scala.annotation.{switch, tailrec}
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+
+import com.rallyhealth.weepickle.v0.core.{ObjArrVisitor, Visitor}
 
 /**
  * Basic ByteBuffer parser.
@@ -35,7 +36,7 @@ final class ByteBufferParser[J](src: ByteBuffer) extends SyncParser[J] with Byte
     src.position(i + start)
     src.get(arr, 0, len)
     src.position(start)
-    new String(arr, utf8)
+    new String(arr, StandardCharsets.UTF_8)
   }
 
   protected[this] final def atEof(i: Int) = i >= limit

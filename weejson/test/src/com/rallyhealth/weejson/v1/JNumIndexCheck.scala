@@ -1,6 +1,7 @@
 package com.rallyhealth.weejson.v0
 
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
@@ -54,7 +55,7 @@ class JNumIndexCheck extends PropSpec with Matchers with PropertyChecks {
   property("visitFloat64StringParts provides the correct indices with parseFromByteBuffer") {
     forAll { (value: BigDecimal) =>
       val json = s"""{ "num": ${value.toString} }"""
-      val bb = ByteBuffer.wrap(json.getBytes("UTF-8"))
+      val bb = ByteBuffer.wrap(json.getBytes(StandardCharsets.UTF_8))
       ByteBufferParser.transform(bb, JNumIndexCheckFacade) shouldBe true
     }
   }
@@ -67,7 +68,7 @@ class JNumIndexCheck extends PropSpec with Matchers with PropertyChecks {
 
   property("visitFloat64StringParts provides the correct indices at the top level with parseFromByteBuffer") {
     forAll { (value: BigDecimal) =>
-      val bb = ByteBuffer.wrap(value.toString.getBytes("UTF-8"))
+      val bb = ByteBuffer.wrap(value.toString.getBytes(StandardCharsets.UTF_8))
       ByteBufferParser.transform(bb, JNumIndexCheckFacade) shouldBe true
     }
   }

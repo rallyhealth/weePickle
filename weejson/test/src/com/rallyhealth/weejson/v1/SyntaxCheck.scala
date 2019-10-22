@@ -68,7 +68,7 @@ class SyntaxCheck extends PropSpec with Matchers with PropertyChecks {
     val cs = java.nio.CharBuffer.wrap(s.toCharArray)
     val r0 = Try(CharSequenceParser.transform(cs, NoOpVisitor)).isSuccess
     val r1 = Try(StringParser.transform(s, NoOpVisitor)).isSuccess
-    val bb = ByteBuffer.wrap(s.getBytes("UTF-8"))
+    val bb = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8))
     val r2 = Try(ByteBufferParser.transform(bb, NoOpVisitor)).isSuccess
     if (r0 == r1) r1 else sys.error(s"CharSequence/String parsing disagree($r0, $r1): $s")
     if (r1 == r2) r1 else sys.error(s"String/ByteBuffer parsing disagree($r1, $r2): $s")

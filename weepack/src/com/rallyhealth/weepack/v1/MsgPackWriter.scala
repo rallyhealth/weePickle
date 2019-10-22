@@ -1,5 +1,6 @@
 package com.rallyhealth.weepack.v0
 import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 
 import com.rallyhealth.weepack.v0.{MsgPackKeys => MPK}
 import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
@@ -125,7 +126,7 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
   }
 
   override def visitString(s: CharSequence, index: Int) = {
-    val bytes = s.toString.getBytes("UTF-8")
+    val bytes = s.toString.getBytes(StandardCharsets.UTF_8)
     val length = bytes.length
     if (length <= 31){
       out.write(MPK.FixStrMask | length)
