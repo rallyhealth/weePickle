@@ -33,17 +33,17 @@ object MacroImplicits{
                 (implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
     dieIfNothing[T](c)("Writer")
-    c.Expr[T](q"${c.prefix}.ReadWriter.join(${c.prefix}.macroR, ${c.prefix}.macroW)")
+    c.Expr[T](q"${c.prefix}.ReaderWriter.join(${c.prefix}.macroR, ${c.prefix}.macroW)")
   }
 
 }
 trait MacroImplicits{ this: com.rallyhealth.weepickle.v0.core.Types =>
   implicit def macroSingletonR[T <: Singleton]: Reader[T] = macro MacroImplicits.applyR[T]
   implicit def macroSingletonW[T <: Singleton]: Writer[T] = macro MacroImplicits.applyW[T]
-  implicit def macroSingletonRW[T <: Singleton]: ReadWriter[T] = macro MacroImplicits.applyRW[T]
+  implicit def macroSingletonRW[T <: Singleton]: ReaderWriter[T] = macro MacroImplicits.applyRW[T]
   def macroR[T]: Reader[T] = macro MacroImplicits.applyR[T]
   def macroW[T]: Writer[T] = macro MacroImplicits.applyW[T]
-  def macroRW[T]: ReadWriter[T] = macro MacroImplicits.applyRW[ReadWriter[T]]
+  def macroRW[T]: ReaderWriter[T] = macro MacroImplicits.applyRW[ReaderWriter[T]]
 
   def macroR0[T, M[_]]: Reader[T] = macro internal.Macros.macroRImpl[T, M]
   def macroW0[T, M[_]]: Writer[T] = macro internal.Macros.macroWImpl[T, M]

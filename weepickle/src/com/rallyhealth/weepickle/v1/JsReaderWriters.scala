@@ -2,7 +2,7 @@ package com.rallyhealth.weepickle.v0
 import com.rallyhealth.weepickle.v0.implicits.MacroImplicits
 import com.rallyhealth.weepickle.v0.core.Visitor
 
-trait JsReadWriters extends com.rallyhealth.weepickle.v0.core.Types with MacroImplicits{
+trait JsReaderWriters extends com.rallyhealth.weepickle.v0.core.Types with MacroImplicits{
 
   implicit val JsValueR: Reader[com.rallyhealth.weejson.v0.Value] = new Reader.Delegate(com.rallyhealth.weejson.v0.Value)
 

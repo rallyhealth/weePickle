@@ -19,8 +19,8 @@ trait Api
     with implicits.Writers
     with WebJson
     with Api.NoOpMappers
-    with JsReadWriters
-    with MsgReadWriters{
+    with JsReaderWriters
+    with MsgReaderWriters{
   /**
     * Reads the given MessagePack input into a Scala value
     */
@@ -76,7 +76,7 @@ trait Api
 
   def writer[T: Writer]: Writer[T] = implicitly[Writer[T]]
 
-  def readwriter[T: ReadWriter]: ReadWriter[T] = implicitly[ReadWriter[T]]
+  def readerWriter[T: ReaderWriter]: ReaderWriter[T] = implicitly[ReaderWriter[T]]
 
   case class transform[T: Writer](t: T) extends com.rallyhealth.weepack.v0.Readable with com.rallyhealth.weejson.v0.Readable {
     def transform[V](f: Visitor[_, V]): V = writer[T].transform(t, f)

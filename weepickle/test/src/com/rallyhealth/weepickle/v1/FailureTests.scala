@@ -8,14 +8,14 @@ import com.rallyhealth.weepickle.v0.core.AbortException
 case class Fee(i: Int, s: String)
 sealed trait Fi
 object Fi{
-  implicit def rw2: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Fi] = com.rallyhealth.weepickle.v0.WeePickle.ReadWriter.merge(Fo.rw2, Fum.rw2)
+  implicit def rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Fi] = com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter.merge(Fo.rw2, Fum.rw2)
   case class Fo(i: Int) extends Fi
   object Fo{
-    implicit def rw2: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Fo] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Fo] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
   case class Fum(s: String) extends Fi
   object Fum{
-    implicit def rw2: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Fum] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Fum] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
 }
 /**
@@ -177,13 +177,13 @@ object FailureTests extends TestSuite {
         57, 58, 59, 60, 61, 62, 63,
         64
       )
-      implicit val b63rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Big63] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-      implicit val b64rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Big64] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit val b63rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Big63] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit val b64rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Big64] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
       val written63 = com.rallyhealth.weepickle.v0.WeePickle.write(b63)
       assert(com.rallyhealth.weepickle.v0.WeePickle.read[Big63](written63) == b63)
       val written64 = com.rallyhealth.weepickle.v0.WeePickle.write(b64)
       assert(com.rallyhealth.weepickle.v0.WeePickle.read[Big64](written64) == b64)
-      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Big65] = com.rallyhealth.weepickle.v0.WeePickle.macroRW}")
+      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Big65] = com.rallyhealth.weepickle.v0.WeePickle.macroRW}")
       assert(err.msg.contains("weepickle does not support serializing case classes with >64 fields"))
     }
   }

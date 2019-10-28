@@ -6,7 +6,7 @@ import com.rallyhealth.weepickle.v0.example.Simple.Thing
 
 case class Opt(a: Option[String], b: Option[Int])
 object Opt{
-  implicit def rw: OptionPickler.ReadWriter[Opt] = OptionPickler.macroRW
+  implicit def rw: OptionPickler.ReaderWriter[Opt] = OptionPickler.macroRW
 }
 object OptionPickler extends com.rallyhealth.weepickle.v0.AttributeTagged {
   override implicit def OptionWriter[T: Writer]: Writer[Option[T]] =
@@ -26,7 +26,7 @@ object OptionPickler extends com.rallyhealth.weepickle.v0.AttributeTagged {
 object OptionsAsNullTests extends TestSuite {
 
   import OptionPickler._
-  implicit def rw: OptionPickler.ReadWriter[Thing] = OptionPickler.macroRW
+  implicit def rw: OptionPickler.ReaderWriter[Thing] = OptionPickler.macroRW
   val tests = TestSuite {
     test("nullAsNone"){
 
@@ -84,7 +84,7 @@ object OptionsAsNullTests extends TestSuite {
         class CustomThing2(val i: Int, val s: String)
 
         object CustomThing2 {
-          implicit val rw = /*weepickle.default*/ OptionPickler.readwriter[String].bimap[CustomThing2](
+          implicit val rw = /*weepickle.default*/ OptionPickler.readerWriter[String].bimap[CustomThing2](
             x => x.i + " " + x.s,
             str => {
               val Array(i, s) = str.split(" ", 2)
@@ -115,8 +115,8 @@ object OptionsAsNullTests extends TestSuite {
       'Js {
         import OptionPickler._   // changed from weepickle.WeePickle._
         case class Bar(i: Int, s: String)
-        implicit val fooReadWrite: ReadWriter[Bar] =
-          readwriter[com.rallyhealth.weejson.v0.Value].bimap[Bar](
+        implicit val fooReadWrite: ReaderWriter[Bar] =
+          readerWriter[com.rallyhealth.weejson.v0.Value].bimap[Bar](
             x => com.rallyhealth.weejson.v0.Arr(x.s, x.i),
             json => new Bar(json(1).num.toInt, json(0).str)
           )

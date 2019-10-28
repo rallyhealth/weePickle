@@ -1,7 +1,7 @@
 package com.rallyhealth.weepickle.v0
 
 //import com.rallyhealth.weepickle.v0.ADTs.ADT0
-import WeePickle.{ReadWriter => RW, Reader => R, Writer => W}
+import WeePickle.{ReaderWriter => RW, Reader => R, Writer => W}
 import com.rallyhealth.weepickle.v0.implicits.key
 /*
  * A whole bunch of test data that can be used by client libraries to try out
@@ -55,20 +55,20 @@ object ADTs {
 object Hierarchy {
   sealed trait A
   object A{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[A] = RW.merge(B.rw, C.rw)
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = RW.merge(B.rw, C.rw)
   }
   case class B(i: Int) extends A
   object B{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[B] = WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = WeePickle.macroRW
   }
   case class C(s1: String, s2: String) extends A
   object C{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[C] = WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = WeePickle.macroRW
   }
 
   object Z{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Z] = RW.merge(
-      implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[AnZ.type]]
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Z] = RW.merge(
+      implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[AnZ.type]]
     )
   }
   sealed trait Z //new line

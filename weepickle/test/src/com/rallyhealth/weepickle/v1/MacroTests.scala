@@ -20,7 +20,7 @@ object Custom {
   class Thing2(val i: Int, val s: String) extends ThingBase
 
   abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T){
-    implicit val thing2Writer = com.rallyhealth.weepickle.v0.WeePickle.readwriter[String].bimap[T](
+    implicit val thing2Writer = com.rallyhealth.weepickle.v0.WeePickle.readerWriter[String].bimap[T](
       t => t.i + " " + t.s,
       str => {
         val Array(i, s) = str.toString.split(" ", 2)
@@ -39,7 +39,7 @@ object Custom {
 sealed trait TypedFoo
 object TypedFoo{
   import com.rallyhealth.weepickle.v0.WeePickle._
-  implicit val readWriter: ReadWriter[TypedFoo] = ReadWriter.merge(
+  implicit val readerWriter: ReaderWriter[TypedFoo] = ReaderWriter.merge(
     macroRW[Bar], macroRW[Baz], macroRW[Quz]
   )
 

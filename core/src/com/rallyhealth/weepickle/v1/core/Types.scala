@@ -14,12 +14,12 @@ trait Types{ types =>
   /**
     * A combined [[Reader]] and [[Writer]], along with some utility methods.
     */
-  trait ReadWriter[T] extends Reader[T] with Writer[T]{
-    override def narrow[K]: ReadWriter[K] = this.asInstanceOf[ReadWriter[K]]
-    def bimap[V](f: V => T, g: T => V): ReadWriter[V] = {
-      new Visitor.MapReader[Any, T, V](ReadWriter.this) with ReadWriter[V]{
+  trait ReaderWriter[T] extends Reader[T] with Writer[T]{
+    override def narrow[K]: ReaderWriter[K] = this.asInstanceOf[ReaderWriter[K]]
+    def bimap[V](f: V => T, g: T => V): ReaderWriter[V] = {
+      new Visitor.MapReader[Any, T, V](ReaderWriter.this) with ReaderWriter[V]{
         def write0[Z](out: Visitor[_, Z], v: V): Z = {
-          ReadWriter.this.write(out, f(v.asInstanceOf[V]))
+          ReaderWriter.this.write(out, f(v.asInstanceOf[V]))
         }
 
         override def mapNonNullsFunction(t: T): V = g(t)
@@ -27,13 +27,13 @@ trait Types{ types =>
     }
   }
 
-  object ReadWriter{
+  object ReaderWriter{
 
-    def merge[T](rws: ReadWriter[_ <: T]*): TaggedReadWriter[T] = {
-      new TaggedReadWriter.Node(rws.asInstanceOf[Seq[TaggedReadWriter[T]]]:_*)
+    def merge[T](rws: ReaderWriter[_ <: T]*): TaggedReaderWriter[T] = {
+      new TaggedReaderWriter.Node(rws.asInstanceOf[Seq[TaggedReaderWriter[T]]]:_*)
     }
 
-    implicit def join[T](implicit r0: Reader[T], w0: Writer[T]): ReadWriter[T] = (r0, w0) match{
+    implicit def join[T](implicit r0: Reader[T], w0: Writer[T]): ReaderWriter[T] = (r0, w0) match{
       // Make sure we preserve the tagged-ness of the Readers/Writers being
       // pulled in; we need to do this because the macros that generate tagged
       // Readers/Writers do not know until post-typechecking whether or not the
@@ -42,14 +42,14 @@ trait Types{ types =>
       // wait until runtime before inspecting it and seeing if the tags exist
 
       case (r1: TaggedReader[T], w1: TaggedWriter[T]) =>
-        new TaggedReadWriter[T] {
+        new TaggedReaderWriter[T] {
           override val tagName: String = findTagName(Seq(r1, w1))
           def findReader(s: String): Reader[T] = r1.findReader(s)
           def findWriter(v: Any): (String, CaseW[T]) = w1.findWriter(v)
         }
 
       case _ =>
-        new Visitor.Delegate[Any, T](r0) with ReadWriter[T]{
+        new Visitor.Delegate[Any, T](r0) with ReaderWriter[T]{
           def write0[V](out: Visitor[_, V], v: T): V = w0.write(out, v)
         }
     }
@@ -314,20 +314,20 @@ trait Types{ types =>
     }
   }
 
-  trait TaggedReadWriter[T] extends ReadWriter[T] with TaggedReader[T] with TaggedWriter[T] with SimpleReader[T]{
+  trait TaggedReaderWriter[T] extends ReaderWriter[T] with TaggedReader[T] with TaggedWriter[T] with SimpleReader[T]{
     override def visitArray(length: Int, index: Int) = taggedArrayContext(this, index)
     override def visitObject(length: Int, index: Int) = taggedObjectContext(this, index)
 
   }
-  object TaggedReadWriter{
-    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T] with Reader[T]) extends TaggedReadWriter[T]{
+  object TaggedReaderWriter{
+    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T] with Reader[T]) extends TaggedReaderWriter[T]{
       def findReader(s: String) = if (s == tag) r else null
       def findWriter(v: Any) = {
         if (c.runtimeClass.isInstance(v)) (tag -> r)
         else null
       }
     }
-    class Node[T](rs: TaggedReadWriter[_ <: T]*) extends TaggedReadWriter[T]{
+    class Node[T](rs: TaggedReaderWriter[_ <: T]*) extends TaggedReaderWriter[T]{
       override val tagName: String = findTagName(rs)
       def findReader(s: String) = scanChildren(rs)(_.findReader(s)).asInstanceOf[Reader[T]]
       def findWriter(v: Any) = scanChildren(rs)(_.findWriter(v)).asInstanceOf[(String, CaseW[T])]

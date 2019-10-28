@@ -8,20 +8,20 @@ object shared {
     import common.Message
     case class That(common: Message)
     object That{
-      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[That] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[That] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     }
   }
   object other {
     import common.Message
     case class Other(common: Message)
     object Other{
-      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Other] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Other] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     }
   }
   object common {
     case class Message(content: String)
     object Message{
-      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Message] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Message] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     }
   }
 }
@@ -30,76 +30,76 @@ object All {
   import shared.other._
   sealed trait Outers
   object Outers{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Outers] = com.rallyhealth.weepickle.v0.WeePickle.ReadWriter.merge(
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Outers] = com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter.merge(
       Out1.rw
     )
   }
   case class Out1(a: Other) extends Outers
   object Out1{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Out1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Out1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
 
   import shared.that._
   import shared.common._
   sealed trait Inners extends Outers
   object Inners{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Inners] = com.rallyhealth.weepickle.v0.WeePickle.ReadWriter.merge(
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Inners] = com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter.merge(
       Inner1.rw,
       Inner2.rw
     )
   }
   case class Inner1(b: That) extends Inners
   object Inner1{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Inner1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Inner1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
   case class Inner2(a: Message) extends Inners
   object Inner2{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[Inner2] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Inner2] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
   }
 }
 
-import com.rallyhealth.weepickle.v0.WeePickle.{ReadWriter, macroRW}
+import com.rallyhealth.weepickle.v0.WeePickle.{ReaderWriter, macroRW}
 sealed trait Gadt[T]
 object Gadt{
-  implicit def rw[T]: ReadWriter[Gadt[T]] = macroRW[Gadt[_]].asInstanceOf[ReadWriter[Gadt[T]]]
+  implicit def rw[T]: ReaderWriter[Gadt[T]] = macroRW[Gadt[_]].asInstanceOf[ReaderWriter[Gadt[T]]]
   case class IsDir(path: String) extends Gadt[Boolean]
   object IsDir{
-    implicit val rw: ReadWriter[IsDir] = macroRW
+    implicit val rw: ReaderWriter[IsDir] = macroRW
   }
   case class Exists(path: String) extends Gadt[Boolean]
   object Exists{
-    implicit val rw: ReadWriter[Exists] = macroRW
+    implicit val rw: ReaderWriter[Exists] = macroRW
   }
   case class ReadBytes(path: String) extends Gadt[Array[Byte]]
   object ReadBytes{
-    implicit val rw: ReadWriter[ReadBytes] = macroRW
+    implicit val rw: ReaderWriter[ReadBytes] = macroRW
   }
   case class CopyOver(src: Seq[Byte], path: String) extends Gadt[Unit]
   object CopyOver{
-    implicit val rw: ReadWriter[CopyOver] = macroRW
+    implicit val rw: ReaderWriter[CopyOver] = macroRW
   }
 }
 
 sealed trait Gadt2[T, V]
 object Gadt2{
-  implicit def rw[T, V: ReadWriter]: ReadWriter[Gadt2[T, V]] =
-    macroRW[Gadt2[_, V]].asInstanceOf[ReadWriter[Gadt2[T, V]]]
+  implicit def rw[T, V: ReaderWriter]: ReaderWriter[Gadt2[T, V]] =
+    macroRW[Gadt2[_, V]].asInstanceOf[ReaderWriter[Gadt2[T, V]]]
 
   case class IsDir[V](v: V) extends Gadt2[Boolean, V]
   object IsDir{
-    implicit def rw[V: ReadWriter]: ReadWriter[IsDir[V]] = macroRW
+    implicit def rw[V: ReaderWriter]: ReaderWriter[IsDir[V]] = macroRW
   }
   case class Exists[V](v: V) extends Gadt2[Boolean, V]
   object Exists{
-    implicit def rw[V: ReadWriter]: ReadWriter[Exists[V]] = macroRW
+    implicit def rw[V: ReaderWriter]: ReaderWriter[Exists[V]] = macroRW
   }
   case class ReadBytes[V](v: V) extends Gadt2[Array[Byte], V]
   object ReadBytes{
-    implicit def rw[V: ReadWriter]: ReadWriter[ReadBytes[V]] = macroRW
+    implicit def rw[V: ReaderWriter]: ReaderWriter[ReadBytes[V]] = macroRW
   }
   case class CopyOver[V](src: Seq[Byte], v: String) extends Gadt2[Int, V]
   object CopyOver{
-    implicit def rw[V]: ReadWriter[CopyOver[V]] = macroRW
+    implicit def rw[V]: ReaderWriter[CopyOver[V]] = macroRW
   }
 }
 
@@ -306,9 +306,9 @@ object AdvancedTests extends TestSuite {
         }
       }
       //      test("companionImplicitPickedUp"){
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Reader[TypedFoo]] eq TypedFoo.readWriter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[TypedFoo]] eq TypedFoo.readWriter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReadWriter[TypedFoo]] eq TypedFoo.readWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Reader[TypedFoo]] eq TypedFoo.readerWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[TypedFoo]] eq TypedFoo.readerWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[TypedFoo]] eq TypedFoo.readerWriter)
       //      }
       //      test("companionImplicitWorks"){
       //

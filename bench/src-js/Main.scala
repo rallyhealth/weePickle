@@ -36,7 +36,7 @@ object Main{
     )
   }
   def weepickleWebDefault(duration: Int) = {
-    import com.rallyhealth.weepickle.v0.WeePickle.{ReadWriter => RW}
+    import com.rallyhealth.weepickle.v0.WeePickle.{ReaderWriter => RW}
     implicit def rw1: RW[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     implicit def rw2: RW[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     implicit def rw3: RW[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
@@ -52,7 +52,7 @@ object Main{
     )
   }
   def weepickleWebDefaultCached(duration: Int) = {
-    import com.rallyhealth.weepickle.v0.WeePickle.{ReadWriter => RW}
+    import com.rallyhealth.weepickle.v0.WeePickle.{ReaderWriter => RW}
     implicit lazy val rw1: RW[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     implicit lazy val rw2: RW[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     implicit lazy val rw3: RW[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW

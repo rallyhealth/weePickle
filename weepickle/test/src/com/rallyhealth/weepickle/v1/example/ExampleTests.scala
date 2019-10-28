@@ -3,7 +3,7 @@ package com.rallyhealth.weepickle.v0.example
 import acyclic.file
 import com.rallyhealth.weepickle.v0.TestUtil
 import utest._
-import com.rallyhealth.weepickle.v0.WeePickle.{macroRW, ReadWriter => RW}
+import com.rallyhealth.weepickle.v0.WeePickle.{macroRW, ReaderWriter => RW}
 import com.rallyhealth.weejson.v0._
 import com.rallyhealth.weepack.v0.WeePack
 import com.rallyhealth.weepickle.v0.core.{NoOpVisitor, Visitor}
@@ -75,7 +75,7 @@ object KeyedTag{
 object Custom2{
   class CustomThing2(val i: Int, val s: String)
   object CustomThing2 {
-    implicit val rw = com.rallyhealth.weepickle.v0.WeePickle.readwriter[String].bimap[CustomThing2](
+    implicit val rw = com.rallyhealth.weepickle.v0.WeePickle.readerWriter[String].bimap[CustomThing2](
       x => x.i + " " + x.s,
       str => {
         val Array(i, s) = str.split(" ", 2)
@@ -268,8 +268,8 @@ object ExampleTests extends TestSuite {
       test("simple"){
         import com.rallyhealth.weepickle.v0.WeePickle._
         case class Wrap(i: Int)
-        implicit val fooReadWrite: ReadWriter[Wrap] =
-          readwriter[Int].bimap[Wrap](_.i, Wrap(_))
+        implicit val fooReadWrite: ReaderWriter[Wrap] =
+          readerWriter[Int].bimap[Wrap](_.i, Wrap(_))
 
         write(Seq(Wrap(1), Wrap(10), Wrap(100))) ==> "[1,10,100]"
         read[Seq[Wrap]]("[1,10,100]") ==> Seq(Wrap(1), Wrap(10), Wrap(100))
@@ -277,8 +277,8 @@ object ExampleTests extends TestSuite {
       test("Value"){
         import com.rallyhealth.weepickle.v0.WeePickle._
         case class Bar(i: Int, s: String)
-        implicit val fooReadWrite: ReadWriter[Bar] =
-          readwriter[com.rallyhealth.weejson.v0.Value].bimap[Bar](
+        implicit val fooReadWrite: ReaderWriter[Bar] =
+          readerWriter[com.rallyhealth.weejson.v0.Value].bimap[Bar](
             x => com.rallyhealth.weejson.v0.Arr(x.s, x.i),
             json => new Bar(json(1).num.toInt, json(0).str)
           )
@@ -325,7 +325,7 @@ object ExampleTests extends TestSuite {
         com.rallyhealth.weepickle.v0.WeePickle.read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==>
           Thing(1, "gg")
 
-        implicit def thingRW: SnakePickle.ReadWriter[Thing] = SnakePickle.macroRW
+        implicit def thingRW: SnakePickle.ReaderWriter[Thing] = SnakePickle.macroRW
 
         // snake_case_keys read-writing
         SnakePickle.write(Thing(1, "gg")) ==>

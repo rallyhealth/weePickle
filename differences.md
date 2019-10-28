@@ -142,3 +142,8 @@ with `@discriminator` annotations on the sealed parent type:
 
 ## WeeJson/WeePack
 `WeeJson` and `WeePack` are accessible via named objects instead of package objects. For example: `WeeJson.read("{}")` instead of `ujson.read("{}")`. This makes them more easily importable and avoids naming collisions.
+
+## ReadWriter => ReaderWriter
+`Reader` + `Writer` = `ReaderWriter` (not `ReadWriter`)
+
+Two people independently asked me why their code wasn't working because they expected a class named `ReaderWriter`, so that's the name now.
