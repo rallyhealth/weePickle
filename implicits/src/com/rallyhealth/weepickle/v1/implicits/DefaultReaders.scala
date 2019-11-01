@@ -170,10 +170,19 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     }
   }
 
-  implicit def OptionReader[T: Reader]: Reader[Option[T]] = implicitly[Reader[T]].mapNulls{
-      case null => None
-      case x => Some(x)
+  implicit def OptionReader[T: Reader]: Reader[Option[T]] = {
+    new Reader.MapReader[T, T, Option[T]](implicitly[Reader[T]]) {
+
+      private def f(t: T): Option[T] = Option(t)
+
+      override def visitNull(index: Int): Option[T] = None
+
+      override def mapFunction(v: T): Option[T] = f(v)
+
+      def mapNonNullsFunction(v: T): Option[T] = f(v)
     }
+  }
+
   implicit def SomeReader[T: Reader]: Reader[Some[T]] = OptionReader[T].narrow[Some[T]]
   implicit def NoneReader: Reader[None.type] = OptionReader[Unit].narrow[None.type]
 

@@ -114,6 +114,32 @@ object StructTests extends TestSuite {
       }
     }
 
+    /**
+     * this test is inspired by PlayJson which returns Some(T) even when input is null
+      */
+    test("optionWithNull should always return None") {
+
+      object AlwaysReturn {
+        case class Bar()
+        implicit val r = WeePickle.macroR[Bar]
+
+        //the following reader always returns Bar() even when input is null
+        implicit val barDelegateReader = new WeePickle.Reader.Delegate[Any, Bar](
+          implicitly[WeePickle.Reader[Bar]]
+            .map(identity)
+        ) {
+          override def visitNull(index: Int): AlwaysReturn.Bar = Bar()
+        }
+      }
+
+      import AlwaysReturn._
+
+      assert(WeePickle.read[Bar]("""{}""") == Bar())
+      assert(WeePickle.read[Bar]("""null""") == Bar())   //when input is null
+      assert(WeePickle.read[Option[Bar]]("""{}""") == Some(Bar()))
+      assert(WeePickle.read[Option[Bar]]("""null""") == None)
+    }
+
     test("either"){
       test("Left") - rw(Left(123): Left[Int, Int], """[0,123]""")
       test("Right") - rw(Right(123): Right[Int, Int], """[1,123]""")
