@@ -1,9 +1,26 @@
 rm -rf .idea*
 mill mill.scalalib.GenIdea/idea
 # The generated modules use overlapping directories which will confuse IntelliJ. Delete them.
-# IntelliJ uTest runner only works with <= 2.12 so that's the one we keep here.
+# https://github.com/lihaoyi/mill/issues/478 would help here.
+#
+# IntelliJ uTest runner only works with <= 2.12 otherwise you get:
+# ClassNotFoundException for com.rallyhealth.weepickle.v0.JsonTests: com.rallyhealth.weepickle.v0.JsonTests
+echo "Removing:"
 rm -fv .idea_modules/*.js-* .idea_modules/*.js.* .idea_modules/*-2.11* .idea_modules/*-2.13*
+
+# bench: IntelliJ can't figure out that bench/compile needs to depend on weepickle/test.
+# Removing it for now.
+rm -rv .idea_modules/bench.jvm.iml
+sed -e '/.*bench.*/d' -i '' .idea/modules.xml
+
 sed -e '/.*\.js-.*/d' -i '' .idea/modules.xml
 sed -e '/.*\.js.iml*/d' -i '' .idea/modules.xml
 sed -e '/.*-2.11.*/d' -i '' .idea/modules.xml
 sed -e '/.*-2.13.*/d' -i '' .idea/modules.xml
+
+echo
+echo "IntelliJ project ready. You can open IntelliJ now."
+
+echo "Running source generators since IntelliJ won't do that for you..."
+set -x
+mill __.generatedSources
