@@ -62,6 +62,13 @@ object PrimitiveTests extends TestSuite {
         BigDecimal("234207440984302304980238412.15423127402740234"),
           """ "234207440984302304980238412.15423127402740234" """)
       test("null") - rw(null: BigDecimal, "null")
+      test("json integer") - {
+        WeePickle.read[BigDecimal]("123") ==> BigDecimal(123)
+      }
+      test("json float") - {
+        WeePickle.read[BigDecimal]("123.4") ==> BigDecimal(123.4)
+      }
+
     }
 
     test("Int"){

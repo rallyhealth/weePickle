@@ -122,8 +122,23 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
       Util.parseIntegralNum(s, decIndex, expIndex, index).toLong
     }
   }
-  implicit val BigIntReader: Reader[BigInt] = new MapStringReader(s => BigInt(s.toString))
-  implicit val BigDecimalReader: Reader[BigDecimal] = new MapStringReader(s => BigDecimal(s.toString))
+  implicit val BigIntReader: Reader[BigInt] = new SimpleReader[BigInt] {
+    override def expectedMsg = "expected number or numeric string"
+    override def visitString(s: CharSequence, index: Int) = BigInt(s.toString)
+    override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = BigInt(s.toString)
+    override def visitInt32(d: Int, index: Int) = BigInt(d)
+    override def visitInt64(d: Long, index: Int) = BigInt(d)
+    override def visitUInt64(d: Long, index: Int) = BigInt(java.lang.Long.toUnsignedString(d))
+  }
+  implicit val BigDecimalReader: Reader[BigDecimal] = new SimpleReader[BigDecimal] {
+    override def expectedMsg = "expected number or numeric string"
+    override def visitString(s: CharSequence, index: Int) = BigDecimal(s.toString)
+    override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = BigDecimal(s.toString)
+    override def visitInt32(d: Int, index: Int) = BigDecimal(d)
+    override def visitInt64(d: Long, index: Int) = BigDecimal(d)
+    override def visitUInt64(d: Long, index: Int) = BigDecimal(java.lang.Long.toUnsignedString(d))
+    override def visitFloat64(d: Double, index: Int) = BigDecimal(d)
+  }
   implicit val SymbolReader: Reader[Symbol] = new MapStringReader(s => Symbol(s.toString))
   implicit val UriReader: Reader[URI] = new MapStringReader(s => URI.create(s.toString))
 
