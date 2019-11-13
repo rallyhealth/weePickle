@@ -32,20 +32,20 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     override def visitFalse(index: Int) = false
   }
 
-
-  implicit val DoubleReader: Reader[Double] = new SimpleReader[Double] {
+  implicit val DoubleReader: Reader[Double] = new NumericReader[Double] {
     override def expectedMsg = "expected number"
     override def visitString(s: CharSequence, index: Int) = s.toString.toDouble
     override def visitInt32(d: Int, index: Int) = d
     override def visitInt64(d: Long, index: Int) = d
     override def visitUInt64(d: Long, index: Int) = d
     override def visitFloat64(d: Double, index: Int) = d
-
+    override def visitFloat64String(s: String, index: Int): Double = s.toDouble
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
       s.toString.toDouble
     }
   }
-  implicit val IntReader: Reader[Int] = new SimpleReader[Int] {
+
+  implicit val IntReader: Reader[Int] = new NumericReader[Int] {
     override def expectedMsg = "expected number"
     override def visitInt32(d: Int, index: Int) = d
     override def visitInt64(d: Long, index: Int) = d.toInt
@@ -55,7 +55,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
       Util.parseIntegralNum(s, decIndex, expIndex, index).toInt
     }
   }
-  implicit val FloatReader: Reader[Float] = new SimpleReader[Float] {
+  implicit val FloatReader: Reader[Float] = new NumericReader[Float] {
     override def expectedMsg = "expected number"
 
     override def visitString(s: CharSequence, index: Int) = s.toString.toFloat
@@ -63,11 +63,12 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     override def visitInt64(d: Long, index: Int) = d.toFloat
     override def visitUInt64(d: Long, index: Int) = d.toFloat
     override def visitFloat64(d: Double, index: Int) = d.toFloat
+    override def visitFloat64String(s: String, index: Int) = s.toFloat
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
       s.toString.toFloat
     }
   }
-  implicit val ShortReader: Reader[Short] = new SimpleReader[Short] {
+  implicit val ShortReader: Reader[Short] = new NumericReader[Short] {
     override def expectedMsg = "expected number"
     override def visitInt32(d: Int, index: Int) = d.toShort
     override def visitInt64(d: Long, index: Int) = d.toShort
@@ -77,7 +78,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
       Util.parseIntegralNum(s, decIndex, expIndex, index).toShort
     }
   }
-  implicit val ByteReader: Reader[Byte] = new SimpleReader[Byte] {
+  implicit val ByteReader: Reader[Byte] = new NumericReader[Byte] {
     override def expectedMsg = "expected number"
     override def visitInt32(d: Int, index: Int) = d.toByte
     override def visitInt64(d: Long, index: Int) = d.toByte
@@ -98,7 +99,25 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     override def visitString(s: CharSequence, index: Int) = f(s)
   }
 
-  implicit val CharReader: Reader[Char] = new SimpleReader[Char] {
+  /**
+    * Forwards some methods to their alternate implementations for numeric types.
+    * Similar to weeJson/JsVisitor, but for numeric types.
+    */
+  private trait NumericReader[J] extends SimpleReader[J] {
+    override def visitFloat64String(s: String, index: Int): J = {
+      visitFloat64StringParts(
+        s,
+        s.indexOf('.'),
+        s.indexOf('E') match {
+          case -1 => s.indexOf('e')
+          case n => n
+        },
+        -1
+      )
+    }
+  }
+
+  implicit val CharReader: Reader[Char] = new NumericReader[Char] {
     override def expectedMsg = "expected char"
     override def visitString(d: CharSequence, index: Int) = d.charAt(0)
     override def visitChar(d: Char, index: Int) = d
@@ -111,7 +130,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     }
   }
   implicit val UUIDReader: Reader[UUID] = new MapStringReader(s => UUID.fromString(s.toString))
-  implicit val LongReader: Reader[Long] = new SimpleReader[Long] {
+  implicit val LongReader: Reader[Long] = new NumericReader[Long] {
     override def expectedMsg = "expected number"
     override def visitString(d: CharSequence, index: Int) = com.rallyhealth.weepickle.v0.core.Util.parseLong(d, 0, d.length())
     override def visitInt32(d: Int, index: Int) = d.toLong
@@ -126,6 +145,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     override def expectedMsg = "expected number or numeric string"
     override def visitString(s: CharSequence, index: Int) = BigInt(s.toString)
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = BigInt(s.toString)
+    override def visitFloat64String(s: String, index: Int): BigInt = BigInt(s.toString)
     override def visitInt32(d: Int, index: Int) = BigInt(d)
     override def visitInt64(d: Long, index: Int) = BigInt(d)
     override def visitUInt64(d: Long, index: Int) = BigInt(java.lang.Long.toUnsignedString(d))
@@ -134,6 +154,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
     override def expectedMsg = "expected number or numeric string"
     override def visitString(s: CharSequence, index: Int) = BigDecimal(s.toString)
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = BigDecimal(s.toString)
+    override def visitFloat64String(s: String, index: Int): BigDecimal = BigDecimal(s.toString)
     override def visitInt32(d: Int, index: Int) = BigDecimal(d)
     override def visitInt64(d: Long, index: Int) = BigDecimal(d)
     override def visitUInt64(d: Long, index: Int) = BigDecimal(java.lang.Long.toUnsignedString(d))
