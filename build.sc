@@ -22,7 +22,7 @@ trait CommonModule extends ScalaModule {
   )
 }
 trait CommonPublishModule extends CommonModule with PublishModule with CrossScalaModule{
-  def publishVersion = "0.1.0"
+  def publishVersion = "0.2.0"
 
   protected def shade(name: String) = name + "-v0"
   def pomSettings = PomSettings(
