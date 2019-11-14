@@ -59,12 +59,21 @@ object Macros {
       }
     }
 
-    def deriveDefaults(companion: c.Tree, hasDefaults: Seq[Boolean]): Seq[c.Tree] = {
+    /*
+     * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
+     * and when data is missing on input, deserialization assigns None to these fields. upickle only processes
+     * defaults as specified explicitly. To be compatible deserializing JSON serialized with Play Json previously,
+     * WeePickle will automatically force a default of None to all Option fields without an explicit default.
+     */
+    def deriveDefaults(companion: c.Tree, hasDefaults: Seq[Boolean], forceDefaultNone: Seq[Boolean]): Seq[c.Tree] = {
       val defaults =
-        for((hasDefault, i) <- hasDefaults.zipWithIndex)
+        for(((hasDefault,forceDefault), i) <- hasDefaults.zip(forceDefaultNone).zipWithIndex)
         yield {
           val defaultName = TermName("apply$default$" + (i + 1))
-          if (!hasDefault) q"null"
+          if (!hasDefault) {
+            if (forceDefault) q"${TermName("None")}"
+            else q"null"
+          }
           else q"$companion.$defaultName"
         }
       defaults
@@ -157,8 +166,12 @@ object Macros {
       getArgSyms(tpe) match {
         case Left(msg) => fail(tpe, msg)
         case Right((companion, typeParams, argSyms, hasDefaults)) =>
-
-          //    println("argSyms " + argSyms.map(_.typeSignature))
+          // println(s"deriveClass: hasDefaults = $hasDefaults")
+          // println("argSyms " + argSyms.map(_.typeSignature))
+          // include .erasure to represent varargs as "Seq", not "Whatever*"
+          val forceDefaultNone = hasDefaults.zip(argSyms.map(_.typeSignature.erasure.typeConstructor))
+            .map { case (b, tc) => !b && tc.toString == "Option" }
+          // println(s"deriveClass: forceDefaultNone = $forceDefaultNone")
           val rawArgs = argSyms.map(_.name.toString)
           val mappedArgs = argSyms.map { p =>
             customKey(p).getOrElse(p.name.toString)
@@ -191,6 +204,7 @@ object Macros {
                 mappedArgs,
                 argSyms.map(_.typeSignature).map(func),
                 hasDefaults,
+                forceDefaultNone,
                 argSyms.map(shouldDropDefault),
                 tpe,
                 argSyms.exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
@@ -254,6 +268,7 @@ object Macros {
                   mappedArgs: Seq[String],
                   argTypes: Seq[Type],
                   hasDefaults: Seq[Boolean],
+                  forceDefaultNone: Seq[Boolean],
                   omitDefaults: Seq[Boolean],
                   targetType: c.Type,
                   varargs: Boolean): Tree
@@ -269,10 +284,11 @@ object Macros {
                   mappedArgs: Seq[String],
                   argTypes: Seq[Type],
                   hasDefaults: Seq[Boolean],
+                  forceDefaultNone: Seq[Boolean],
                   omitDefaults: Seq[Boolean],
                   targetType: c.Type,
                   varargs: Boolean) = {
-      val defaults = deriveDefaults(companion, hasDefaults)
+      val defaults = deriveDefaults(companion, hasDefaults, forceDefaultNone)
       if (rawArgs.size > 64) {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
@@ -308,7 +324,7 @@ object Macros {
 
             def visitEnd(index: Int) = {
               ..${
-                for(i <- rawArgs.indices if hasDefaults(i))
+                for(i <- rawArgs.indices if hasDefaults(i) || forceDefaultNone(i))
                 yield q"if ((found & (1L << $i)) == 0) {found |= (1L << $i); storeAggregatedValue($i, ${defaults(i)})}"
               }
 
@@ -377,10 +393,11 @@ object Macros {
                   mappedArgs: Seq[String],
                   argTypes: Seq[Type],
                   hasDefaults: Seq[Boolean],
+                  forceDefaultNone: Seq[Boolean],
                   omitDefaults: Seq[Boolean],
                   targetType: c.Type,
                   varargs: Boolean) = {
-      val defaults = deriveDefaults(companion, hasDefaults)
+      val defaults = deriveDefaults(companion, hasDefaults, forceDefaultNone)
 
       def checkDefault(i: Int) = hasDefaults(i) && omitDefaults(i)
 

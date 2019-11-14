@@ -140,6 +140,22 @@ object StructTests extends TestSuite {
       assert(WeePickle.read[Option[Bar]]("""null""") == None)
     }
 
+    test("assume None as default for Option types") {
+      object NoneAsDefault {
+        case class Bar(noDefault: Option[Int])
+        implicit val r = WeePickle.macroR[Bar]
+      }
+      assert(WeePickle.read[NoneAsDefault.Bar]("""{}""") == NoneAsDefault.Bar(None))
+    }
+
+    test("use explicitly-provided default for Option types") {
+      object NoneAsDefault {
+        case class Bar(noDefault: Option[Int] = Some(1))
+        implicit val r = WeePickle.macroR[Bar]
+      }
+      assert(WeePickle.read[NoneAsDefault.Bar]("""{}""") == NoneAsDefault.Bar(Some(1)))
+    }
+
     test("either"){
       test("Left") - rw(Left(123): Left[Int, Int], """[0,123]""")
       test("Right") - rw(Right(123): Right[Int, Int], """[1,123]""")
