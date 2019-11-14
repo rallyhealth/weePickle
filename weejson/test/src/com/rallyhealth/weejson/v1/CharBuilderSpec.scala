@@ -2,8 +2,9 @@ package com.rallyhealth.weejson.v0
 
 import org.scalatest._
 import org.scalatest.prop._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class CharBuilderSpec extends PropSpec with Matchers with PropertyChecks {
+class CharBuilderSpec extends PropSpec with Matchers with ScalaCheckPropertyChecks {
 
   property("append") {
     forAll { xs: List[Char] =>

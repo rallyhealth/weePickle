@@ -2,15 +2,15 @@ package com.rallyhealth.weejson.v0
 
 import java.nio.charset.StandardCharsets
 
+import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 import org.scalacheck.Gen._
 import org.scalacheck._
 import org.scalatest._
-import org.scalatest.prop._
-import com.rallyhealth.weepickle.v0.core.NoOpVisitor
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.util.Try
 
-class SyntaxCheck extends PropSpec with Matchers with PropertyChecks {
+class SyntaxCheck extends PropSpec with Matchers with ScalaCheckPropertyChecks {
 
   // failed to detect some failures in issue #243 at minSuccessful=10. Raised to minSuccessful=100.
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 100)

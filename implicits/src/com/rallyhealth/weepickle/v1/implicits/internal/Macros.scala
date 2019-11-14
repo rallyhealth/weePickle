@@ -23,7 +23,7 @@ object Macros {
 
     import c.universe._
     def companionTree(tpe: c.Type): Either[String, Tree] = {
-      val companionSymbol = tpe.typeSymbol.companionSymbol
+      val companionSymbol = tpe.typeSymbol.companion
 
       if (companionSymbol == NoSymbol && tpe.typeSymbol.isClass) {
         val clsSymbol = tpe.typeSymbol.asClass
@@ -35,7 +35,7 @@ object Macros {
       }else{
         val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
         val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
-        Right(c.universe.treeBuild.mkAttributedRef(pre, companionSymbol))
+        Right(c.universe.internal.gen.mkAttributedRef(pre, companionSymbol))
       }
 
     }
@@ -47,7 +47,7 @@ object Macros {
         tpe.members.find(x => x.isMethod && x.asMethod.isPrimaryConstructor) match {
           case None => Left("Can't find primary constructor of " + tpe)
           case Some(primaryConstructor) =>
-            val flattened = primaryConstructor.asMethod.paramss.flatten
+            val flattened = primaryConstructor.asMethod.paramLists.flatten
             Right((
               companion,
               tpe.typeSymbol.asClass.typeParams,
@@ -63,7 +63,7 @@ object Macros {
       val defaults =
         for((hasDefault, i) <- hasDefaults.zipWithIndex)
         yield {
-          val defaultName = newTermName("apply$default$" + (i + 1))
+          val defaultName = TermName("apply$default$" + (i + 1))
           if (!hasDefault) q"null"
           else q"$companion.$defaultName"
         }
@@ -96,7 +96,7 @@ object Macros {
       val mod = tpe.typeSymbol.asClass.module
       val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
       val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
-      val mod2 = c.universe.treeBuild.mkAttributedRef(pre, mod)
+      val mod2 = c.universe.internal.gen.mkAttributedRef(pre, mod)
 
       annotate(tpe)(wrapObject(mod2))
 
@@ -104,7 +104,7 @@ object Macros {
     def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree
 
     def derive(tpe: c.Type) = {
-      if (tpe.typeSymbol.asClass.isTrait || (tpe.typeSymbol.asClass.isAbstractClass && !tpe.typeSymbol.isJava)) {
+      if (tpe.typeSymbol.asClass.isTrait || (tpe.typeSymbol.asClass.isAbstract && !tpe.typeSymbol.isJava)) {
         val derived = deriveTrait(tpe)
         derived
       }
@@ -141,10 +141,10 @@ object Macros {
       weakTypeOf[M[_]](typeclass) match {
         case TypeRef(a, b, _) =>
           import compat._
-          TypeRef(a, b, List(t))
+          internal.typeRef(a, b, List(t))
         case ExistentialType(_, TypeRef(a, b, _)) =>
           import compat._
-          TypeRef(a, b, List(t))
+          internal.typeRef(a, b, List(t))
         case x =>
           println("Dunno Wad Dis Typeclazz Is " + x)
           println(x)
@@ -168,14 +168,14 @@ object Macros {
 
             if (argSyms.length == 0) t
             else {
-              val concrete = tpe.normalize.asInstanceOf[TypeRef].args
+              val concrete = tpe.dealias.asInstanceOf[TypeRef].args
               if (t.typeSymbol != definitions.RepeatedParamClass) {
 
                 t.substituteTypes(typeParams, concrete)
               } else {
                 val TypeRef(pref, sym, args) = typeOf[Seq[Int]]
                 import compat._
-                TypeRef(pref, sym, t.asInstanceOf[TypeRef].args)
+                internal.typeRef(pref, sym, t.asInstanceOf[TypeRef].args)
               }
             }
           }
@@ -216,15 +216,15 @@ object Macros {
 
     def customKey(sym: c.Symbol): Option[String] = {
         sym.annotations
-          .find(_.tpe == typeOf[key])
-          .flatMap(_.scalaArgs.headOption)
+          .find(_.tree.tpe == typeOf[key])
+          .flatMap(_.tree.children.tail.headOption)
           .map{case Literal(Constant(s)) => s.toString}
     }
 
     def customDiscriminator(sym: c.Symbol): Option[String] = {
         sym.annotations
-          .find(_.tpe == typeOf[discriminator])
-          .flatMap(_.scalaArgs.headOption)
+          .find(_.tree.tpe == typeOf[discriminator])
+          .flatMap(_.tree.children.tail.headOption)
           .map{case Literal(Constant(s)) => s.toString}
     }
 
@@ -244,7 +244,7 @@ object Macros {
       */
     def shouldDropDefault(sym: c.Symbol): Boolean = {
         sym.annotations
-          .exists(_.tpe == typeOf[dropDefault])
+          .exists(_.tree.tpe == typeOf[dropDefault])
     }
 
     def wrapObject(obj: Tree): Tree
@@ -365,7 +365,7 @@ object Macros {
         x => x
       )
       Seq("unapply", "unapplySeq")
-        .map(newTermName(_))
+        .map(TermName(_))
         .find(companion.tpe.member(_) != NoSymbol)
         .getOrElse(c.abort(c.enclosingPosition, "None of the following methods " +
         "were defined: unapply, unapplySeq"))

@@ -1,7 +1,6 @@
 package com.rallyhealth.weepickle.v0.core
 
 import scala.language.experimental.macros
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**

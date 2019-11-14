@@ -13,9 +13,9 @@ object WebJson extends com.rallyhealth.weejson.v0.Transformer[js.Any]{
       case true => f.visitTrue(-1)
       case false => f.visitFalse(-1)
       case null => f.visitNull(-1)
-      case s: js.Array[js.Any] =>
+      case s: js.Array[_] =>
         val ctx = f.visitArray(-1, -1).narrow
-        for(i <- s) ctx.visitValue(transform(i, ctx.subVisitor), -1)
+        for(i <- s) ctx.visitValue(transform(i.asInstanceOf[js.Any], ctx.subVisitor), -1)
         ctx.visitEnd(-1)
       case s: js.Object =>
         val ctx = f.visitObject(-1, -1).narrow

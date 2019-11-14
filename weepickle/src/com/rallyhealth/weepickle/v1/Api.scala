@@ -99,7 +99,9 @@ object Api{
 
     /**
       * Transforms sealed trait/class $type discriminator values.
-      * e.g. {"$type": "com.rallyhealth.Bee"} => {"$type": "com-rallyhealth-bee"}
+      * e.g. {{{
+      *    {"$type": "com.rallyhealth.Bee"} => {"$type": "com-rallyhealth-bee"}
+      * }}}
       *
       * @see http://www.lihaoyi.com/upickle/#CustomConfiguration
       */

@@ -1,9 +1,9 @@
 package com.rallyhealth.weejson.v0
 
 import org.scalatest._
-import org.scalatest.prop._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class BoolSpec extends PropSpec with Matchers with PropertyChecks with Inside {
+class BoolSpec extends PropSpec with Matchers with ScalaCheckPropertyChecks with Inside {
 
   property("com.rallyhealth.weejson.v0.Bool apply") {
     com.rallyhealth.weejson.v0.Bool(true) shouldBe com.rallyhealth.weejson.v0.True

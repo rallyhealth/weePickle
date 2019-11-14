@@ -11,7 +11,12 @@ import com.typesafe.tools.mima.core._
 val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
 
 trait CommonModule extends ScalaModule {
-  def scalacOptions = T{ if (scalaVersion() startsWith "2.12") Seq("-opt:l:method") else Nil }
+
+  def scalacOptions = T {
+    // Not ready to deal with 2.13 collection deprecations.
+    (if (scalaVersion() startsWith "2.12") Seq("-opt:l:method", "-Xfatal-warnings", "-deprecation", "-feature", "-language:higherKinds", "-language:implicitConversions") else Nil)
+  }
+
   def platformSegment: String
 
   def isScalaOld = T{ scalaVersion() startsWith "2.11" }

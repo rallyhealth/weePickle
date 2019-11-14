@@ -1,7 +1,9 @@
 package com.rallyhealth.weejson.v0
+
 import com.rallyhealth.weepickle.v0.core._
 
 import scala.collection.compat._
+//import scala.language.higherKinds
 
 trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I]{
   def apply(t: Readable): I = t.transform(this)

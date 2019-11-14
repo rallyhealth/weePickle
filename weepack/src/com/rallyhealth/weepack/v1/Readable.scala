@@ -7,7 +7,7 @@ trait Readable {
 }
 
 object Readable {
-  implicit def fromByteArray(s: Array[Byte]) = new Readable{
+  implicit def fromByteArray(s: Array[Byte]): Readable = new Readable{
     def transform[T](v: Visitor[_, T]): T = new MsgPackReader(0, s).parse(JsonPointerVisitor(v))
   }
 }

@@ -3,9 +3,10 @@ package com.rallyhealth.weejson.v0
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-import org.scalatest.prop.PropertyChecks
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor}
 import org.scalatest.{Matchers, PropSpec}
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
 object JNumIndexCheckFacade extends JsVisitor[Boolean, Boolean] {
   def visitArray(length: Int, index: Int)  = new ArrVisitor[Boolean, Boolean] {
     var failed = false
@@ -43,7 +44,7 @@ object JNumIndexCheckFacade extends JsVisitor[Boolean, Boolean] {
 }
 
 
-class JNumIndexCheck extends PropSpec with Matchers with PropertyChecks {
+class JNumIndexCheck extends PropSpec with Matchers with ScalaCheckPropertyChecks {
 
   property("visitFloat64StringParts provides the correct indices with parseFromString") {
     forAll { (value: BigDecimal) =>

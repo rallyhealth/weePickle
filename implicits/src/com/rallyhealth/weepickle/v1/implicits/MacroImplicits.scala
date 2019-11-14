@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v0.implicits
 
-import language.experimental.macros
+import scala.language.experimental.macros
 
 /**
   * Stupid hacks to work around scalac not forwarding macro type params properly
