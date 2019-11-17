@@ -1,13 +1,9 @@
 package com.rallyhealth.weepickle.v0.implicits.internal
 
-import scala.annotation.StaticAnnotation
-import scala.language.experimental.macros
-import compat._
-import acyclic.file
 import com.rallyhealth.weepickle.v0.implicits.{discriminator, dropDefault, key}
 
-import language.higherKinds
-import language.existentials
+import scala.language.experimental.macros
+import scala.language.{existentials, higherKinds}
 
 /**
  * Implementation of macros used by weepickle to serialize and deserialize
@@ -51,32 +47,96 @@ object Macros {
             Right((
               companion,
               tpe.typeSymbol.asClass.typeParams,
-              flattened,
-              flattened.map(_.asTerm.isParamWithDefault)
+              flattened
             ))
         }
-
       }
     }
 
     /*
-     * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
-     * and when data is missing on input, deserialization assigns None to these fields. upickle only processes
-     * defaults as specified explicitly. To be compatible deserializing JSON serialized with Play Json previously,
-     * WeePickle will automatically force a default of None to all Option fields without an explicit default.
+     * Wrap all the argument stuff up in a case class for easy processing
      */
-    def deriveDefaults(companion: c.Tree, hasDefaults: Seq[Boolean], forceDefaultNone: Seq[Boolean]): Seq[c.Tree] = {
-      val defaults =
-        for(((hasDefault,forceDefault), i) <- hasDefaults.zip(forceDefaultNone).zipWithIndex)
-        yield {
-          val defaultName = TermName("apply$default$" + (i + 1))
-          if (!hasDefault) {
-            if (forceDefault) q"${TermName("None")}"
-            else q"null"
-          }
-          else q"$companion.$defaultName"
+    private[internal] case class Argument(
+      i: Int,
+      raw: String,
+      mapped: String,
+      argType: Type,
+      hasDefault: Boolean,
+      assumeDefaultNone: Boolean,
+      omitDefault: Boolean,
+      default: c.Tree,
+      localReader : TermName,
+      aggregate : TermName
+    ) {
+      def writingCheckDefault: Boolean = hasDefault && omitDefault
+      def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
+    }
+
+    private[internal] object Argument {
+
+      /**
+        * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
+        * the same as the default value, unless instructed explicitly not to with the
+        * [[dropDefault]] annotation.
+        *
+        * We are upgrading from play-json which always sends default values.
+        * If teams swapped in weepickle for play-json and their rest endpoints started
+        * omitting fields, that would be a surprising breaking API change.
+        * The play-json will throw if a default valued field is missing,
+        * e.g. Json.parse("{}").as[FooDefault] // throws: missing i
+        *
+        * Over time, consumers will transition to tolerant weepickle readers, and we
+        * can revisit this.
+        */
+      private def shouldDropDefault(sym: c.Symbol): Boolean =
+        sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])
+
+      /*
+       * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
+       * and when data is missing on input, deserialization assigns None to these fields. upickle only processes
+       * defaults as specified explicitly. To be compatible deserializing JSON serialized with Play Json previously,
+       * WeePickle will automatically force a default of None to all Option fields without an explicit default.
+       */
+      private def deriveDefault(companion: c.Tree, index: Int, isParamWithDefault: Boolean, assumeDefaultNone: Boolean): c.Tree = {
+        val defaultName = TermName("apply$default$" + (index + 1))
+        if (!isParamWithDefault) {
+          if (assumeDefaultNone) q"${TermName("None")}"
+          else q"null"
+        } else {
+          q"$companion.$defaultName"
         }
-      defaults
+      }
+
+      private def argTypeFromSignature(tpe: Type, typeParams: List[Symbol], t: Type) = {
+        val concrete = tpe.dealias.asInstanceOf[TypeRef].args
+        if (t.typeSymbol != definitions.RepeatedParamClass) {
+          t.substituteTypes(typeParams, concrete)
+        } else {
+          val TypeRef(pref, sym, _) = typeOf[Seq[Int]]
+          internal.typeRef(pref, sym, t.asInstanceOf[TypeRef].args)
+        }
+      }
+
+      def apply(tpe: Type, companion: c.Tree, typeParams: List[Symbol])(indexedArg: (Symbol, Int)): Argument = {
+        val (argSym, index) = indexedArg
+        val isParamWithDefault = argSym.asTerm.isParamWithDefault
+        // include .erasure to represent varargs as "Seq", not "Whatever*"
+        val isOptionWithoutDefault = !isParamWithDefault &&
+          argSym.typeSignature.erasure.typeConstructor.toString == "Option"
+
+        new Argument(
+          i = index,
+          raw = argSym.name.toString,
+          mapped = customKey(argSym).getOrElse(argSym.name.toString),
+          argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
+          hasDefault = isParamWithDefault,
+          assumeDefaultNone = isOptionWithoutDefault,
+          omitDefault = shouldDropDefault(argSym),
+          default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
+          localReader = TermName("localReader" + index),
+          aggregate = TermName("aggregated" + index)
+        )
+      }
     }
 
     /**
@@ -92,10 +152,10 @@ object Macros {
         baseClsArgs = st.baseType(tpe.typeSymbol).asInstanceOf[TypeRef].args
       } yield {
         tpe match{
-          case ExistentialType(_, TypeRef(pre, sym, args)) =>
+          case ExistentialType(_, TypeRef(_, _, args)) =>
             st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
           case ExistentialType(_, _) => st
-          case TypeRef(pre, sym, args) =>
+          case TypeRef(_, _, args) =>
             st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
         }
       }
@@ -149,10 +209,10 @@ object Macros {
 
       weakTypeOf[M[_]](typeclass) match {
         case TypeRef(a, b, _) =>
-          import compat._
+
           internal.typeRef(a, b, List(t))
         case ExistentialType(_, TypeRef(a, b, _)) =>
-          import compat._
+
           internal.typeRef(a, b, List(t))
         case x =>
           println("Dunno Wad Dis Typeclazz Is " + x)
@@ -165,33 +225,9 @@ object Macros {
     def deriveClass(tpe: c.Type) = {
       getArgSyms(tpe) match {
         case Left(msg) => fail(tpe, msg)
-        case Right((companion, typeParams, argSyms, hasDefaults)) =>
-          // println(s"deriveClass: hasDefaults = $hasDefaults")
-          // println("argSyms " + argSyms.map(_.typeSignature))
-          // include .erasure to represent varargs as "Seq", not "Whatever*"
-          val forceDefaultNone = hasDefaults.zip(argSyms.map(_.typeSignature.erasure.typeConstructor))
-            .map { case (b, tc) => !b && tc.toString == "Option" }
-          // println(s"deriveClass: forceDefaultNone = $forceDefaultNone")
-          val rawArgs = argSyms.map(_.name.toString)
-          val mappedArgs = argSyms.map { p =>
-            customKey(p).getOrElse(p.name.toString)
-          }
+        case Right((companion, typeParams, argSyms)) =>
+          val args = argSyms.zipWithIndex.map(Argument(tpe, companion, typeParams))
 
-          def func(t: Type) = {
-
-            if (argSyms.length == 0) t
-            else {
-              val concrete = tpe.dealias.asInstanceOf[TypeRef].args
-              if (t.typeSymbol != definitions.RepeatedParamClass) {
-
-                t.substituteTypes(typeParams, concrete)
-              } else {
-                val TypeRef(pref, sym, args) = typeOf[Seq[Int]]
-                import compat._
-                internal.typeRef(pref, sym, t.asInstanceOf[TypeRef].args)
-              }
-            }
-          }
           // According to @retronym, this is necessary in order to force the
           // default argument `apply$default$n` methods to be synthesized
           companion.tpe.member(TermName("apply")).info
@@ -200,12 +236,7 @@ object Macros {
               // Otherwise, reading and writing are kinda identical
               wrapCaseN(
                 companion,
-                rawArgs,
-                mappedArgs,
-                argSyms.map(_.typeSignature).map(func),
-                hasDefaults,
-                forceDefaultNone,
-                argSyms.map(shouldDropDefault),
+                args,
                 tpe,
                 argSyms.exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
               )
@@ -242,34 +273,11 @@ object Macros {
           .map{case Literal(Constant(s)) => s.toString}
     }
 
-    /**
-      * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
-      * the same as the default value, unless instructed explicitly not to with the
-      * [[dropDefault]] annotation.
-      *
-      * We are upgrading from play-json which always sends default values.
-      * If teams swapped in weepickle for play-json and their rest endpoints started
-      * omitting fields, that would be a surprising breaking API change.
-      * The play-json will throw if a default valued field is missing,
-      * e.g. Json.parse("{}").as[FooDefault] // throws: missing i
-      *
-      * Over time, consumers will transition to tolerant weepickle readers, and we
-      * can revisit this.
-      */
-    def shouldDropDefault(sym: c.Symbol): Boolean = {
-        sym.annotations
-          .exists(_.tree.tpe == typeOf[dropDefault])
-    }
 
     def wrapObject(obj: Tree): Tree
 
     def wrapCaseN(companion: Tree,
-                  rawArgs: Seq[String],
-                  mappedArgs: Seq[String],
-                  argTypes: Seq[Type],
-                  hasDefaults: Seq[Boolean],
-                  forceDefaultNone: Seq[Boolean],
-                  omitDefaults: Seq[Boolean],
+                  args: Seq[Argument],
                   targetType: c.Type,
                   varargs: Boolean): Tree
   }
@@ -280,43 +288,35 @@ object Macros {
     def wrapObject(t: c.Tree) = q"new ${c.prefix}.SingletonR($t)"
 
     def wrapCaseN(companion: c.Tree,
-                  rawArgs: Seq[String],
-                  mappedArgs: Seq[String],
-                  argTypes: Seq[Type],
-                  hasDefaults: Seq[Boolean],
-                  forceDefaultNone: Seq[Boolean],
-                  omitDefaults: Seq[Boolean],
+                  args: Seq[Argument],
                   targetType: c.Type,
                   varargs: Boolean) = {
-      val defaults = deriveDefaults(companion, hasDefaults, forceDefaultNone)
-      if (rawArgs.size > 64) {
+      if (args.size > 64) {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
-      val localReaders = for (i <- rawArgs.indices) yield TermName("localReader" + i)
-      val aggregates = for (i <- rawArgs.indices) yield TermName("aggregated" + i)
       q"""
         ..${
-          for (i <- rawArgs.indices)
-          yield q"private[this] lazy val ${localReaders(i)} = implicitly[${c.prefix}.Reader[${argTypes(i)}]]"
+          for (arg <- args)
+          yield q"private[this] lazy val ${arg.localReader} = implicitly[${c.prefix}.Reader[${arg.argType}]]"
         }
         new ${c.prefix}.CaseR[$targetType]{
           override def visitObject(length: Int, index: Int) = new CaseObjectContext{
             ..${
-              for (i <- rawArgs.indices)
-              yield q"private[this] var ${aggregates(i)}: ${argTypes(i)} = _"
+              for (arg <- args)
+              yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"
             }
             def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
               case ..${
-                for (i <- rawArgs.indices)
-                yield cq"$i => ${aggregates(i)} = v.asInstanceOf[${argTypes(i)}]"
+                for (arg <- args)
+                yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"
               }
             }
             def visitKey(index: Int) = com.rallyhealth.weepickle.v0.core.StringVisitor
             def visitKeyValue(s: Any) = {
               currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
                 case ..${
-                  for(i <- mappedArgs.indices)
-                  yield cq"${mappedArgs(i)} => $i"
+                  for(arg <- args)
+                  yield cq"${arg.mapped} => ${arg.i}"
                 }
                 case _ => -1
               }
@@ -324,21 +324,21 @@ object Macros {
 
             def visitEnd(index: Int) = {
               ..${
-                for(i <- rawArgs.indices if hasDefaults(i) || forceDefaultNone(i))
-                yield q"if ((found & (1L << $i)) == 0) {found |= (1L << $i); storeAggregatedValue($i, ${defaults(i)})}"
+                for(arg <- args if arg.readingCheckDefault)
+                yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
               }
 
               // Special-case 64 because java bit shifting ignores any RHS values above 63
               // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
-              if (found != ${if (rawArgs.length == 64) -1 else (1L << rawArgs.length) - 1}){
+              if (found != ${if (args.length == 64) -1 else (1L << args.length) - 1}){
                 var i = 0
                 val keys = for{
-                  i <- 0 until ${rawArgs.length}
+                  i <- 0 until ${args.length}
                   if (found & (1L << i)) == 0
                 } yield i match{
                   case ..${
-                    for (i <- mappedArgs.indices)
-                    yield cq"$i => ${mappedArgs(i)}"
+                    for (arg <- args)
+                    yield cq"${arg.i} => ${arg.mapped}"
                   }
                 }
                 throw new com.rallyhealth.weepickle.v0.core.Abort(
@@ -347,10 +347,10 @@ object Macros {
               }
               $companion.apply(
                 ..${
-                  for(i <- rawArgs.indices)
+                  for(arg <- args)
                   yield
-                    if (i == rawArgs.length - 1 && varargs) q"${aggregates(i)}:_*"
-                    else q"${aggregates(i)}"
+                    if (arg.i == args.length - 1 && varargs) q"${arg.aggregate}:_*"
+                    else q"${arg.aggregate}"
                 }
               )
             }
@@ -358,8 +358,8 @@ object Macros {
             def subVisitor: com.rallyhealth.weepickle.v0.core.Visitor[_, _] = currentIndex match{
               case -1 => com.rallyhealth.weepickle.v0.core.NoOpVisitor
               case ..${
-                for (i <- rawArgs.indices)
-                yield cq"$i => ${localReaders(i)} "
+                for (arg <- args)
+                yield cq"${arg.i} => ${arg.localReader} "
               }
             }
           }
@@ -376,7 +376,7 @@ object Macros {
     import c.universe._
     def wrapObject(obj: c.Tree) = q"new ${c.prefix}.SingletonW($obj)"
     def findUnapply(tpe: Type) = {
-      val (companion, paramTypes, argSyms, hasDefaults) = getArgSyms(tpe).fold(
+      val (companion, _, _) = getArgSyms(tpe).fold(
         errMsg => c.abort(c.enclosingPosition, errMsg),
         x => x
       )
@@ -389,36 +389,27 @@ object Macros {
 
     def internal = q"${c.prefix}.Internal"
     def wrapCaseN(companion: c.Tree,
-                  rawArgs: Seq[String],
-                  mappedArgs: Seq[String],
-                  argTypes: Seq[Type],
-                  hasDefaults: Seq[Boolean],
-                  forceDefaultNone: Seq[Boolean],
-                  omitDefaults: Seq[Boolean],
+                  args: Seq[Argument],
                   targetType: c.Type,
                   varargs: Boolean) = {
-      val defaults = deriveDefaults(companion, hasDefaults, forceDefaultNone)
-
-      def checkDefault(i: Int) = hasDefaults(i) && omitDefaults(i)
-
-      def write(i: Int) = {
+      def write(arg: Argument) = {
         val snippet = q"""
 
           val keyVisitor = ctx.visitKey(-1)
           ctx.visitKeyValue(
             keyVisitor.visitString(
-              ${c.prefix}.objectAttributeKeyWriteMap(${mappedArgs(i)}),
+              ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped}),
               -1
             )
           )
-          val w = implicitly[${c.prefix}.Writer[${argTypes(i)}]]
-          ctx.narrow.visitValue(w.write(ctx.subVisitor, v.${TermName(rawArgs(i))}), -1)
+          val w = implicitly[${c.prefix}.Writer[${arg.argType}]]
+          ctx.narrow.visitValue(w.write(ctx.subVisitor, v.${TermName(arg.raw)}), -1)
         """
 
         /**
           * @see [[shouldDropDefault()]]
           */
-        if (checkDefault(i)) q"""if (v.${TermName(rawArgs(i))} != ${defaults(i)}) $snippet"""
+        if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
         else snippet
       }
       q"""
@@ -426,17 +417,17 @@ object Macros {
           def length(v: $targetType) = {
             var n = 0
             ..${
-              for(i <- 0 until rawArgs.length)
+              for(arg <- args)
               yield {
-                if (!checkDefault(i)) q"n += 1"
-                else q"""if (v.${TermName(rawArgs(i))} != ${defaults(i)}) n += 1"""
+                if (!arg.writingCheckDefault) q"n += 1"
+                else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
               }
             }
             n
           }
           def writeToObject[R](ctx: com.rallyhealth.weepickle.v0.core.ObjVisitor[_, R],
                                v: $targetType): Unit = {
-            ..${(0 until rawArgs.length).map(write)}
+            ..${args.map(write)}
 
           }
         }
@@ -448,7 +439,6 @@ object Macros {
   }
   def macroRImpl[T, R[_]](c0: scala.reflect.macros.blackbox.Context)
                          (implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[R[_]]): c0.Expr[R[T]] = {
-    import c0.universe._
     val res = new Reading[R]{
       val c: c0.type = c0
       def typeclass = e2
@@ -459,7 +449,6 @@ object Macros {
 
   def macroWImpl[T, W[_]](c0: scala.reflect.macros.blackbox.Context)
                          (implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[W[_]]): c0.Expr[W[T]] = {
-    import c0.universe._
     val res = new Writing[W]{
       val c: c0.type = c0
       def typeclass = e2
