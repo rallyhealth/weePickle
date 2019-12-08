@@ -1,5 +1,6 @@
 package com.rallyhealth.weepickle.v0
 
+import java.math.MathContext
 import java.net.URI
 
 import com.rallyhealth.weepickle.v0.TestUtil._
@@ -44,6 +45,7 @@ object PrimitiveTests extends TestSuite {
       test("max") - rw(Int.MaxValue.toLong + 1, """ "2147483648" """)
       test("min") - rw(Long.MinValue, """ "-9223372036854775808" """)
       test("max") - rw(Long.MaxValue, """ "9223372036854775807" """)
+
     }
     test("BigInt"){
       test("whole") - rw(BigInt("125123"), """ "125123" """)
@@ -53,6 +55,10 @@ object PrimitiveTests extends TestSuite {
         BigInt("23420744098430230498023841234712512315423127402740234"),
           """ "23420744098430230498023841234712512315423127402740234" """)
       test("null") - rw(null: BigInt, "null")
+      test("abuse cases") {
+        test("10k digits") - parses[BigInt](s""" "1${"0" * 9999}" """)
+        test("100k digits") - abuseCase[BigInt](s""" "1${"0" * 99999}" """)
+      }
     }
     test("BigDecimal"){
       test("whole") - rw(BigDecimal("125123"), """ "125123" """)
@@ -68,7 +74,27 @@ object PrimitiveTests extends TestSuite {
       test("json float") - {
         WeePickle.read[BigDecimal]("123.4") ==> BigDecimal(123.4)
       }
+      test("abuse cases") {
+        /*
+        Notes for anyone working with these cases in the future
+        - Fiddling with the math context doesn't help because in the too many digits scenarios because it does a full precision big integer
+        parse BEFORE turning it into the decimal
+        - The performance across different compilation targets is radically different
+        - scala.js being ~60x slower for 1m digits than jvm targets
+        - If you need to kill a test run make sure you don't leave a stray node process in the background
+         */
 
+        test("greater than max int exponential") -abuseCase[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """)
+        test("10k digits integer") - parses[BigDecimal](s""" "1${"0" * 9999}" """)
+        test("100k digits integer") - abuseCase[BigDecimal](s""" "1${"0" * 99999}" """)
+        test("10k digits after the decimal") - parses[BigDecimal](s""" ".${"9" * 9999}" """)
+        test("100k digits after the decimal") - abuseCase[BigDecimal](s""" ".${"9" * 99999}" """)
+        test("Not quite max int exponential") - parses[BigDecimal](s""" "1E${Integer.MAX_VALUE - 1}" """)
+        // MathContext.UNLIMITED gives you unlimited precision normally you only get 128 bit decimal see [[BigDecimal.defaultMathContext]]
+        test("amazingly small") - rw(BigDecimal("0.0000000000000000001", MathContext.UNLIMITED).pow(999))
+        // For whatever reason the default java pow doesn't handle negative numbers, and the variant that does isn't exposed in the scala wrapper. Even then you can't do it with unlimited precision
+        test("negative exponent") - rw(BigDecimal(1) / BigDecimal(10000000, MathContext.UNLIMITED).pow(999), """ "1E-6993" """)
+      }
     }
 
     test("Int"){

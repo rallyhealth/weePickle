@@ -141,9 +141,17 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
       Util.parseIntegralNum(s, decIndex, expIndex, index).toLong
     }
   }
+  private val digitLimit = 10000
   implicit val BigIntReader: Reader[BigInt] = new SimpleReader[BigInt] {
     override def expectedMsg = "expected number or numeric string"
-    override def visitString(s: CharSequence, index: Int) = BigInt(s.toString)
+    override def visitString(s: CharSequence, index: Int) = {
+      if(s.length() > digitLimit) {
+        // Don't put the number in the exception otherwise trying to render it to a string could also cause problems
+        throw new NumberFormatException(s"Number too large with ${s.length} digits")
+      } else {
+        BigInt(s.toString)
+      }
+    }
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = BigInt(s.toString)
     override def visitFloat64String(s: String, index: Int): BigInt = BigInt(s.toString)
     override def visitInt32(d: Int, index: Int) = BigInt(d)
@@ -152,7 +160,15 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
   }
   implicit val BigDecimalReader: Reader[BigDecimal] = new SimpleReader[BigDecimal] {
     override def expectedMsg = "expected number or numeric string"
-    override def visitString(s: CharSequence, index: Int) = BigDecimal(s.toString)
+    override def visitString(s: CharSequence, index: Int) = {
+      if(s.length() > digitLimit) {
+        // Don't put the number in the exception otherwise trying to render it to a string could also cause problems
+        throw new NumberFormatException(s"Number too large with ${s.length} digits")
+      } else {
+        val str = s.toString
+        BigDecimal(str)
+      }
+    }
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = BigDecimal(s.toString)
     override def visitFloat64String(s: String, index: Int): BigDecimal = BigDecimal(s.toString)
     override def visitInt32(d: Int, index: Int) = BigDecimal(d)
