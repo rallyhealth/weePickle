@@ -1,14 +1,18 @@
 package com.rallyhealth.weejson.v0
 
+import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 
 import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 import org.scalacheck.Gen._
 import org.scalacheck._
 import org.scalatest._
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.prop._
 
 import scala.util.Try
+import com.rallyhealth.weepickle.v0.core.NoOpVisitor
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import ujson.InputStreamParser
 
 class SyntaxCheck extends PropSpec with Matchers with ScalaCheckPropertyChecks {
 
@@ -70,25 +74,15 @@ class SyntaxCheck extends PropSpec with Matchers with ScalaCheckPropertyChecks {
     val r1 = Try(StringParser.transform(s, NoOpVisitor)).isSuccess
     val bb = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8))
     val r2 = Try(ByteBufferParser.transform(bb, NoOpVisitor)).isSuccess
-    if (r0 == r1) r1 else sys.error(s"CharSequence/String parsing disagree($r0, $r1): $s")
-    if (r1 == r2) r1 else sys.error(s"String/ByteBuffer parsing disagree($r1, $r2): $s")
-
-    // Removed AsyncParser due to https://github.com/lihaoyi/upickle/issues/252,
-    // so that when we fix it, we can make binary incompatible changes without breaking
-    // an existing (broken) copy in the v0 release.
-    //    locally {
-    //      val async = AsyncParser[Unit](AsyncParser.SingleValue)
-    //      val r3 = async.absorb(s, NoOpVisitor).isRight && async.finish(NoOpVisitor).isRight
-    //      if (r1 == r3) r1 else sys.error(s"Sync/Async parsing disagree($r1, $r3): $s")
-    //    }
-    //
-    //    locally {
-    //      val async = AsyncParser[Unit](AsyncParser.SingleValue)
-    //      val r3 = s.getBytes(StandardCharsets.UTF_8).foldLeft(true) { (isValid, byte) =>
-    //        isValid && async.absorb(Array(byte), NoOpVisitor).isRight
-    //      } && async.finish(NoOpVisitor).isRight
-    //      if (r1 == r3) r1 else sys.error(s"Sync/Async parsing disagree($r1, $r3): $s")
-    //    }
+    val r3 = Try(InputStreamParser.transform(new ByteArrayInputStream(s.getBytes), NoOpVisitor)).isSuccess
+    val r4 = Try(ByteArrayParser.transform(s.getBytes, NoOpVisitor)).isSuccess
+    val r5 = Try(new InputStreamParser(new ByteArrayInputStream(s.getBytes), 5, 5).parse(NoOpVisitor)).isSuccess
+    if (r0 != r1) sys.error(s"CharSequence/String parsing disagree($r0, $r1): $s")
+    if (r1 != r2) sys.error(s"String/ByteBuffer parsing disagree($r1, $r2): $s")
+    if (r2 != r3) sys.error(s"ByteBuffer/InputStream parsing disagree($r2, $r3): $s")
+    if (r3 != r4) sys.error(s"InputStream/ByteArray parsing disagree($r3, $r4): $s")
+    if (r4 != r5) sys.error(s"ByteArray/InputStream5 parsing disagree($r4, $r5): $s")
+    r0
   }
 
   property("syntax-checking") {
@@ -140,4 +134,9 @@ class SyntaxCheck extends PropSpec with Matchers with ScalaCheckPropertyChecks {
   property("1.1e+1 is ok") { isValidSyntax("1.1e+1") shouldBe true }
   property("1+ is invalid") { isValidSyntax("1+") shouldBe false }
   property("1- is invalid") { isValidSyntax("1-") shouldBe false }
+
+  property("[] is valid") { isValidSyntax("[]") shouldBe true }
+  property("{} is valid") { isValidSyntax("""{"a": true}""") shouldBe true }
+  property("other {} is valid") { isValidSyntax("""{"abc": true}""") shouldBe true }
+  property("duh is valid") { isValidSyntax(""""duh"""") shouldBe true }
 }

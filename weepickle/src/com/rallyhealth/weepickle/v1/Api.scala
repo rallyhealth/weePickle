@@ -5,8 +5,11 @@ import java.io.ByteArrayOutputStream
 import language.experimental.macros
 import language.higherKinds
 import com.rallyhealth.weepickle.v0.core._
+
 import scala.reflect.ClassTag
-import com.rallyhealth.weejson.v0.IndexedValue
+import com.rallyhealth.weejson.v0.{BaseRenderer, IndexedValue}
+import com.rallyhealth.weepack.v0.MsgPackWriter
+import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
 /**
  * An instance of the com.rallyhealth.weepickle.v0 API. There's a default instance at
  * `com.rallyhealth.weepickle.v0.WeePickle`, but you can also implement it yourself to customize
@@ -68,10 +71,29 @@ trait Api
     transform(t).to(new com.rallyhealth.weejson.v0.Renderer(out, indent = indent, escapeUnicode))
   }
   /**
+    * Write the given Scala value as a JSON string via a [[WritableAsBytes]]
+    */
+  def stream[T: Writer](t: T,
+                        indent: Int = -1,
+                        escapeUnicode: Boolean = false): WritableAsBytes = new WritableAsBytes{
+    def writeBytesTo(out: java.io.OutputStream) = {
+      val w = new java.io.OutputStreamWriter(out, java.nio.charset.StandardCharsets.UTF_8)
+      transform(t).to(new BaseRenderer(w, indent = indent, escapeUnicode))
+      w.flush()
+    }
+  }
+  /**
     * Write the given Scala value as a MessagePack binary to the given OutputStream
     */
   def writeMsgPackTo[T: Writer](t: T, out: java.io.OutputStream): Unit = {
     transform(t).to(new com.rallyhealth.weepack.v0.MsgPackWriter(out))
+  }
+
+  /**
+    * Write the given Scala value as a MessagePack binary via a [[WritableAsBytes]]
+    */
+  def streamBinary[T: Writer](t: T): WritableAsBytes = new WritableAsBytes{
+    def writeBytesTo(out: java.io.OutputStream) = transform(t).to(new MsgPackWriter(out))
   }
 
   def writer[T: Writer]: Writer[T] = implicitly[Writer[T]]
@@ -184,7 +206,7 @@ trait AttributeTagged extends Api{
           val key = keyAttr.asInstanceOf[IndexedValue.Str].value0.toString
           val delegate = taggedReader.findReader(key)
           if (delegate == null){
-            throw new AbortException("invalid tag for tagged object: " + key, keyAttr.index, -1, -1, Nil, null)
+            throw new AbortException("invalid tag for tagged object: " + key, keyAttr.index, -1, -1, null)
           }
           val ctx2 = delegate.visitObject(-1, -1)
           for (p <- x.value0) {
