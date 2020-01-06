@@ -1,6 +1,7 @@
 package com.rallyhealth.weepack.v0
 
 import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -18,7 +19,7 @@ import scala.collection.mutable.ArrayBuffer
   * appropriately sized versions are written out when the message is serialized
   * to bytes.
   */
-sealed trait Msg extends Readable{
+sealed trait Msg extends Readable with WritableAsBytes{
   def transform[T](f: Visitor[_, T]) = Msg.transform(this, f)
 
   /**
@@ -89,7 +90,9 @@ sealed trait Msg extends Readable{
     case _ => false
   }
 
-
+  def writeBytesTo(out: java.io.OutputStream): Unit = {
+    this.transform(new MsgPackWriter(out))
+  }
 }
 case object Null extends Msg
 case object True extends Bool{

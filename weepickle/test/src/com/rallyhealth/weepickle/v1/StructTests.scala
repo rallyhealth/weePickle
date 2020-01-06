@@ -1,12 +1,15 @@
 package com.rallyhealth.weepickle.v0
+
+import java.io.ByteArrayOutputStream
+
 import utest._
 
 import scala.collection.compat._
 import scala.concurrent.duration._
-import TestUtil._
 import java.util.UUID
 
 import acyclic.file
+import com.rallyhealth.weepickle.v0.TestUtil._
 
 import scala.reflect.ClassTag
 import language.postfixOps
@@ -199,6 +202,41 @@ object StructTests extends TestSuite {
         rw(Left(10 seconds): Either[Duration, Option[Duration]], """[0,"10000000000"]""")
         rw(Right(Some(0.33 millis)): Either[Duration, Option[Duration]], """[1,"330000"]""")
         rw(Right(None): Either[Duration, Option[Duration]], """[1,null]""")
+      }
+    }
+
+    test("writeBytesTo"){
+      test("json") {
+        type Thing = Seq[List[Map[Option[String], String]]]
+        val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
+        val out = new ByteArrayOutputStream()
+        WeePickle.stream(thing).writeBytesTo(out)
+        out.toByteArray ==> WeePickle.write(thing).getBytes
+      }
+      test("msgpack") {
+        type Thing = Seq[List[Map[Option[String], String]]]
+        val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
+        val out = new ByteArrayOutputStream()
+        WeePickle.streamBinary(thing).writeBytesTo(out)
+        out.toByteArray ==> WeePickle.writeMsgPack(thing)
+      }
+    }
+
+    test("transmutation"){
+      test("vectorToList"){
+        val vectorToList = WeePickle.read[List[Double]](WeePickle.write(Vector(1.1, 2.2, 3.3)))
+        assert(
+          vectorToList.isInstanceOf[List[Double]],
+          vectorToList == List(1.1, 2.2, 3.3)
+        )
+
+      }
+      test("listToMap"){
+        val listToMap = WeePickle.read[Map[Int, String]](WeePickle.write(List((1, "1"), (2, "2"))))
+        assert(
+          listToMap.isInstanceOf[Map[Int, String]],
+          listToMap == Map(1 -> "1", 2 -> "2")
+        )
       }
     }
 

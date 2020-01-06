@@ -47,7 +47,7 @@ object Main{
     implicit def rw8: RW[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     implicit def rw9: RW[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     bench[String](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.web.read[Data],
+      com.rallyhealth.weepickle.v0.WeePickle.web.read[Seq[Data]],
       com.rallyhealth.weepickle.v0.WeePickle.web.write(_)
     )
   }
@@ -63,7 +63,7 @@ object Main{
     implicit lazy val rw8: RW[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     implicit lazy val rw9: RW[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
     bench[String](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.web.read[Data],
+      com.rallyhealth.weepickle.v0.WeePickle.web.read[Seq[Data]],
       com.rallyhealth.weepickle.v0.WeePickle.web.write(_)
     )
   }

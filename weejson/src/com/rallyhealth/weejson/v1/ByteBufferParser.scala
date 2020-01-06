@@ -2,7 +2,7 @@ package com.rallyhealth.weejson.v0
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-import com.rallyhealth.weepickle.v0.core.{ObjArrVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.Visitor
 
 /**
  * Basic ByteBuffer parser.
@@ -14,7 +14,7 @@ import com.rallyhealth.weepickle.v0.core.{ObjArrVisitor, Visitor}
  * The parser makes absolute calls to the ByteBuffer, which will not
  * update its own mutable position fields.
  */
-final class ByteBufferParser[J](src: ByteBuffer) extends SyncParser[J] with ByteBasedParser[J] {
+final class ByteBufferParser[J](src: ByteBuffer) extends Parser[J] with ByteBasedParser[J] {
   private[this] final val start = src.position()
   private[this] final val limit = src.limit() - start
 
@@ -24,13 +24,12 @@ final class ByteBufferParser[J](src: ByteBuffer) extends SyncParser[J] with Byte
   protected[this] final def newline(i: Int) = { lineState += 1 }
   protected[this] final def column(i: Int) = i
 
-  protected[this] final def close() = { src.position(src.limit) }
-  protected[this] final def reset(i: Int): Int = i
-  protected[this] final def checkpoint(state: Int, i: Int, stack: List[ObjArrVisitor[_, J]], path: List[Any]) = {}
+  protected[this] final def close() { src.position(src.limit) }
+  protected[this] final def dropBufferUntil(i: Int): Unit = ()
   protected[this] final def byte(i: Int): Byte = src.get(i + start)
-  protected[this] final def at(i: Int): Char = src.get(i + start).toChar
+  protected[this] final def char(i: Int): Char = src.get(i + start).toChar
 
-  protected[this] final def at(i: Int, k: Int): CharSequence = {
+  protected[this] final def sliceString(i: Int, k: Int): CharSequence = {
     val len = k - i
     val arr = new Array[Byte](len)
     src.position(i + start)

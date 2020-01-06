@@ -84,7 +84,7 @@ trait CommonJsModule extends CommonPublishModule with ScalaJSModule{
     if (isScalaOld())
       "0.6.25"
     else
-      "0.6.28"
+      "0.6.31"
   }
   def millSourcePath = super.millSourcePath / os.up
   trait Tests extends super.Tests with CommonTestModule{
@@ -340,7 +340,7 @@ trait BenchModule extends CommonModule {
 
 object bench extends Module {
   object js extends BenchModule with ScalaJSModule {
-    def scalaJSVersion = "0.6.28"
+    def scalaJSVersion = "0.6.31"
     def platformSegment = "js"
     def moduleDeps = Seq(weepickle.js("2.13.0").test)
     def run(args: String*) = T.command {

@@ -82,6 +82,15 @@ object JsonTests extends TestSuite {
       }
       (parsed(19), reparsed(19))
     }
+    test("inputs"){
+      val unparsed = WeeJson.write(parsed)
+      val fromString = WeeJson.read(unparsed)
+      val fromBytes = WeeJson.read(unparsed.getBytes)
+      val fromInputStream = WeeJson.read(new java.io.ByteArrayInputStream(unparsed.getBytes))
+
+      assert(fromString == fromBytes)
+      assert(fromBytes == fromInputStream)
+    }
     test("shortcuts"){
       test("positive"){
         WeeJson.read("[1]").arr        ==> Seq(Num(1))
@@ -95,6 +104,13 @@ object JsonTests extends TestSuite {
         intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("\"1\"").obj}
 
       }
+    }
+    test("writeBytesTo"){
+      val out = new java.io.ByteArrayOutputStream()
+      parsed.writeBytesTo(out)
+      val s = new String(out.toByteArray)
+      val parsedAgain = WeeJson.read(s)
+      assert(parsed == parsedAgain)
     }
   }
 }

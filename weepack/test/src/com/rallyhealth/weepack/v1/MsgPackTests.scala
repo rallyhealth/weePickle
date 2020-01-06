@@ -1,9 +1,10 @@
 package com.rallyhealth.weepack.v0
-import java.io.ByteArrayOutputStream
 
 import com.rallyhealth.weejson.v0.WeeJson
 import com.rallyhealth.weepickle.v0.core.Util
+import com.rallyhealth.weepickle.v0.geny.ReadableAsBytes
 import utest._
+
 object MsgPackTests extends TestSuite{
   val tests = Tests{
     test("hello"){
@@ -29,12 +30,16 @@ object MsgPackTests extends TestSuite{
         assert(jsonified == expectedJson)
 
         val msg = WeePack.read(packed)
+        val msg2 = WeePack.read(packed: ReadableAsBytes)
 
         val rewrittenBytes = WeePack.write(msg)
+        val rewrittenBytes2 = WeePack.write(msg2)
         val rewritten = Util.bytesToString(rewrittenBytes)
+        val rewritten2 = Util.bytesToString(rewrittenBytes2)
         val possibilities = testCase("msgpack").arr.map(_.str)
 
         assert(possibilities.contains(rewritten))
+        assert(possibilities.contains(rewritten2))
       }
     }
   }
