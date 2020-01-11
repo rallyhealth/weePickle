@@ -147,3 +147,17 @@ with `@discriminator` annotations on the sealed parent type:
 `Reader` + `Writer` = `ReaderWriter` (not `ReadWriter`)
 
 Two people independently asked me why their code wasn't working because they expected a class named `ReaderWriter`, so that's the name now.
+
+## weejson.Num(Double) => weejson.Num(BigDecimal) 
+ujson's `case class Num(value: Double)` has been replaced with `case class Num(value: BigDecimal)`. This makes it capable of representing 64-bit whole numbers (particularly from external APIs) without precision loss.
+
+The primary consequence is how javascript consumers are treated. Javascript has only one number type, 64-bit floating point numbers. Seriously, put this in your chrome console:
+
+```
+Math.pow(2, 53) === (Math.pow(2, 53) + 1)
+> true
+```
+
+In particular, this can become an issue when handling 64-bit `scala.Long` numbers. Nobody likes silent data loss, but encoding fields as numbers sometimes, but strings other times isn't great either.
+
+Varying the encoding of a single field based on concrete number types, e.g. `{"foo": 1}` but `{"foo", "18014398509481984"}` is too surprising to do at the library level by default, since it requires special handling by the browser. Varying the encoding based on concrete values increases the likelihood of programming errors. For example, the js code `body.foo + 666` verified against the first case, would incorrectly return "18014398509481984666" for the second case. It is more straightforward to *always* encode values that can contain large values as strings consistently and declare it as such in your json schema.

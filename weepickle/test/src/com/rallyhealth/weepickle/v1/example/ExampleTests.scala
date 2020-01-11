@@ -143,7 +143,7 @@ object ExampleTests extends TestSuite {
         write(12: Long)                   ==> "12"
         write(4000000000000L: Long)       ==> "4000000000000"
         // large longs are written as strings, to avoid floating point rounding
-        write(9223372036854775807L: Long) ==> "\"9223372036854775807\""
+        write(9223372036854775807L: Long) ==> "9223372036854775807"
       }
       test("specialNumbers"){
         write(1.0/0: Double)              ==> "\"Infinity\""
@@ -337,7 +337,7 @@ object ExampleTests extends TestSuite {
 
       test("stringLongs"){
         com.rallyhealth.weepickle.v0.WeePickle.write(123: Long) ==> "123"
-        com.rallyhealth.weepickle.v0.WeePickle.write(Long.MaxValue) ==> "\"9223372036854775807\""
+        com.rallyhealth.weepickle.v0.WeePickle.write(Long.MaxValue) ==> "9223372036854775807"
 
         object StringLongs extends com.rallyhealth.weepickle.v0.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {

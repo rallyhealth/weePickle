@@ -1,6 +1,6 @@
 package com.rallyhealth.weejson.v0
 
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.Visitor
 
 /**
   * A [[Visitor]] specialized to work with JSON types. Forwards the
@@ -13,18 +13,18 @@ trait JsVisitor[-T, +J] extends Visitor[T, J]{
     else visitFloat64String(d.toString, index)
 
   }
-
-  def visitFloat32(d: Float, index: Int): J = visitFloat64(d, index)
-  def visitInt32(i: Int, index: Int): J = visitFloat64(i, index)
+  def visitFloat32(d: Float, index: Int): J = {
+    visitFloat64(d, index)
+  }
+  def visitInt32(i: Int, index: Int): J = {
+    visitInt64(i, index)
+  }
   def visitInt64(i: Long, index: Int): J = {
-    if (math.abs(i) > math.pow(2, 53) || i == -9223372036854775808L) visitString(i.toString, index)
-    else visitFloat64(i, index)
+    visitFloat64StringParts(i.toString, -1, -1, index)
   }
   def visitUInt64(i: Long, index: Int): J = {
-    if (i > math.pow(2, 53) || i < 0) visitString(java.lang.Long.toUnsignedString(i), index)
-    else visitFloat64(i, index)
+    visitFloat64StringParts(java.lang.Long.toUnsignedString(i), -1, -1, index)
   }
-
   def visitFloat64String(s: String, index: Int): J = {
     visitFloat64StringParts(
       s,

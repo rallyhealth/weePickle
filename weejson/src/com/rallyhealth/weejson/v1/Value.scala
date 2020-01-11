@@ -1,6 +1,6 @@
 package com.rallyhealth.weejson.v0
 
-import com.rallyhealth.weepickle.v0.core.{Util, Visitor}
+import com.rallyhealth.weepickle.v0.core.Visitor
 import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
 
 import scala.collection.compat._
@@ -16,7 +16,7 @@ sealed trait Value extends Readable with WritableAsBytes{
     */
   def str: String = this match{
     case Str(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Str")
+    case _ => throw Value.InvalidData(this, "Expected Str")
   }
 
   /**
@@ -33,7 +33,7 @@ sealed trait Value extends Readable with WritableAsBytes{
     */
   def obj: mutable.Map[String, Value] = this match{
     case Obj(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Obj")
+    case _ => throw Value.InvalidData(this, "Expected Obj")
   }
   /**
     * Returns an Optional key/value map of this [[Value]] in case this [[Value]] is a 'Obj'.
@@ -48,7 +48,7 @@ sealed trait Value extends Readable with WritableAsBytes{
     */
   def arr: ArrayBuffer[Value] = this match{
     case Arr(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Arr")
+    case _ => throw Value.InvalidData(this, "Expected Arr")
   }
   /**
     * Returns The optional elements of this [[Value]] in case this [[Value]] is a 'Arr'.
@@ -58,17 +58,17 @@ sealed trait Value extends Readable with WritableAsBytes{
     case _ => None
   }
   /**
-    * Returns the `Double` value of this [[Value]], fails if it is not
+    * Returns the `BigDecimal` value of this [[Value]], fails if it is not
     * a [[Num]]
     */
-  def num: Double = this match{
+  def num: BigDecimal = this match{
     case Num(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Num")
+    case _ => throw Value.InvalidData(this, "Expected Num")
   }
   /**
-    * Returns an Option[Double] in case this [[Value]] is a 'Num'.
+    * Returns an Option[BigDecimal] in case this [[Value]] is a 'Num'.
     */
-  def numOpt: Option[Double] = this match{
+  def numOpt: Option[BigDecimal] = this match{
     case Num(value) => Some(value)
     case _ => None
   }
@@ -78,7 +78,7 @@ sealed trait Value extends Readable with WritableAsBytes{
     */
   def bool = this match{
     case Bool(value) => value
-    case _ => throw Value.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Bool")
+    case _ => throw Value.InvalidData(this, "Expected Bool")
   }
   /**
     * Returns an Optional `Boolean` value of this [[Value]] in case this [[Value]] is a 'Bool'.
@@ -88,7 +88,7 @@ sealed trait Value extends Readable with WritableAsBytes{
     case _ => None
   }
   /**
-    * Returns true if the value of this [[Value]] is com.rallyhealth.weejson.v0.Null, false otherwise
+    * Returns true if the value of this [[Value]] is Null, false otherwise
     */
   def isNull: Boolean = this match {
     case Null => true
@@ -105,7 +105,7 @@ sealed trait Value extends Readable with WritableAsBytes{
     * We cannot just overload `update` on `s: Int` and `s: String` because
     * of type inference problems in Scala 2.11.
     */
-  def update(s: Value.Selector, f: Value => Value): Unit = s(this) = f(s(this))
+  def update[V](s: Value.Selector, f: Value => V)(implicit v: V => Value): Unit = s(this) = v(f(s(this)))
 
   def transform[T](f: Visitor[_, T]): T = Value.transform(this, f)
   override def toString = render()
@@ -147,12 +147,13 @@ object Value extends AstTransformer[Value]{
   implicit def JsonableDict[T](items: TraversableOnce[(String, T)])
                               (implicit f: T => Value): Obj = Obj.from(items.map(x => (x._1, f(x._2))))
   implicit def JsonableBoolean(i: Boolean): Bool = if (i) True else False
-  implicit def JsonableByte(i: Byte): Num = Num(i)
-  implicit def JsonableShort(i: Short): Num = Num(i)
+  implicit def JsonableByte(i: Byte): Num = Num(BigDecimal(i))
+  implicit def JsonableShort(i: Short): Num = Num(BigDecimal(i))
   implicit def JsonableInt(i: Int): Num = Num(i)
-  implicit def JsonableLong(i: Long): Str = Str(i.toString)
-  implicit def JsonableFloat(i: Float): Num = Num(i)
+  implicit def JsonableLong(i: Long): Num = Num(i)
+  implicit def JsonableFloat(i: Float): Num = Num(BigDecimal.decimal(i))
   implicit def JsonableDouble(i: Double): Num = Num(i)
+  implicit def JsonableBigDecimal(i: BigDecimal): Num = Num(i)
   implicit def JsonableNull(i: Null): Null.type = Null
   implicit def JsonableString(s: CharSequence): Str = Str(s.toString)
 
@@ -163,7 +164,11 @@ object Value extends AstTransformer[Value]{
       case True => f.visitTrue(-1)
       case False => f.visitFalse(-1)
       case Str(s) => f.visitString(s, -1)
-      case Num(d) => f.visitFloat64(d, -1)
+      case Num(d) =>
+        // precision sensitive
+        if (d.isValidLong) f.visitInt64(d.longValue, -1)
+        else if (d.isDecimalDouble) f.visitFloat64(d.doubleValue, -1)
+        else f.visitFloat64String(d.toString, -1)
       case Arr(items) => transformArray(f, items)
       case Obj(items) => transformObject(f, items)
     }
@@ -179,15 +184,15 @@ object Value extends AstTransformer[Value]{
 
   def visitTrue(index: Int) = True
 
-
   override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int): Num = {
-    Num(
-      if (decIndex != -1 || expIndex != -1) s.toString.toDouble
-      else Util.parseIntegralNum(s, decIndex, expIndex, index)
-    )
+    Num(BigDecimal(s.toString))
   }
 
-  override def visitFloat64(d: Double, index: Int): Num = Num(d)
+  override def visitInt32(i: Int, index: Int): Value =  Num(BigDecimal(i))
+
+  override def visitInt64(i: Long, index: Int): Value = Num(BigDecimal(i))
+
+  override def visitFloat64(d: Double, index: Int): Value = Num(BigDecimal(d))
 
   def visitString(s: CharSequence, index: Int) = Str(s.toString)
 
@@ -232,7 +237,7 @@ object Arr{
 
   def apply(items: Value*): Arr = new Arr(items.to(mutable.ArrayBuffer))
 }
-case class Num(value: Double) extends Value
+case class Num(value: BigDecimal) extends Value
 sealed abstract class Bool extends Value{
   def value: Boolean
 }

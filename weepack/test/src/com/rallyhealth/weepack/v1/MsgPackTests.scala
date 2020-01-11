@@ -1,6 +1,6 @@
 package com.rallyhealth.weepack.v0
 
-import com.rallyhealth.weejson.v0.WeeJson
+import com.rallyhealth.weejson.v0._
 import com.rallyhealth.weepickle.v0.core.Util
 import com.rallyhealth.weepickle.v0.geny.ReadableAsBytes
 import utest._
@@ -356,32 +356,32 @@ object MsgPackTests extends TestSuite{
           ]
         },
         {
-          "bignum": "9223372036854775807",
+          "bignum": 9223372036854775807,
           "msgpack": [
             "d3-7f-ff-ff-ff-ff-ff-ff-ff",
             "cf-7f-ff-ff-ff-ff-ff-ff-ff"
           ]
         },
         {
-          "bignum": "-9223372036854775807",
+          "bignum": -9223372036854775807,
           "msgpack": [
             "d3-80-00-00-00-00-00-00-01"
           ]
         },
         {
-          "bignum": "9223372036854775808",
+          "bignum": 9223372036854775808,
           "msgpack": [
             "cf-80-00-00-00-00-00-00-00"
           ]
         },
         {
-          "bignum": "-9223372036854775808",
+          "bignum": -9223372036854775808,
           "msgpack": [
             "d3-80-00-00-00-00-00-00-00"
           ]
         },
         {
-          "bignum": "18446744073709551615",
+          "bignum": 18446744073709551615,
           "msgpack": [
             "cf-ff-ff-ff-ff-ff-ff-ff-ff"
           ]
