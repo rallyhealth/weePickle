@@ -1,4 +1,5 @@
 package com.rallyhealth.weepickle.v0.core
+import java.time.Instant
 
 /**
   * NoOpVisitor discards all JSON AST information.
@@ -55,4 +56,6 @@ class NoOpVisitor[J](returnValue: J) extends Visitor[Any, J] {
   def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = returnValue
 
   def visitChar(s: Char, index: Int) = returnValue
+
+  def visitTimestamp(instant: Instant, index: Int): J = returnValue
 }

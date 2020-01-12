@@ -1,5 +1,8 @@
 package com.rallyhealth.weejson.v0
 
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+
 import com.rallyhealth.weepickle.v0.core.Visitor
 
 /**
@@ -57,4 +60,8 @@ trait JsVisitor[-T, +J] extends Visitor[T, J]{
   }
 
   def visitChar(s: Char, index: Int) = visitString(s.toString, index)
+
+  def visitTimestamp(instant: Instant, index: Int): J = {
+    visitString(DateTimeFormatter.ISO_INSTANT.format(instant), index)
+  }
 }

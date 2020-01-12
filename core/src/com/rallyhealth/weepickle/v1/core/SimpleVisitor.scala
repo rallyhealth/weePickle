@@ -1,4 +1,5 @@
 package com.rallyhealth.weepickle.v0.core
+import java.time.Instant
 
 /**
   * A visitor that throws an error for all the visit methods which it does not define,
@@ -41,4 +42,6 @@ trait SimpleVisitor[-T, +V] extends Visitor[T, V] {
   def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int): V = throw Abort(expectedMsg + " got binary")
 
   def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int): V = throw Abort(expectedMsg + " got ext")
+
+  def visitTimestamp(instant: Instant, index: Int): V = throw Abort(expectedMsg + " got timestamp")
 }

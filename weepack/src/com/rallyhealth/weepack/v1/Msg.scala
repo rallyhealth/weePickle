@@ -1,5 +1,8 @@
 package com.rallyhealth.weepack.v0
 
+import java.io.ByteArrayOutputStream
+import java.time.Instant
+
 import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
 import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
 
@@ -243,4 +246,14 @@ object Msg extends MsgVisitor[Msg, Msg]{
 
   def visitChar(s: Char, index: Int) = Int32(s)
 
+  override def visitTimestamp(instant: Instant, index: Int): Msg = {
+    // DRY, but unoptimized.
+    val writer = new MsgPackWriter(new ByteArrayOutputStream(15))
+    val baos = writer.visitTimestamp(instant, index)
+    val arr = baos.toByteArray
+    arr(1) match {
+      case -1 => visitExt(-1, arr, 2, baos.size() - 2, index)
+      case 12 => visitExt(-1, arr, 3, 12, index)
+    }
+  }
 }

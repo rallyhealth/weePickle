@@ -1,5 +1,7 @@
 package com.rallyhealth.weepack.v0
 
+import java.time.Instant
+
 import com.rallyhealth.weejson.v0._
 import com.rallyhealth.weepickle.v0.core.Util
 import com.rallyhealth.weepickle.v0.geny.ReadableAsBytes
@@ -10,8 +12,6 @@ object MsgPackTests extends TestSuite{
     test("hello"){
       for{
         (k, v) <- unitCases.obj
-        if k != "50.timestamp.yaml"
-
         testCase <- v.arr
         packed0 <- testCase("msgpack").arr
       }{
@@ -25,6 +25,9 @@ object MsgPackTests extends TestSuite{
         val jsonified = tag match{
           case "binary" => com.rallyhealth.weejson.v0.Str(Util.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
           case "ext" => com.rallyhealth.weejson.v0.Arr(jsonified0(0), com.rallyhealth.weejson.v0.Str(Util.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray)))
+          case "timestamp" =>
+            val instant = Instant.parse(jsonified0.str)
+            com.rallyhealth.weejson.v0.Arr(instant.getEpochSecond, instant.getNano)
           case _ => jsonified0
         }
         assert(jsonified == expectedJson)

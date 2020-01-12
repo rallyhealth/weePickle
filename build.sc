@@ -99,7 +99,8 @@ object core extends Module {
   class CoreJsModule(val crossScalaVersion: String) extends CommonJsModule {
     def artifactName = shade("weepickle-core")
     def ivyDeps = Agg(
-      ivy"org.scala-lang.modules::scala-collection-compat::2.1.2"
+      ivy"org.scala-lang.modules::scala-collection-compat::2.1.2",
+      ivy"io.github.cquiroz::scala-java-time::2.0.0-RC3", // for java.time.Instant
     )
 
     object test extends Tests

@@ -1,4 +1,6 @@
 package com.rallyhealth.weepack.v0
+import java.time.Instant
+
 import com.rallyhealth.weepickle.v0.core.Visitor
 import com.rallyhealth.weepack.v0.{MsgPackKeys => MPK}
 
@@ -99,9 +101,60 @@ abstract class BaseMsgPackReader{
         } else ???
     }
   }
+
   def parseExt[T](n: Int, visitor: Visitor[_, T]) = {
-    val (arr, i, j) = sliceBytes(index + 1, n)
-    visitor.visitExt(byte(index), arr, i, j, index)
+    val extType = byte(index)
+    incrementIndex(1)
+    extType match {
+      case -1 if n == 4 =>
+
+        /**
+          * timestamp 32 stores the number of seconds that have elapsed since 1970-01-01 00:00:00 UTC
+          * in an 32-bit unsigned integer:
+          * +--------+--------+--------+--------+--------+--------+
+          * |  0xd6  |   -1   |   seconds in 32-bit unsigned int  |
+          * +--------+--------+--------+--------+--------+--------+
+          */
+        val seconds = Integer.toUnsignedLong(parseUInt32(index))
+        val instant = Instant.ofEpochSecond(seconds)
+        visitor.visitTimestamp(instant, index)
+
+      case -1 if n == 8 =>
+
+        /**
+          * timestamp 64 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
+          * in 32-bit unsigned integers:
+          * +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+          * |  0xd7  |   -1   |nanoseconds in 30-bit unsigned int |  seconds in 34-bit unsigned int   |
+          * +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+          */
+        val nano30seconds34 = parseUInt64(index)
+        val nanos = nano30seconds34 >>> 34
+        val seconds = nano30seconds34 & 0x03ffffffffL
+        val instant = Instant.ofEpochSecond(seconds, nanos)
+        visitor.visitTimestamp(instant, index)
+
+      case -1 if n == 12 =>
+
+        /**
+          * timestamp 96 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
+          * in 64-bit signed integer and 32-bit unsigned integer:
+          * +--------+--------+--------+--------+--------+--------+--------+
+          * |  0xc7  |   12   |   -1   |nanoseconds in 32-bit unsigned int |
+          * +--------+--------+--------+--------+--------+--------+--------+
+          * +--------+--------+--------+--------+--------+--------+--------+--------+
+          * seconds in 64-bit signed int                        |
+          * +--------+--------+--------+--------+--------+--------+--------+--------+
+          */
+        val nanos = parseUInt32(index)
+        val seconds = parseUInt64(index)
+        val instant = Instant.ofEpochSecond(seconds, nanos)
+        visitor.visitTimestamp(instant, index)
+
+      case _ =>
+        val (arr, i, j) = sliceBytes(index, n)
+        visitor.visitExt(extType, arr, i, j, index)
+    }
   }
 
   def parseStr[T](n: Int, visitor: Visitor[_, T]) = {

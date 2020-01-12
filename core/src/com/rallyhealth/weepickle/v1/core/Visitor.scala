@@ -1,5 +1,7 @@
 package com.rallyhealth.weepickle.v0.core
 
+import java.time.Instant
+
 /**
   * Standard set of hooks weepickle uses to traverse over a structured data.
   * A superset of the JSON, MessagePack, and Scala object  hierarchies, since
@@ -99,6 +101,8 @@ trait Visitor[-T, +J] {
 
   def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int): J
 
+  def visitTimestamp(instant: Instant, index: Int): J
+
   def map[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReader[T, J, Z](Visitor.this){
     def mapNonNullsFunction(v: J): Z = f(v)
   }
@@ -178,6 +182,7 @@ object Visitor{
     override def visitChar(s: Char, index: Int) = delegatedReader.visitChar(s, index)
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = delegatedReader.visitBinary(bytes, offset, len, index)
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = delegatedReader.visitExt(tag, bytes, offset, len, index)
+    override def visitTimestamp(instant: Instant, index: Int): J = delegatedReader.visitTimestamp(instant, index)
   }
 
   class ArrDelegate[T, J](protected val arrVisitor: ArrVisitor[T, J]) extends ArrVisitor[T, J] {
@@ -242,6 +247,7 @@ object Visitor{
     override def visitChar(s: Char, index: Int) = mapFunction(delegatedReader.visitChar(s, index))
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = mapFunction(delegatedReader.visitBinary(bytes, offset, len, index))
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = mapFunction(delegatedReader.visitExt(tag, bytes, offset, len, index))
+    override def visitTimestamp(instant: Instant, index: Int): Z = mapFunction(delegatedReader.visitTimestamp(instant, index))
   }
 
 

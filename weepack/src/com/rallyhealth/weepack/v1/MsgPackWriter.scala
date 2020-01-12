@@ -1,7 +1,10 @@
 package com.rallyhealth.weepack.v0
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
+import com.rallyhealth.weepack.v0.Msg.visitString
 import com.rallyhealth.weepack.v0.{MsgPackKeys => MPK}
 import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
 class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream())
@@ -208,6 +211,55 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
   def visitChar(s: Char, index: Int) = {
     out.write(MPK.UInt16)
     writeUInt16(s)
+    out
+  }
+
+  override def visitTimestamp(instant: Instant, index: Int): T = {
+    val seconds: Long = instant.getEpochSecond
+    val nanos: Int = instant.getNano
+    if (nanos == 0 && (seconds & 0xffffffff00000000L) == 0L) {
+      /**
+        * timestamp 32 stores the number of seconds that have elapsed since 1970-01-01 00:00:00 UTC
+        * in an 32-bit unsigned integer:
+        * +--------+--------+--------+--------+--------+--------+
+        * |  0xd6  |   -1   |   seconds in 32-bit unsigned int  |
+        * +--------+--------+--------+--------+--------+--------+
+        */
+      writeUInt8(MPK.FixExt4)
+      out.write(-1)
+      writeUInt32(seconds.toInt)
+    } else {
+      val seconds34 = seconds & ((1L << 34) - 1)
+      if (seconds34 == seconds) {
+        /**
+          * timestamp 64 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
+          * in 32-bit unsigned integers:
+          * +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+          * |  0xd7  |   -1   |nanoseconds in 30-bit unsigned int |  seconds in 34-bit unsigned int   |
+          * +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+          */
+        val nano30secs34 = (nanos.toLong << 34) | seconds34
+        writeUInt8(MPK.FixExt8)
+        out.write(-1)
+        writeUInt64(nano30secs34)
+      } else {
+        /**
+          * timestamp 96 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
+          * in 64-bit signed integer and 32-bit unsigned integer:
+          * +--------+--------+--------+--------+--------+--------+--------+
+          * |  0xc7  |   12   |   -1   |nanoseconds in 32-bit unsigned int |
+          * +--------+--------+--------+--------+--------+--------+--------+
+          * +--------+--------+--------+--------+--------+--------+--------+--------+
+          * seconds in 64-bit signed int                        |
+          * +--------+--------+--------+--------+--------+--------+--------+--------+
+          */
+        writeUInt8(MPK.Ext8)
+        out.write(12)
+        out.write(-1)
+        writeUInt32(nanos)
+        writeUInt64(seconds) // correct even though signed
+      }
+    }
     out
   }
 }
