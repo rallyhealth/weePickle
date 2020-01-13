@@ -209,15 +209,15 @@ object weepack extends Module {
 object weejson extends Module{
   trait JsonModule extends CommonPublishModule{
     def artifactName = shade("weejson")
-    trait JawnTestModule extends CommonTestModule{
-      def ivyDeps = T{
-        Agg(
-          ivy"org.scalatest::scalatest::3.0.8",
-          ivy"org.scalacheck::scalacheck::1.14.1"
-        )
-      }
-      def testFrameworks = Seq("org.scalatest.tools.Framework")
+  }
+  trait JawnTestModule extends CommonTestModule{
+    def ivyDeps = T{
+      Agg(
+        ivy"org.scalatest::scalatest::3.0.8",
+        ivy"org.scalacheck::scalacheck::1.14.1"
+      )
     }
+    def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 
   object js extends Cross[JsModule](scalaVersions: _*)
@@ -279,6 +279,22 @@ object weejson extends Module{
       )
     }
   }
+
+  object jackson extends Cross[JacksonModule](scalaVersions:_*)
+  class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
+    object test extends Tests with JawnTestModule {
+      def platformSegment = "jvm"
+    }
+
+    def artifactName = shade("weejson-jackson")
+    def platformSegment = "jvm"
+    def moduleDeps = Seq(weejson.jvm())
+    def ivyDeps = T{
+      Agg(
+        ivy"com.fasterxml.jackson.core:jackson-core:2.10.2"
+      )
+    }
+  }
 }
 
 trait weepickleModule extends CommonPublishModule{
@@ -309,6 +325,7 @@ object weepickle extends Module{
           weejson.circe(),
           weejson.json4s(),
           weejson.play(),
+          weejson.jackson(),
           core.jvm().test
         )
       }
@@ -326,7 +343,7 @@ object weepickle extends Module{
 }
 
 trait BenchModule extends CommonModule {
-  def scalaVersion = "2.13.0"
+  def scalaVersion = "2.12.8"
   def millSourcePath = build.millSourcePath / "bench"
   def ivyDeps = Agg(
     ivy"io.circe::circe-core::0.12.1",
@@ -343,7 +360,7 @@ object bench extends Module {
   object js extends BenchModule with ScalaJSModule {
     def scalaJSVersion = "0.6.31"
     def platformSegment = "js"
-    def moduleDeps = Seq(weepickle.js("2.13.0").test)
+    def moduleDeps = Seq(weepickle.js("2.12.8").test)
     def run(args: String*) = T.command {
       finalMainClassOpt() match{
         case Left(err) => mill.eval.Result.Failure(err)
@@ -360,7 +377,7 @@ object bench extends Module {
 
   object jvm extends BenchModule with Jmh{
     def platformSegment = "jvm"
-    def moduleDeps = Seq(weepickle.jvm("2.13.0").test)
+    def moduleDeps = Seq(weepickle.jvm("2.12.8").test)
     def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",

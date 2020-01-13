@@ -8,11 +8,6 @@ mill mill.scalalib.GenIdea/idea
 echo "Removing:"
 rm -fv .idea_modules/*.js-* .idea_modules/*.js.* .idea_modules/*-2.11* .idea_modules/*-2.13*
 
-# bench: IntelliJ can't figure out that bench/compile needs to depend on weepickle/test.
-# Removing it for now.
-rm -rv .idea_modules/bench.jvm.iml
-sed -e '/.*bench.*/d' -i '' .idea/modules.xml
-
 sed -e '/.*\.js-.*/d' -i '' .idea/modules.xml
 sed -e '/.*\.js.iml*/d' -i '' .idea/modules.xml
 sed -e '/.*-2.11.*/d' -i '' .idea/modules.xml
