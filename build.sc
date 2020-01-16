@@ -237,11 +237,16 @@ object weejson extends Module{
       shade(name)
     }
     def platformSegment = "jvm"
-    def moduleDeps = Seq(weejson.jvm())
+    def moduleDeps = Seq(weepickle.jvm())
     def ivyDeps = T{
       Agg(
         ivy"com.typesafe.play::play-json:${playVersion()}"
       )
+    }
+
+    object test extends Tests with CommonModule with ScalaTestModule {
+      def moduleDeps = super.moduleDeps
+      def platformSegment = "jvm"
     }
   }
 

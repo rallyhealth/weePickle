@@ -1,8 +1,8 @@
 package com.rallyhealth.weejson.v1.play
 
-
 import play.api.libs.json._
 import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.WeePickle._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -30,4 +30,11 @@ object PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
   }
 
   def visitString(s: CharSequence, index: Int) = JsString(s.toString)
+
+  implicit val JsValueWriter: Writer[JsValue] = new Writer[JsValue] {
+    def write0[R](out: Visitor[_, R], v: JsValue): R = PlayJson.transform(v, out)
+  }
+
+  implicit val JsValueReader: Reader[JsValue] = new Reader.Delegate[JsValue, JsValue](this)
+
 }
