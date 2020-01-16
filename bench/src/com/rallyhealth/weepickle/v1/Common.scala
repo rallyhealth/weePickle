@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 
 import java.nio.charset.StandardCharsets.UTF_8
 
@@ -21,9 +21,9 @@ object Common{
     ADTc(i = 1234567890, s = "i am a strange loop"),
     ADT0()
   ))
-  val benchmarkSampleJson = com.rallyhealth.weepickle.v0.WeePickle.write(benchmarkSampleData)
+  val benchmarkSampleJson = com.rallyhealth.weepickle.v1.WeePickle.write(benchmarkSampleData)
   val benchmarkSampleJsonBytes = benchmarkSampleJson.getBytes(UTF_8)
-  val benchmarkSampleMsgPack = com.rallyhealth.weepickle.v0.WeePickle.writeMsgPack(benchmarkSampleData)
+  val benchmarkSampleMsgPack = com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(benchmarkSampleData)
 
 //  println("benchmarkSampleJson " + benchmarkSampleJson.size + " bytes")
 //  println("benchmarkSampleMsgPack " + benchmarkSampleMsgPack.size + " bytes")
@@ -89,16 +89,16 @@ object Common{
   def weepickleDefault(duration: Int) = {
 
     bench[String](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.read[Seq[Data]](_),
-      com.rallyhealth.weepickle.v0.WeePickle.write(_)
+      com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](_),
+      com.rallyhealth.weepickle.v1.WeePickle.write(_)
     )
   }
 
   def weepickleBinaryDefault(duration: Int) = {
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.readMsgPack[Seq[Data]](_),
-      com.rallyhealth.weepickle.v0.WeePickle.writeMsgPack(_)
+      com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Seq[Data]](_),
+      com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(_)
     )
   }
 
@@ -182,89 +182,89 @@ object Common{
   }
 
   def weepickleDefaultCached(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw3: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw4: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw5: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw6: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw7: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw8: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw9: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[String](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.read[Seq[Data]](_),
-      com.rallyhealth.weepickle.v0.WeePickle.write(_)
+      com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](_),
+      com.rallyhealth.weepickle.v1.WeePickle.write(_)
     )
   }
   def weepickleDefaultCachedByteArray(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw3: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw4: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw5: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw6: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw7: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw8: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw9: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.read[Seq[Data]](_),
-      com.rallyhealth.weepickle.v0.WeePickle.write(_).getBytes
+      com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](_),
+      com.rallyhealth.weepickle.v1.WeePickle.write(_).getBytes
     )
   }
   def weepickleDefaultCachedReadable(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw3: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw4: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw5: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw6: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw7: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw8: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw9: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[String](duration)(
-      x => com.rallyhealth.weepickle.v0.WeePickle.read[Seq[Data]](x: com.rallyhealth.weepickle.v0.geny.ReadableAsBytes),
-      com.rallyhealth.weepickle.v0.WeePickle.write(_)
+      x => com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](x: com.rallyhealth.weepickle.v1.geny.ReadableAsBytes),
+      com.rallyhealth.weepickle.v1.WeePickle.write(_)
     )
   }
 
   def weepickleDefaultCachedReadablePath(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw3: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw4: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw5: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw6: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw7: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw8: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw9: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[java.nio.file.Path](duration)(
-      file => com.rallyhealth.weepickle.v0.WeePickle.read[Seq[Data]](java.nio.file.Files.newInputStream(file): com.rallyhealth.weepickle.v0.geny.ReadableAsBytes),
+      file => com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](java.nio.file.Files.newInputStream(file): com.rallyhealth.weepickle.v1.geny.ReadableAsBytes),
       data => java.nio.file.Files.write(
         java.nio.file.Files.createTempFile("temp", ".json"),
-        com.rallyhealth.weepickle.v0.WeePickle.write(data).getBytes
+        com.rallyhealth.weepickle.v1.WeePickle.write(data).getBytes
       ),
       checkEqual = false
     )
   }
 
   def weepickleDefaultBinaryCached(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw2: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw3: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw4: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw5: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw6: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw7: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw8: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
-    implicit lazy val rw9: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.weepickle.v0.WeePickle.readMsgPack[Seq[Data]](_),
-      com.rallyhealth.weepickle.v0.WeePickle.writeMsgPack(_)
+      com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Seq[Data]](_),
+      com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(_)
     )
   }
 

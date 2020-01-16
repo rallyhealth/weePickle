@@ -1,27 +1,27 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 import utest._
 import acyclic.file
-import com.rallyhealth.weepickle.v0.TestUtil.rw
+import com.rallyhealth.weepickle.v1.TestUtil.rw
 
 object shared {
   object that {
     import common.Message
     case class That(common: Message)
     object That{
-      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[That] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[That] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
     }
   }
   object other {
     import common.Message
     case class Other(common: Message)
     object Other{
-      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Other] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Other] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
     }
   }
   object common {
     case class Message(content: String)
     object Message{
-      implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Message] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Message] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
     }
   }
 }
@@ -30,35 +30,35 @@ object All {
   import shared.other._
   sealed trait Outers
   object Outers{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Outers] = com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter.merge(
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Outers] = com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter.merge(
       Out1.rw
     )
   }
   case class Out1(a: Other) extends Outers
   object Out1{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Out1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Out1] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
   }
 
   import shared.that._
   import shared.common._
   sealed trait Inners extends Outers
   object Inners{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Inners] = com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter.merge(
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Inners] = com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter.merge(
       Inner1.rw,
       Inner2.rw
     )
   }
   case class Inner1(b: That) extends Inners
   object Inner1{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Inner1] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Inner1] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
   }
   case class Inner2(a: Message) extends Inners
   object Inner2{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Inner2] = com.rallyhealth.weepickle.v0.WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Inner2] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
   }
 }
 
-import com.rallyhealth.weepickle.v0.WeePickle.{ReaderWriter, macroRW}
+import com.rallyhealth.weepickle.v1.WeePickle.{ReaderWriter, macroRW}
 sealed trait Gadt[T]
 object Gadt{
   implicit def rw[T]: ReaderWriter[Gadt[T]] = macroRW[Gadt[_]].asInstanceOf[ReaderWriter[Gadt[T]]]
@@ -107,8 +107,8 @@ object AdvancedTests extends TestSuite {
   import All._
   val tests = Tests {
     "complexTraits" - {
-      val reader = implicitly[com.rallyhealth.weepickle.v0.WeePickle.Reader[Outers]]
-      val writer = implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[Outers]]
+      val reader = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Reader[Outers]]
+      val writer = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Writer[Outers]]
       assert(reader != null)
       assert(writer != null)
     }
@@ -138,7 +138,7 @@ object AdvancedTests extends TestSuite {
       test("ADT"){
         import GenericADTs._
         test - {
-          val pref1 = "com.rallyhealth.weepickle.v0.GenericADTs.Delta"
+          val pref1 = "com.rallyhealth.weepickle.v1.GenericADTs.Delta"
           val D1 = Delta
           type D1[+A, +B] = Delta[A, B]
           rw(D1.Insert(1, 1), s"""{"$$type":"$pref1.Insert","key":1,"value":1}""")
@@ -149,7 +149,7 @@ object AdvancedTests extends TestSuite {
           rw(D1.Clear(): D1[Int, Int], s"""{"$$type":"$pref1.Clear"}""")
         }
         test - {
-          val pref2 = "com.rallyhealth.weepickle.v0.GenericADTs.DeltaInvariant"
+          val pref2 = "com.rallyhealth.weepickle.v1.GenericADTs.DeltaInvariant"
           val D2 = DeltaInvariant
           type D2[A, B] = DeltaInvariant[A, B]
           rw(D2.Insert(1, 1), s"""{"$$type":"$pref2.Insert","key":1,"value":1}""")
@@ -177,16 +177,16 @@ object AdvancedTests extends TestSuite {
       rw(
         SingleNode(123, List(SingleNode(456, Nil), SingleNode(789, Nil))),
         """{
-          "$type": "com.rallyhealth.weepickle.v0.Recursive.SingleNode",
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
           "value": 123,
           "children": [
             {
-              "$type": "com.rallyhealth.weepickle.v0.Recursive.SingleNode",
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
               "value": 456,
               "children": []
             },
             {
-              "$type": "com.rallyhealth.weepickle.v0.Recursive.SingleNode",
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
               "value":789,
               "children":[]
             }
@@ -196,61 +196,61 @@ object AdvancedTests extends TestSuite {
       rw(
         SingleNode(123, List(SingleNode(456, Nil), SingleNode(789, Nil))): SingleTree,
         """{
-          "$type": "com.rallyhealth.weepickle.v0.Recursive.SingleNode",
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
           "value": 123,
           "children": [
             {
-              "$type": "com.rallyhealth.weepickle.v0.Recursive.SingleNode",
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
               "value": 456,
               "children": []
             },
             {
-              "$type": "com.rallyhealth.weepickle.v0.Recursive.SingleNode",
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
               "value":789,
               "children":[]
             }
           ]
         }"""
       )
-      rw(End: LL, """{"$type":"com.rallyhealth.weepickle.v0.Recursive.End"}""")
+      rw(End: LL, """{"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}""")
       rw(Node(3, End): LL,
         """{
-          "$type": "com.rallyhealth.weepickle.v0.Recursive.Node",
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
           "c": 3,
-          "next": {"$type":"com.rallyhealth.weepickle.v0.Recursive.End"}
+          "next": {"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}
         }""")
       rw(Node(6, Node(3, End)),
         """{
-          "$type": "com.rallyhealth.weepickle.v0.Recursive.Node",
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
           "c": 6,
           "next": {
-            "$type": "com.rallyhealth.weepickle.v0.Recursive.Node",
+            "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
             "c":3,
-            "next":{"$type":"com.rallyhealth.weepickle.v0.Recursive.End"}
+            "next":{"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}
           }
         }""")
 
     }
     test("gadt"){
       test("simple"){
-        test - rw(Gadt.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v0.Gadt.Exists","path":"hello"}""")
-        test - rw(Gadt.Exists("hello"): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v0.Gadt.Exists","path":"hello"}""")
-        test - rw(Gadt.IsDir(" "), """{"$type":"com.rallyhealth.weepickle.v0.Gadt.IsDir","path":" "}""")
-        test - rw(Gadt.IsDir(" "): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v0.Gadt.IsDir","path":" "}""")
-        test - rw(Gadt.ReadBytes("\""), """{"$type":"com.rallyhealth.weepickle.v0.Gadt.ReadBytes","path":"\""}""")
-        test - rw(Gadt.ReadBytes("\""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v0.Gadt.ReadBytes","path":"\""}""")
-        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v0.Gadt.CopyOver","src":[1,2,3],"path":""}""")
-        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v0.Gadt.CopyOver","src":[1,2,3],"path":""}""")
+        test - rw(Gadt.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.Exists","path":"hello"}""")
+        test - rw(Gadt.Exists("hello"): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.Exists","path":"hello"}""")
+        test - rw(Gadt.IsDir(" "), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.IsDir","path":" "}""")
+        test - rw(Gadt.IsDir(" "): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.IsDir","path":" "}""")
+        test - rw(Gadt.ReadBytes("\""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
+        test - rw(Gadt.ReadBytes("\""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
+        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
+        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
       }
       test("partial"){
-        test - rw(Gadt2.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.Exists","v":"hello"}""")
-        test - rw(Gadt2.Exists("hello"): Gadt2[_, String], """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.Exists","v":"hello"}""")
-        test - rw(Gadt2.IsDir(123), """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.IsDir","v":123}""")
-        test - rw(Gadt2.IsDir(123): Gadt2[_, Int], """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.IsDir","v":123}""")
-        test - rw(Gadt2.ReadBytes('h'), """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.ReadBytes","v":"h"}""")
-        test - rw(Gadt2.ReadBytes('h'): Gadt2[_, Char], """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.ReadBytes","v":"h"}""")
-        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
-        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v0.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
+        test - rw(Gadt2.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
+        test - rw(Gadt2.Exists("hello"): Gadt2[_, String], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
+        test - rw(Gadt2.IsDir(123), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
+        test - rw(Gadt2.IsDir(123): Gadt2[_, Int], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
+        test - rw(Gadt2.ReadBytes('h'), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
+        test - rw(Gadt2.ReadBytes('h'): Gadt2[_, Char], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
+        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
+        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
       }
     }
     test("issues"){
@@ -272,11 +272,11 @@ object AdvancedTests extends TestSuite {
       test("scalatex"){
         val block = Ast.Block(1, Seq(Ast.Block.Text(2, "hello")))
         val blockText = """{
-            "$type":"com.rallyhealth.weepickle.v0.Ast.Block",
+            "$type":"com.rallyhealth.weepickle.v1.Ast.Block",
             "offset":1,
             "parts":[
               {
-                "$type": "com.rallyhealth.weepickle.v0.Ast.Block.Text",
+                "$type": "com.rallyhealth.weepickle.v1.Ast.Block.Text",
                 "offset":2,
                 "txt":"hello"
               }
@@ -289,7 +289,7 @@ object AdvancedTests extends TestSuite {
 
         val header = Ast.Header(0, "Hello", block)
         val headerText = s"""{
-          "$$type": "com.rallyhealth.weepickle.v0.Ast.Header",
+          "$$type": "com.rallyhealth.weepickle.v1.Ast.Header",
           "offset": 0,
           "front": "Hello",
           "block": $blockText
@@ -301,20 +301,20 @@ object AdvancedTests extends TestSuite {
       }
       test("scala-issue-11768"){
         // Make sure this compiles
-        class Thing[T: com.rallyhealth.weepickle.v0.WeePickle.Writer, V: com.rallyhealth.weepickle.v0.WeePickle.Writer](t: Option[(V, T)]){
-          implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[Option[(V, T)]]]
+        class Thing[T: com.rallyhealth.weepickle.v1.WeePickle.Writer, V: com.rallyhealth.weepickle.v1.WeePickle.Writer](t: Option[(V, T)]){
+          implicitly[com.rallyhealth.weepickle.v1.WeePickle.Writer[Option[(V, T)]]]
         }
       }
       //      test("companionImplicitPickedUp"){
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Reader[TypedFoo]] eq TypedFoo.readerWriter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.Writer[TypedFoo]] eq TypedFoo.readerWriter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[TypedFoo]] eq TypedFoo.readerWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.Reader[TypedFoo]] eq TypedFoo.readerWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.Writer[TypedFoo]] eq TypedFoo.readerWriter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[TypedFoo]] eq TypedFoo.readerWriter)
       //      }
       //      test("companionImplicitWorks"){
       //
-      //        rw(TypedFoo.Bar(1): TypedFoo, """{"$type": "com.rallyhealth.weepickle.v0.TypedFoo.Bar", "i": 1}""")
-      //        rw(TypedFoo.Baz("lol"): TypedFoo, """{"$type": "com.rallyhealth.weepickle.v0.TypedFoo.Baz", "s": "lol"}""")
-      //        rw(TypedFoo.Quz(true): TypedFoo, """{"$type": "com.rallyhealth.weepickle.v0.TypedFoo.Quz", "b": true}""")
+      //        rw(TypedFoo.Bar(1): TypedFoo, """{"$type": "com.rallyhealth.weepickle.v1.TypedFoo.Bar", "i": 1}""")
+      //        rw(TypedFoo.Baz("lol"): TypedFoo, """{"$type": "com.rallyhealth.weepickle.v1.TypedFoo.Baz", "s": "lol"}""")
+      //        rw(TypedFoo.Quz(true): TypedFoo, """{"$type": "com.rallyhealth.weepickle.v1.TypedFoo.Quz", "b": true}""")
       //      }
     }
 

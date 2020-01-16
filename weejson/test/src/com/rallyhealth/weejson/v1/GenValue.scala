@@ -1,6 +1,6 @@
 package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weejson.v0._
+import com.rallyhealth.weejson.v1._
 import org.scalacheck.{Arbitrary, Gen}
 
 import scala.collection.mutable.ArrayBuffer

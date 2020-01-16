@@ -1,8 +1,8 @@
-package com.rallyhealth.weepickle.v0.implicits
+package com.rallyhealth.weepickle.v1.implicits
 
 import java.time._
 
-import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 
 trait Writers extends DefaultWriters {
 

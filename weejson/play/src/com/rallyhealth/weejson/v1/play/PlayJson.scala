@@ -1,12 +1,12 @@
-package com.rallyhealth.weejson.v0.play
+package com.rallyhealth.weejson.v1.play
 
 
 import play.api.libs.json._
-import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 
 import scala.collection.mutable.ArrayBuffer
 
-object PlayJson extends com.rallyhealth.weejson.v0.AstTransformer[JsValue] {
+object PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
   def transform[T](j: JsValue, f: Visitor[_, T]): T = j match{
     case JsArray(xs) => transformArray(f, xs)
     case JsBoolean(b) => if (b) f.visitTrue(-1) else f.visitFalse(-1)

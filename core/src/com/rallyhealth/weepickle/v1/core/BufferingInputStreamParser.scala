@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v0.core
+package com.rallyhealth.weepickle.v1.core
 
 /**
   * Defines common functionality to any parser that works on a `java.io.InputStream`
@@ -44,7 +44,7 @@ trait BufferingInputStreamParser{
 
   def byte(i: Int): Byte = {
     requestUntil(i)
-    com.rallyhealth.weepickle.v0.core.Platform.byteAt(buffer, i - firstIdx)
+    com.rallyhealth.weepickle.v1.core.Platform.byteAt(buffer, i - firstIdx)
   }
 
   def sliceString(i: Int, k: Int): String = {

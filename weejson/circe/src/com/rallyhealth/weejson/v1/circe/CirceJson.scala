@@ -1,10 +1,10 @@
-package com.rallyhealth.weejson.v0.circe
+package com.rallyhealth.weejson.v1.circe
 
-import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 import io.circe.{Json, JsonNumber}
 
 import scala.collection.mutable.ArrayBuffer
-object CirceJson extends com.rallyhealth.weejson.v0.AstTransformer[Json]{
+object CirceJson extends com.rallyhealth.weejson.v1.AstTransformer[Json]{
 
   override def transform[T](j: Json, f: Visitor[_, T]) = j.fold(
     f.visitNull(-1),

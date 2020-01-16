@@ -1,7 +1,7 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weejson.v0.jackson.{DefaultJsonFactory, WeeJackson}
-import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.rallyhealth.weepickle.v1.core.Visitor
 
 object StringParser extends Transformer[String] {
 

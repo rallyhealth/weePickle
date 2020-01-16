@@ -1,7 +1,7 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 
-import com.rallyhealth.weepickle.v0.core.{BufferingInputStreamParser, Visitor}
-import com.rallyhealth.weepickle.v0.geny.ReadableAsBytes
+import com.rallyhealth.weepickle.v1.core.{BufferingInputStreamParser, Visitor}
+import com.rallyhealth.weepickle.v1.geny.ReadableAsBytes
 
 trait Readable {
   def transform[T](f: Visitor[_, T]): T

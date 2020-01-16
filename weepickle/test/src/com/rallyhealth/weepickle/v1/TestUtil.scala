@@ -1,11 +1,11 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 import utest._
 import acyclic.file
 /**
 * Created by haoyi on 4/22/14.
 */
-object TestUtil extends TestUtil[com.rallyhealth.weepickle.v0.WeePickle.type](com.rallyhealth.weepickle.v0.WeePickle)
-class TestUtil[Api <: com.rallyhealth.weepickle.v0.Api](val api: Api){
+object TestUtil extends TestUtil[com.rallyhealth.weepickle.v1.WeePickle.type](com.rallyhealth.weepickle.v1.WeePickle)
+class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api){
 
   def rw[T: api.Reader: api.Writer](t: T, s: String*) = {
     rwk[T, T](t, s:_*)(x => x)
@@ -38,7 +38,7 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v0.Api](val api: Api){
 
     // Test binary round tripping
     val writtenBinary = api.writeMsgPack(t)
-    // println(com.rallyhealth.weepickle.v0.core.Util.bytesToString(writtenBinary))
+    // println(com.rallyhealth.weepickle.v1.core.Util.bytesToString(writtenBinary))
     val roundTrippedBinary = api.readMsgPack[T](writtenBinary)
     (roundTrippedBinary, t) match{
       case (lhs: Array[_], rhs: Array[_]) => assert(lhs.toSeq == rhs.toSeq)
@@ -50,8 +50,8 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v0.Api](val api: Api){
     if (checkBinaryJson){
       val rewrittenBinary = api.writeMsgPack(roundTrippedBinary)
 
-      val writtenBinaryStr = com.rallyhealth.weepickle.v0.core.Util.bytesToString(writtenBinary)
-      val rewrittenBinaryStr = com.rallyhealth.weepickle.v0.core.Util.bytesToString(rewrittenBinary)
+      val writtenBinaryStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(writtenBinary)
+      val rewrittenBinaryStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(rewrittenBinary)
       assert(writtenBinaryStr == rewrittenBinaryStr)
     }
   }

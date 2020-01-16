@@ -1,4 +1,4 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 
 object MsgPackKeys {
   final val PositiveFixInt = 0x7f

@@ -1,4 +1,4 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks

@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v0.core
+package com.rallyhealth.weepickle.v1.core
 
 import java.time.Instant
 import java.time.format.DateTimeFormatter

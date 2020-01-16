@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v0.geny
+package com.rallyhealth.weepickle.v1.geny
 
 import java.io.{ByteArrayInputStream, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets

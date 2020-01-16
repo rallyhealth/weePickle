@@ -1,10 +1,10 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 
 import java.io.ByteArrayOutputStream
 import java.time.Instant
 
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
-import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.geny.WritableAsBytes
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -27,66 +27,66 @@ sealed trait Msg extends Readable with WritableAsBytes{
 
   /**
     * Returns the `String` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Str]]
+    * a [[com.rallyhealth.weepack.v1.Str]]
     */
   def binary = this match{
     case Binary(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Str")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Str")
   }
   /**
     * Returns the `String` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Str]]
+    * a [[com.rallyhealth.weepack.v1.Str]]
     */
   def str = this match{
     case Str(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Str")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Str")
   }
   /**
     * Returns the key/value map of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Obj]]
+    * a [[com.rallyhealth.weepack.v1.Obj]]
     */
   def obj = this match{
     case Obj(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Obj")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Obj")
   }
   /**
     * Returns the elements of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Arr]]
+    * a [[com.rallyhealth.weepack.v1.Arr]]
     */
   def arr = this match{
     case Arr(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Arr")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Arr")
   }
   /**
     * Returns the `Double` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Int32]], [[com.rallyhealth.weepack.v0.Int64]] or [[com.rallyhealth.weepack.v0.UInt64]]
+    * a [[com.rallyhealth.weepack.v1.Int32]], [[com.rallyhealth.weepack.v1.Int64]] or [[com.rallyhealth.weepack.v1.UInt64]]
     */
   def int32 = this match{
     case Int32(value) => value
     case Int64(value) => value.toInt
     case UInt64(value) => value.toInt
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Num")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Num")
   }
   /**
     * Returns the `Double` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Int32]], [[com.rallyhealth.weepack.v0.Int64]] or [[com.rallyhealth.weepack.v0.UInt64]]
+    * a [[com.rallyhealth.weepack.v1.Int32]], [[com.rallyhealth.weepack.v1.Int64]] or [[com.rallyhealth.weepack.v1.UInt64]]
     */
   def int64 = this match{
     case Int32(value) => value.toLong
     case Int64(value) => value
     case UInt64(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Num")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Num")
   }
   /**
     * Returns the `Boolean` value of this [[Msg]], fails if it is not
-    * a [[com.rallyhealth.weepack.v0.Bool]]
+    * a [[com.rallyhealth.weepack.v1.Bool]]
     */
   def bool = this match{
     case Bool(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v0.Bool")
+    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Bool")
   }
   /**
-    * Returns true if the value of this [[Msg]] is com.rallyhealth.weejson.v0.Null, false otherwise
+    * Returns true if the value of this [[Msg]] is com.rallyhealth.weejson.v1.Null, false otherwise
     */
   def isNull = this match {
     case Null => true

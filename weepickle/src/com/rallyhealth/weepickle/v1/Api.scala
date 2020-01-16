@@ -1,25 +1,25 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 
 import java.io.ByteArrayOutputStream
 
 import com.fasterxml.jackson.core.PrettyPrinter
-import com.rallyhealth.weejson.v0.jackson.{DefaultJsonFactory, WeeJackson}
-import com.rallyhealth.weejson.v0.{BaseRenderer, IndexedValue}
-import com.rallyhealth.weepack.v0.MsgPackWriter
-import com.rallyhealth.weepickle.v0.core._
-import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.rallyhealth.weejson.v1.{BaseRenderer, IndexedValue}
+import com.rallyhealth.weepack.v1.MsgPackWriter
+import com.rallyhealth.weepickle.v1.core._
+import com.rallyhealth.weepickle.v1.geny.WritableAsBytes
 
 import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 /**
- * An instance of the com.rallyhealth.weepickle.v0 API. There's a default instance at
- * `com.rallyhealth.weepickle.v0.WeePickle`, but you can also implement it yourself to customize
+ * An instance of the com.rallyhealth.weepickle.v1 API. There's a default instance at
+ * `com.rallyhealth.weepickle.v1.WeePickle`, but you can also implement it yourself to customize
  * its behavior. Override the `annotate` methods to control how a sealed
  * trait instance is tagged during reading and writing.
  */
 trait Api
-    extends com.rallyhealth.weepickle.v0.core.Types
+    extends com.rallyhealth.weepickle.v1.core.Types
     with implicits.Readers
     with implicits.Writers
     with WebJson
@@ -29,12 +29,12 @@ trait Api
   /**
     * Reads the given MessagePack input into a Scala value
     */
-  def readMsgPack[T: Reader](s: com.rallyhealth.weepack.v0.Readable): T = s.transform(reader[T])
+  def readMsgPack[T: Reader](s: com.rallyhealth.weepack.v1.Readable): T = s.transform(reader[T])
 
   /**
     * Reads the given JSON input into a Scala value
     */
-  def read[T: Reader](s: com.rallyhealth.weejson.v0.Readable): T = s.transform(reader[T])
+  def read[T: Reader](s: com.rallyhealth.weejson.v1.Readable): T = s.transform(reader[T])
 
   def reader[T: Reader]: Reader[T] = implicitly[Reader[T]]
 
@@ -44,24 +44,24 @@ trait Api
   def write[T: Writer](t: T,
                        indent: Int = -1,
                        escapeUnicode: Boolean = false): String = {
-    transform(t).to(com.rallyhealth.weejson.v0.StringRenderer(indent, escapeUnicode)).toString
+    transform(t).to(com.rallyhealth.weejson.v1.StringRenderer(indent, escapeUnicode)).toString
   }
   /**
     * Write the given Scala value as a MessagePack binary
     */
   def writeMsgPack[T: Writer](t: T): Array[Byte] = {
-    transform(t).to(new com.rallyhealth.weepack.v0.MsgPackWriter(new ByteArrayOutputStream())).toByteArray
+    transform(t).to(new com.rallyhealth.weepack.v1.MsgPackWriter(new ByteArrayOutputStream())).toByteArray
   }
 
   /**
     * Write the given Scala value as a JSON struct
     */
-  def writeJs[T: Writer](t: T): com.rallyhealth.weejson.v0.Value = transform(t).to[com.rallyhealth.weejson.v0.Value]
+  def writeJs[T: Writer](t: T): com.rallyhealth.weejson.v1.Value = transform(t).to[com.rallyhealth.weejson.v1.Value]
 
   /**
     * Write the given Scala value as a MessagePack struct
     */
-  def writeMsgAst[T: Writer](t: T): com.rallyhealth.weepack.v0.Msg = transform(t).to[com.rallyhealth.weepack.v0.Msg]
+  def writeMsgAst[T: Writer](t: T): com.rallyhealth.weepack.v1.Msg = transform(t).to[com.rallyhealth.weepack.v1.Msg]
 
   /**
     * Write the given Scala value as a JSON string to the given Writer
@@ -94,7 +94,7 @@ trait Api
     * Write the given Scala value as a MessagePack binary to the given OutputStream
     */
   def writeMsgPackTo[T: Writer](t: T, out: java.io.OutputStream): Unit = {
-    transform(t).to(new com.rallyhealth.weepack.v0.MsgPackWriter(out))
+    transform(t).to(new com.rallyhealth.weepack.v1.MsgPackWriter(out))
   }
 
   /**
@@ -108,7 +108,7 @@ trait Api
 
   def readerWriter[T: ReaderWriter]: ReaderWriter[T] = implicitly[ReaderWriter[T]]
 
-  case class transform[T: Writer](t: T) extends com.rallyhealth.weepack.v0.Readable with com.rallyhealth.weejson.v0.Readable {
+  case class transform[T: Writer](t: T) extends com.rallyhealth.weepack.v1.Readable with com.rallyhealth.weejson.v1.Readable {
     def transform[V](f: Visitor[_, V]): V = writer[T].transform(t, f)
     def to[V](f: Visitor[_, V]): V = transform(f)
     def to[V](implicit f: Reader[V]): V = transform(f)
@@ -142,7 +142,7 @@ object Api{
 }
 
 /**
- * A `com.rallyhealth.weepickle.v0.Api` that follows the default sealed-trait-instance-tagging
+ * A `com.rallyhealth.weepickle.v1.Api` that follows the default sealed-trait-instance-tagging
  * behavior of using an attribute, but allow you to control what the name
  * of the attribute is.
  */
@@ -151,7 +151,7 @@ trait AttributeTagged extends Api{
   /**
     * Default discriminator field name.
     * Overridable here globally, or for a specific class hierarcy using the
-    * [[com.rallyhealth.weepickle.v0.implicits.discriminator]] annotation.
+    * [[com.rallyhealth.weepickle.v1.implicits.discriminator]] annotation.
     */
   def tagName: String = "$type"
 
@@ -169,12 +169,12 @@ trait AttributeTagged extends Api{
       private[this] var fastPath = false
       private[this] var context: ObjVisitor[Any, _] = null
       def subVisitor: Visitor[_, _] =
-        if (context == null) com.rallyhealth.weepickle.v0.core.StringVisitor
+        if (context == null) com.rallyhealth.weepickle.v1.core.StringVisitor
         else context.subVisitor
 
       def visitKey(index: Int) = {
         if (context != null) context.visitKey(index)
-        else com.rallyhealth.weepickle.v0.core.StringVisitor
+        else com.rallyhealth.weepickle.v1.core.StringVisitor
       }
       def visitKeyValue(s: Any): Unit = {
         if (context != null) context.visitKeyValue(s)

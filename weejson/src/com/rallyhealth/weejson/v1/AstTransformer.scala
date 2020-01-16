@@ -1,6 +1,6 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v0.core._
+import com.rallyhealth.weepickle.v1.core._
 
 import scala.collection.compat._
 //import scala.language.higherKinds
@@ -29,7 +29,7 @@ trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I]{
     private[this] var key: String = null
     private[this] val vs = factory.newBuilder
     def subVisitor = AstTransformer.this
-    def visitKey(index: Int) = com.rallyhealth.weepickle.v0.core.StringVisitor
+    def visitKey(index: Int) = com.rallyhealth.weepickle.v1.core.StringVisitor
     def visitKeyValue(s: Any): Unit = key = s.toString
 
     def visitValue(v: I, index: Int): Unit = vs += (key -> v)

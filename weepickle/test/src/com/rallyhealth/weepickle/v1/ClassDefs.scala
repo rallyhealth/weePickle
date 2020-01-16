@@ -1,12 +1,12 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 
-//import com.rallyhealth.weepickle.v0.ADTs.ADT0
+//import com.rallyhealth.weepickle.v1.ADTs.ADT0
 import WeePickle.{ReaderWriter => RW, Reader => R, Writer => W}
-import com.rallyhealth.weepickle.v0.implicits.key
+import com.rallyhealth.weepickle.v1.implicits.key
 /*
  * A whole bunch of test data that can be used by client libraries to try out
  * their typeclass derivation to make sure it's doing the right thing. Contains
- * roughly the  whole range of interesting shapes of types supported by com.rallyhealth.weepickle.v0.
+ * roughly the  whole range of interesting shapes of types supported by com.rallyhealth.weepickle.v1.
  */
 
 object ADTs {
@@ -55,20 +55,20 @@ object ADTs {
 object Hierarchy {
   sealed trait A
   object A{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[A] = RW.merge(B.rw, C.rw)
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = RW.merge(B.rw, C.rw)
   }
   case class B(i: Int) extends A
   object B{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[B] = WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = WeePickle.macroRW
   }
   case class C(s1: String, s2: String) extends A
   object C{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[C] = WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = WeePickle.macroRW
   }
 
   object Z{
-    implicit def rw: com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[Z] = RW.merge(
-      implicitly[com.rallyhealth.weepickle.v0.WeePickle.ReaderWriter[AnZ.type]]
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Z] = RW.merge(
+      implicitly[com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[AnZ.type]]
     )
   }
   sealed trait Z //new line
@@ -471,4 +471,4 @@ object Ast{
   }
 }
 
-case class CaseClassWithJson(json: com.rallyhealth.weejson.v0.Value)
+case class CaseClassWithJson(json: com.rallyhealth.weejson.v1.Value)

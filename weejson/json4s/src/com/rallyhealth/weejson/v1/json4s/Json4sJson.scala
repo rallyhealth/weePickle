@@ -1,12 +1,12 @@
-package com.rallyhealth.weejson.v0.json4s
+package com.rallyhealth.weejson.v1.json4s
 
 import org.json4s.JsonAST._
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 
 object Json4sJson extends Json4sJson(false, false)
 
 class Json4sJson(useBigDecimalForDouble: Boolean, useBigIntForLong: Boolean)
-  extends com.rallyhealth.weejson.v0.AstTransformer[JValue] {
+  extends com.rallyhealth.weejson.v1.AstTransformer[JValue] {
   def transform[T](j: JValue, f: Visitor[_, T]) = j match{
     case JArray(xs) => transformArray(f, xs)
     case JBool(b) => if (b) f.visitTrue(-1) else f.visitFalse(-1)
@@ -36,7 +36,7 @@ class Json4sJson(useBigDecimalForDouble: Boolean, useBigIntForLong: Boolean)
   def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
     if (decIndex == -1 && expIndex == -1) {
       if (useBigIntForLong) JInt(BigInt(s.toString))
-      else JLong(com.rallyhealth.weepickle.v0.core.Util.parseLong(s, 0, s.length))
+      else JLong(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length))
     } else {
       if (useBigDecimalForDouble) JDecimal(BigDecimal(s.toString))
       else JDouble(s.toString.toDouble)

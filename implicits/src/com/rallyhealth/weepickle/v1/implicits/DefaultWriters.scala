@@ -1,13 +1,13 @@
-package com.rallyhealth.weepickle.v0.implicits
+package com.rallyhealth.weepickle.v1.implicits
 
 import java.net.URI
 import java.util.UUID
 
-import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.weepickle.v1.core.Visitor
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-trait DefaultWriters extends com.rallyhealth.weepickle.v0.core.Types with Generated with MacroImplicits with LowPriWriters{
+trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits with LowPriWriters{
   implicit val StringWriter: Writer[String] = new Writer[String] {
     def write0[R](out: Visitor[_, R], v: String): R = out.visitString(v, -1)
   }
@@ -83,10 +83,10 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v0.core.Types with Genera
       def write0[R](out: Visitor[_, R], v: M[String, V]): R = {
         val ctx = out.visitObject(v.size, -1).narrow
         for(pair <- v){
-          val (k1, v0) = pair
+          val (k1, v1) = pair
           val keyVisitor = ctx.visitKey(-1)
           ctx.visitKeyValue(keyVisitor.visitString(k1, -1))
-          ctx.visitValue(vw.write(ctx.subVisitor, v0), -1)
+          ctx.visitValue(vw.write(ctx.subVisitor, v1), -1)
 
         }
         ctx.visitEnd(-1)
@@ -143,7 +143,7 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v0.core.Types with Genera
 /**
   * This needs to be split into a separate trait due to https://github.com/scala/bug/issues/11768
   */
-trait LowPriWriters extends com.rallyhealth.weepickle.v0.core.Types{
+trait LowPriWriters extends com.rallyhealth.weepickle.v1.core.Types{
   implicit def SeqLikeWriter[C[_] <: Iterable[_], T](implicit r: Writer[T]): Writer[C[T]] = new Writer[C[T]] {
     def write0[R](out: Visitor[_, R], v: C[T]): R = {
       val ctx = out.visitArray(v.size, -1).narrow

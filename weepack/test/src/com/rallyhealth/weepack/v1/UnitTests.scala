@@ -1,9 +1,9 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 import java.io.ByteArrayOutputStream
 
-import com.rallyhealth.weejson.v0.Value
-import com.rallyhealth.weepickle.v0.core.{Abort, Util}
-import com.rallyhealth.weepickle.v0.geny.ReadableAsBytes
+import com.rallyhealth.weejson.v1.Value
+import com.rallyhealth.weepickle.v1.core.{Abort, Util}
+import com.rallyhealth.weepickle.v1.geny.ReadableAsBytes
 import utest._
 
 object UnitTests extends TestSuite{

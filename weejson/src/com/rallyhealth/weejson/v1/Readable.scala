@@ -1,11 +1,11 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
 import java.io.InputStream
 import java.nio.file.{Files, Path}
 
-import com.rallyhealth.weejson.v0.jackson.{DefaultJsonFactory, WeeJackson}
-import com.rallyhealth.weepickle.v0.core.Visitor
-import com.rallyhealth.weepickle.v0.geny.ReadableAsBytes
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.geny.ReadableAsBytes
 
 trait Readable {
   def transform[T](f: Visitor[_, T]): T

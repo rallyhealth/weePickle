@@ -1,7 +1,7 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 
-import com.rallyhealth.weejson.v0.WeeJson
-import com.rallyhealth.weepickle.v0.core.Util
+import com.rallyhealth.weejson.v1.WeeJson
+import com.rallyhealth.weepickle.v1.core.Util
 import utest._
 
 import scala.collection.mutable
@@ -14,7 +14,7 @@ object MsgPackJvmTests extends TestSuite{
     while(p.index < bytes.length){
       output.append(p.parse(Msg))
     }
-    com.rallyhealth.weepack.v0.Arr(output)
+    com.rallyhealth.weepack.v1.Arr(output)
   }
   val tests = Tests{
     test("hello"){
@@ -27,8 +27,8 @@ object MsgPackJvmTests extends TestSuite{
       val expectedJson = WeeJson.read(readBytes(casesJson))
       val msg = readMsgs(casesMsg)
       val msgCompact = readMsgs(casesCompactMsg)
-      val jsonMsg = WeePack.transform(msg, com.rallyhealth.weejson.v0.Value)
-      val jsonMsgCompact = WeePack.transform(msgCompact, com.rallyhealth.weejson.v0.Value)
+      val jsonMsg = WeePack.transform(msg, com.rallyhealth.weejson.v1.Value)
+      val jsonMsgCompact = WeePack.transform(msgCompact, com.rallyhealth.weejson.v1.Value)
       val writtenMsg = Util.bytesToString(WeePack.write(msg))
       val rewrittenMsg = Util.bytesToString(
         WeePack.write(WeePack.read(WeePack.write(msg)))

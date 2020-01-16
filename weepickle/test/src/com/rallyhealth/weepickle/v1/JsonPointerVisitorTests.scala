@@ -1,9 +1,9 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 
 import com.rallyhealth._
-import com.rallyhealth.weejson.v0.WeeJson
-import com.rallyhealth.weepickle.v0.core.JsonPointerVisitor.JsonPointerException
-import com.rallyhealth.weepickle.v0.core.{JsonPointerVisitor, NoOpVisitor}
+import com.rallyhealth.weejson.v1.WeeJson
+import com.rallyhealth.weepickle.v1.core.JsonPointerVisitor.JsonPointerException
+import com.rallyhealth.weepickle.v1.core.{JsonPointerVisitor, NoOpVisitor}
 import utest._
 
 /**
@@ -13,7 +13,7 @@ object JsonPointerVisitorTests extends TestSuite {
 
   case class Foo(foo: List[String], s: String, i: Int, b: Boolean)
 
-  implicit lazy val rw = weepickle.v0.WeePickle.macroRW[Foo]
+  implicit lazy val rw = weepickle.v1.WeePickle.macroRW[Foo]
 
   override def tests: Tests = Tests {
     test("failures") {

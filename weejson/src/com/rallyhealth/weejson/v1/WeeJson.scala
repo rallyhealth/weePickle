@@ -1,9 +1,9 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v0.core.NoOpVisitor
+import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 
 object WeeJson {
-  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v0.core.Visitor[_, T]): T = t.transform(v)
+  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v1.core.Visitor[_, T]): T = t.transform(v)
 
   /**
     * Read the given JSON input as a JSON struct
@@ -49,5 +49,5 @@ object WeeJson {
   def reformatTo(s: Readable, out: java.io.Writer, indent: Int = -1, escapeUnicode: Boolean = false): Unit = {
     transform(s, Renderer(out, indent, escapeUnicode)).toString
   }
-  // End com.rallyhealth.weejson.v0
+  // End com.rallyhealth.weejson.v1
 }

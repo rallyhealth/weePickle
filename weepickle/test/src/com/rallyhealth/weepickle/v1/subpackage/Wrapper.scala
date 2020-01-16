@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v0.subpackage
+package com.rallyhealth.weepickle.v1.subpackage
 
 sealed trait Base
 object Base {

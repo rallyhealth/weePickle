@@ -1,16 +1,16 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-import com.rallyhealth.weepack.v0.Msg.visitString
-import com.rallyhealth.weepack.v0.{MsgPackKeys => MPK}
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepack.v1.Msg.visitString
+import com.rallyhealth.weepack.v1.{MsgPackKeys => MPK}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream())
     extends MsgVisitor[T, T] {
   override def visitArray(length: Int, index: Int) = new ArrVisitor[T, T] {
-    require(length != -1, "Length of com.rallyhealth.weepack.v0 array must be known up front")
+    require(length != -1, "Length of com.rallyhealth.weepack.v1 array must be known up front")
     if (length <= 15){
       out.write(MPK.FixArrMask | length)
     }else if (length <= 65535){
@@ -26,7 +26,7 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
   }
 
   override def visitObject(length: Int, index: Int) = new ObjVisitor[T, T] {
-    require(length != -1, "Length of com.rallyhealth.weepack.v0 object must be known up front")
+    require(length != -1, "Length of com.rallyhealth.weepack.v1 object must be known up front")
     if (length <= 15){
       out.write(MPK.FixMapMask | length)
     }else if (length <= 65535){

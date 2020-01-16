@@ -1,0 +1,246 @@
+package com.rallyhealth.weejson.v1.jackson
+
+import java.io.InputStream
+import java.math.BigInteger
+
+import com.fasterxml.jackson.core._
+import com.rallyhealth.weepickle.v1.core._
+
+import scala.collection.mutable
+
+/**
+  * Implements most of the [[JsonGenerator]] interface.
+  *
+  * Index of -1 is always emitted to the visitor, even if the index is known.
+  *
+  * [[CharSequence]]s emitted to the visitor are typically thin wrappers around
+  * jackson's internal mutable buffer. Values are stable until the visitor methods return.
+  * It is the visitor's responsibility to call toString if immutability is needed.
+  *
+  * @param rootVisitor underlying sink of json events
+  * @param objectCodec used for writeObject(), which will probably never be called.
+  * @tparam J visitor return value
+  */
+class VisitorJsonGenerator[J](
+  rootVisitor: Visitor[_, J],
+  private var objectCodec: ObjectCodec
+) extends JsonGenerator {
+
+  def this(visitor: Visitor[_, J]) = this(visitor, DefaultJsonFactory.Instance.getCodec)
+
+  private val cs = new TextBufferCharSequence(Array.emptyCharArray, 0, 0)
+
+  private val stack: mutable.ArrayStack[ObjArrVisitor[Any, _]] = new mutable.ArrayStack[ObjArrVisitor[Any, _]]()
+
+  // Manually managing this reference is faster than calling stack.top every time.
+  private var ctxt: ObjArrVisitor[Any, _] = {
+    // Create a dummy root stack element that returns the rootVisitor.
+    // This is simpler than special-casing the rootVisitor.
+    new ArrVisitor[Any, J] {
+      override def subVisitor: Visitor[Nothing, J] = rootVisitor
+
+      override def visitValue(v: Any, index: Int): Unit = ()
+
+      override def visitEnd(index: Int): Nothing = {
+        throw new IllegalStateException("programming error: illegal call to dummy ArrVisitor")
+      }
+    }
+  }
+
+  @inline private def index: Int = -1 // unknowable without a parser
+
+  protected def facade: Visitor[_, _] = top.subVisitor
+
+  protected def top: ObjArrVisitor[Any, _] = ctxt
+
+  protected def push(e: ObjArrVisitor[Any, _]): Unit = {
+    stack.push(top)
+    ctxt = e
+  }
+  protected def pop(): ObjArrVisitor[Any, _] = {
+    val ret = top
+    ctxt = stack.pop()
+    ret
+  }
+
+  private def charSequence(buf: Array[Char], off: Int, len: Int): CharSequence = {
+    cs.buf = buf
+    cs.off = off
+    cs.len = len
+    cs
+  }
+
+  override def setCodec(oc: ObjectCodec): JsonGenerator = {
+    objectCodec = oc
+    this
+  }
+
+  override def getCodec: ObjectCodec = objectCodec
+
+  override def version(): Version = Version.unknownVersion()
+
+  override def enable(f: JsonGenerator.Feature): JsonGenerator = this
+
+  override def disable(f: JsonGenerator.Feature): JsonGenerator = this
+
+  override def isEnabled(f: JsonGenerator.Feature): Boolean = false
+
+  override def getFeatureMask: Int = 0
+
+  override def setFeatureMask(values: Int): JsonGenerator = this
+
+  override def useDefaultPrettyPrinter(): JsonGenerator = this
+
+  override def writeStartArray(): Unit = push(facade.visitArray(-1, index).narrow)
+
+  override def writeStartObject(): Unit = push(facade.visitObject(-1, index).narrow)
+
+  override def writeEndObject(): Unit = writeEndObjArr()
+
+  override def writeEndArray(): Unit = writeEndObjArr()
+
+  private def writeEndObjArr(): Unit = visitValue(pop().visitEnd(index))
+
+  override def writeFieldName(name: String): Unit = {
+    val objVisitor = top.asInstanceOf[ObjVisitor[Any, _]]
+    objVisitor.visitKeyValue(objVisitor.visitKey(index).visitString(name, index))
+  }
+
+  override def writeFieldName(name: SerializableString): Unit = writeFieldName(name.getValue)
+
+  override def writeString(text: String): Unit = {
+    visitValue(facade.visitString(text, index))
+  }
+
+  override def writeString(buf: Array[Char], off: Int, len: Int): Unit = {
+    visitValue(facade.visitString(charSequence(buf, off, len), index))
+  }
+
+  override def writeString(text: SerializableString): Unit = {
+    writeString(text.getValue)
+  }
+
+  override def writeRawUTF8String(text: Array[Byte], offset: Int, length: Int): Unit = throw notSupported
+
+  override def writeUTF8String(text: Array[Byte], offset: Int, length: Int): Unit = throw notSupported
+
+  override def writeRaw(text: String): Unit = throw notSupported
+
+  override def writeRaw(text: String, offset: Int, len: Int): Unit = throw notSupported
+
+  override def writeRaw(text: Array[Char], offset: Int, len: Int): Unit = throw notSupported
+
+  override def writeRaw(c: Char): Unit = throw notSupported
+
+  override def writeRawValue(text: String): Unit = throw notSupported
+
+  override def writeRawValue(text: String, offset: Int, len: Int): Unit = throw notSupported
+
+  override def writeRawValue(text: Array[Char], offset: Int, len: Int): Unit = throw notSupported
+
+  override def writeBinary(bv: Base64Variant, data: Array[Byte], offset: Int, len: Int): Unit = {
+    visitValue(facade.visitBinary(data, offset, len, index))
+  }
+
+  override def writeBinary(bv: Base64Variant, data: InputStream, dataLength: Int): Int = {
+    // Size to dataLength + 1. If the estimate is correct, we can avoid doubling the buffer,
+    // i.e. last read() will be made with 1 buf slot free, and will return -1.
+    var buffer = Array.ofDim[Byte](if (dataLength > 0) dataLength + 1 else 8 * 1024)
+    var size = 0
+    var r = data.read(buffer)
+    while (r != -1) {
+      size += r
+      if (size == buffer.length) {
+        val old = buffer
+        buffer = Array.ofDim[Byte](buffer.length * 2)
+        System.arraycopy(old, 0, buffer, 0, size)
+      }
+      r = data.read(buffer, size, buffer.length - size)
+    }
+    data.close()
+    visitValue(facade.visitBinary(buffer, 0, size, index))
+    size
+  }
+
+  override def writeNumber(v: Int): Unit = {
+    visitValue(facade.visitInt32(v, index))
+  }
+
+  override def writeNumber(v: Long): Unit = {
+    visitValue(facade.visitInt64(v, index))
+  }
+
+  override def writeNumber(v: BigInteger): Unit = {
+    visitValue(facade.visitFloat64StringParts(v.toString, -1, -1, index))
+  }
+
+  override def writeNumber(v: Double): Unit = {
+    visitValue(facade.visitFloat64(v, index))
+  }
+
+  override def writeNumber(v: Float): Unit = {
+    visitValue(facade.visitFloat64(v, index))
+  }
+
+  override def writeNumber(v: java.math.BigDecimal): Unit = {
+    visitValue(facade.visitFloat64String(v.toString, index))
+  }
+
+  override def writeNumber(encodedValue: String): Unit = {
+    visitValue(facade.visitFloat64String(encodedValue, index))
+  }
+
+  override def writeBoolean(state: Boolean): Unit = {
+    if (state) writeTrue()
+    else writeFalse()
+  }
+
+  def writeTrue(): Unit = visitValue(facade.visitTrue(index))
+
+  def writeFalse(): Unit = visitValue(facade.visitFalse(index))
+
+  override def writeNull(): Unit = visitValue(facade.visitNull(index))
+
+  override def writeObject(pojo: Any): Unit = objectCodec.writeValue(this, pojo)
+
+  override def writeTree(rootNode: TreeNode): Unit = objectCodec.writeValue(this, rootNode)
+
+  override def getOutputContext: JsonStreamContext = throw notSupported
+
+  override def flush(): Unit = ()
+
+  override def isClosed: Boolean = top == null
+
+  override def close(): Unit = {
+    if (!isClosed) {
+      stack.clear()
+      ctxt = null
+    }
+  }
+
+  private def visitValue(any: Any): Unit = {
+    top.visitValue(any, index)
+  }
+
+  private def notSupported: UnsupportedOperationException = new UnsupportedOperationException()
+}
+
+/**
+  * Reference to a chunk of text in a VERY MUTABLE BUFFER.
+  *
+  * Contents are guaranteed to be stable for as long as the receiving method is on the stack.
+  * After the receiving method returns control, the contents may change.
+  *
+  * Cheaper than allocating a String when one is not needed.
+  * For example, [[com.rallyhealth.weejson.v1.Renderer.escape()]] writes out the chars one at a time.
+  */
+private final class TextBufferCharSequence(var buf: Array[Char], var off: Int, var len: Int) extends CharSequence {
+
+  override def charAt(index: Int): Char = buf(off + index)
+
+  override def subSequence(start: Int, end: Int): CharSequence = new TextBufferCharSequence(buf, off + start, end - start)
+
+  override def toString: String = new String(buf, off, length)
+
+  override def length(): Int = len
+}

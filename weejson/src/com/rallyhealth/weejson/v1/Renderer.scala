@@ -1,12 +1,12 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
 import java.io.{ByteArrayOutputStream, StringWriter}
 
 import com.fasterxml.jackson.core.json.JsonWriteFeature
 import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
 import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator, PrettyPrinter}
-import com.rallyhealth.weejson.v0.jackson.{DefaultJsonFactory, WeeJackson}
-import com.rallyhealth.weepickle.v0.core.Visitor
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.rallyhealth.weepickle.v1.core.Visitor
 
 object BytesRenderer {
 

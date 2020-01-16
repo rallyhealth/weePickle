@@ -1,4 +1,4 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
 import java.io._
 

@@ -1,8 +1,8 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 import java.time.Instant
 
-import com.rallyhealth.weepickle.v0.core.Visitor
-import com.rallyhealth.weepack.v0.{MsgPackKeys => MPK}
+import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepack.v1.{MsgPackKeys => MPK}
 
 import scala.annotation.switch
 
@@ -16,7 +16,7 @@ class MsgPackReader(val startIndex: Int = 0, input0: Array[Byte]) extends BaseMs
 class InputStreamMsgPackReader(val data: java.io.InputStream,
                                val minStartBufferSize: Int,
                                val maxStartBufferSize: Int)
-extends BaseMsgPackReader with com.rallyhealth.weepickle.v0.core.BufferingInputStreamParser{
+extends BaseMsgPackReader with com.rallyhealth.weepickle.v1.core.BufferingInputStreamParser{
   def startIndex = 0
 }
 

@@ -1,11 +1,11 @@
-package com.rallyhealth.weepickle.v0.core
+package com.rallyhealth.weepickle.v1.core
 
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
 /**
 * Basic functionality to be able to read and write objects. Kept as a trait so
-* other internal files can use it, while also mixing it into the `com.rallyhealth.weepickle.v0`
+* other internal files can use it, while also mixing it into the `com.rallyhealth.weepickle.v1`
 * package to form the public API.
 */
 trait Types{ types =>
@@ -58,7 +58,7 @@ trait Types{ types =>
     * A Reader that throws an error for all the visit methods which it does not define,
     * letting you only define the handlers you care about.
     */
-  trait SimpleReader[T] extends Reader[T] with com.rallyhealth.weepickle.v0.core.SimpleVisitor[Any, T]
+  trait SimpleReader[T] extends Reader[T] with com.rallyhealth.weepickle.v1.core.SimpleVisitor[Any, T]
 
   /**
     * Represents the ability to read a value of type [[T]].
@@ -66,7 +66,7 @@ trait Types{ types =>
     * A thin wrapper around [[Visitor]], but needs to be it's own class in order
     * to make type inference automatically pick up it's implicit values.
     */
-  trait Reader[T] extends com.rallyhealth.weepickle.v0.core.Visitor[Any, T]{
+  trait Reader[T] extends com.rallyhealth.weepickle.v1.core.Visitor[Any, T]{
 
     override def map[Z](f: T => Z): Reader[Z] = new Reader.MapReader[T, T, Z](Reader.this){
       def mapNonNullsFunction(v: T): Z = f(v)

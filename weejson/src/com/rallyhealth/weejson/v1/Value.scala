@@ -1,7 +1,7 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v0.core.Visitor
-import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
+import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.geny.WritableAsBytes
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -126,7 +126,7 @@ sealed trait Value extends Readable with WritableAsBytes{
 * JSON AST.
 */
 object Value extends AstTransformer[Value]{
-  type Value = com.rallyhealth.weejson.v0.Value
+  type Value = com.rallyhealth.weejson.v1.Value
   sealed trait Selector{
     def apply(x: Value): Value
     def update(x: Value, y: Value): Unit

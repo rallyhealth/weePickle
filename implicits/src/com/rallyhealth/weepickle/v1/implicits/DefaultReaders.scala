@@ -1,17 +1,17 @@
-package com.rallyhealth.weepickle.v0.implicits
+package com.rallyhealth.weepickle.v1.implicits
 
 import java.net.URI
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import com.rallyhealth.weepickle.v0.core._
+import com.rallyhealth.weepickle.v1.core._
 
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Generated with MacroImplicits{
+trait DefaultReaders extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
   implicit val UnitReader: Reader[Unit] = new SimpleReader[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int, index: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {
@@ -132,7 +132,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
   implicit val UUIDReader: Reader[UUID] = new MapStringReader(s => UUID.fromString(s.toString))
   implicit val LongReader: Reader[Long] = new NumericReader[Long] {
     override def expectedMsg = "expected number"
-    override def visitString(d: CharSequence, index: Int) = com.rallyhealth.weepickle.v0.core.Util.parseLong(d, 0, d.length())
+    override def visitString(d: CharSequence, index: Int) = com.rallyhealth.weepickle.v1.core.Util.parseLong(d, 0, d.length())
     override def visitInt32(d: Int, index: Int) = d.toLong
     override def visitInt64(d: Long, index: Int) = d.toLong
     override def visitUInt64(d: Long, index: Int) = d.toLong
@@ -306,7 +306,7 @@ trait DefaultReaders extends com.rallyhealth.weepickle.v0.core.Types with Genera
                s.charAt(4) == 'f' &&
                s.length() == 5){
       Duration.Undefined
-    }else Duration(com.rallyhealth.weepickle.v0.core.Util.parseLong(s, 0, s.length()), TimeUnit.NANOSECONDS)
+    }else Duration(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length()), TimeUnit.NANOSECONDS)
   )
 
   implicit val InfiniteDurationReader = DurationReader.narrow[Duration.Infinite]

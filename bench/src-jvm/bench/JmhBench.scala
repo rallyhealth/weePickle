@@ -3,12 +3,12 @@ package bench
 import java.io.{ByteArrayOutputStream, StringWriter}
 import java.util.concurrent.TimeUnit
 
-import com.rallyhealth.weejson.v0.jackson.{DefaultJsonFactory, WeeJackson}
-import com.rallyhealth.weepickle.v0.WeePickle._
-import com.rallyhealth.weepickle.v0.{Common, WeePickle}
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.rallyhealth.weepickle.v1.WeePickle._
+import com.rallyhealth.weepickle.v1.{Common, WeePickle}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import com.rallyhealth.weejson.v0.parser
+import com.rallyhealth.weejson.v1.parser
 
 /**
   * ==Run with==

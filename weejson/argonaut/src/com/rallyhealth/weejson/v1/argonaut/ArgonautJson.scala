@@ -1,12 +1,12 @@
-package com.rallyhealth.weejson.v0.argonaut
+package com.rallyhealth.weejson.v1.argonaut
 
 import argonaut.{Json, JsonNumber, JsonObject}
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-object ArgonautJson extends com.rallyhealth.weejson.v0.AstTransformer[Json]{
+object ArgonautJson extends com.rallyhealth.weejson.v1.AstTransformer[Json]{
   override def transform[T](j: Json, f: Visitor[_, T]) = j.fold(
     f.visitNull(-1),
     if (_) f.visitTrue(-1) else f.visitFalse(-1),

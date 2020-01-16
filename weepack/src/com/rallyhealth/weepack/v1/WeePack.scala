@@ -1,10 +1,10 @@
-package com.rallyhealth.weepack.v0
+package com.rallyhealth.weepack.v1
 
-import com.rallyhealth.weepickle.v0.core.NoOpVisitor
+import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 
 object WeePack {
 
-  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v0.core.Visitor[_, T]): T = t.transform(v)
+  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v1.core.Visitor[_, T]): T = t.transform(v)
 
   /**
     * Read the given MessagePack input into a MessagePack struct

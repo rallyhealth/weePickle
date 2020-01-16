@@ -1,12 +1,12 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v0.core.Util.reject
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, JsVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.Util.reject
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, Visitor}
 
 import scala.collection.mutable
 
 /**
-  * A version of [[com.rallyhealth.weejson.v0.Value]] that keeps the index positions of the various AST
+  * A version of [[com.rallyhealth.weejson.v1.Value]] that keeps the index positions of the various AST
   * nodes it is constructing. Usually not necessary, but sometimes useful if you
   * want to work with an AST but still provide source-index error positions if
   * something goes wrong.

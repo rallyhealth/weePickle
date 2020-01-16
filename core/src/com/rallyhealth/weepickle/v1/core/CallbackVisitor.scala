@@ -1,7 +1,6 @@
 package com.rallyhealth.weepickle.v1.core
 
-import com.rallyhealth.weepickle.v0.core.Visitor.{ArrDelegate, ObjDelegate}
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.Visitor.{ArrDelegate, ObjDelegate}
 
 /**
   * Notifies the `callback` of top-level results returned by the [[delegate]] visitor.

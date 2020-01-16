@@ -1,6 +1,5 @@
 package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weejson.v0.{Value, WeeJson}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks

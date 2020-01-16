@@ -1,7 +1,7 @@
-package com.rallyhealth.weepickle.v0
+package com.rallyhealth.weepickle.v1
 import utest._
 import acyclic.file
-import com.rallyhealth.weejson.v0.{Num, WeeJson}
+import com.rallyhealth.weejson.v1.{Num, WeeJson}
 
 object JsonTests extends TestSuite {
   val tests = Tests {
@@ -99,9 +99,9 @@ object JsonTests extends TestSuite {
         WeeJson.read("{\"1\": 1}").obj ==> Map("1" -> Num(1))
       }
       test("negative"){
-        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("[1]").obj}
-        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("1").obj}
-        intercept[com.rallyhealth.weejson.v0.Value.InvalidData]{WeeJson.read("\"1\"").obj}
+        intercept[com.rallyhealth.weejson.v1.Value.InvalidData]{WeeJson.read("[1]").obj}
+        intercept[com.rallyhealth.weejson.v1.Value.InvalidData]{WeeJson.read("1").obj}
+        intercept[com.rallyhealth.weejson.v1.Value.InvalidData]{WeeJson.read("\"1\"").obj}
 
       }
     }
