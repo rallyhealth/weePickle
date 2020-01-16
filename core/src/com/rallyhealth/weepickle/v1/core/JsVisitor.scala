@@ -1,9 +1,7 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weepickle.v0.core
 
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-
-import com.rallyhealth.weepickle.v0.core.Visitor
 
 /**
   * A [[Visitor]] specialized to work with JSON types. Forwards the

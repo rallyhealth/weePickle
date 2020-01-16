@@ -3,7 +3,8 @@ package com.rallyhealth.weejson.v0
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor}
+import com.rallyhealth.weejson.v0.parser.ByteBufferParser
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, JsVisitor, ObjVisitor}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
@@ -49,7 +50,7 @@ class JNumIndexCheck extends PropSpec with Matchers with ScalaCheckPropertyCheck
   property("visitFloat64StringParts provides the correct indices with parseFromString") {
     forAll { (value: BigDecimal) =>
       val json = s"""{ "num": ${value.toString} }"""
-      StringParser.transform(json, JNumIndexCheckFacade) shouldBe true
+      parser.StringParser.transform(json, JNumIndexCheckFacade) shouldBe true
     }
   }
 
@@ -63,7 +64,7 @@ class JNumIndexCheck extends PropSpec with Matchers with ScalaCheckPropertyCheck
 
   property("visitFloat64StringParts provides the correct indices at the top level with parseFromString") {
     forAll { (value: BigDecimal) =>
-      StringParser.transform(value.toString, JNumIndexCheckFacade) shouldBe true
+      parser.StringParser.transform(value.toString, JNumIndexCheckFacade) shouldBe true
     }
   }
 

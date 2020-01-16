@@ -3,7 +3,6 @@ language: scala
 
 env:
   - PLATFORM=jvm
-  - PLATFORM=js
 
 script:
 - ./mill -i __.$PLATFORM.__.test.test

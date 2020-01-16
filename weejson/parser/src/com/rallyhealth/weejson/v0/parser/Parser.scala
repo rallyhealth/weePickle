@@ -1,4 +1,5 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v0.parser
+
 import com.rallyhealth.weepickle.v0.core._
 
 import scala.annotation.{switch, tailrec}

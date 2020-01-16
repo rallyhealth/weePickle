@@ -1,5 +1,6 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v0.parser
 
+import com.rallyhealth.weejson.v0.Transformer
 import com.rallyhealth.weepickle.v0.core.{Platform, Visitor}
 /**
  * Lazy character sequence parsing.

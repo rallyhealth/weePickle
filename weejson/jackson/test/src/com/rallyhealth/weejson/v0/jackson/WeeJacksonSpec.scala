@@ -21,7 +21,7 @@ class WeeJacksonSpec
   "parse" - {
     "like WeeJson" in forAll { value: Value =>
       val str = WeeJson.write(value)
-      WeeJackson.parse(str).transform(Value) should ===(value)
+      WeeJackson.parseSingle(str, Value) should ===(value)
     }
 
     "multiple results" - {
@@ -41,7 +41,7 @@ class WeeJacksonSpec
     "like WeeJson.write" in {
       forAll { value: Value =>
         val writer = new StringWriter()
-        value.transform(WeeJackson.visitor(Instance.createGenerator(writer))).close()
+        value.transform(WeeJackson.toGenerator(Instance.createGenerator(writer))).close()
         writer.toString should ===(WeeJson.write(value))
       }
     }

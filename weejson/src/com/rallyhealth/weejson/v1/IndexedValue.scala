@@ -1,26 +1,31 @@
 package com.rallyhealth.weejson.v0
 
-import com.rallyhealth.weejson.v0._
 import com.rallyhealth.weepickle.v0.core.Util.reject
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, JsVisitor, ObjVisitor, Visitor}
+
 import scala.collection.mutable
-import com.rallyhealth.weepickle.v0.core.{Visitor, ObjVisitor, ArrVisitor, Abort, AbortException}
 
 /**
   * A version of [[com.rallyhealth.weejson.v0.Value]] that keeps the index positions of the various AST
   * nodes it is constructing. Usually not necessary, but sometimes useful if you
   * want to work with an AST but still provide source-index error positions if
-  * something goes wrong
+  * something goes wrong.
+  *
+  * This is used by the case class macros to buffer data for polymorphic types
+  * when the discriminator is not the first element, e.g. {"foo": 1, "$type": "discriminator"}.
+  * It is important that all types be immutable.
   */
 sealed trait IndexedValue {
   def index: Int
 }
 
 object IndexedValue extends Transformer[IndexedValue]{
-  
-  case class Str(index: Int, value0: java.lang.CharSequence) extends IndexedValue
-  case class Obj(index: Int, value0: (java.lang.CharSequence, IndexedValue)*) extends IndexedValue
+
+  case class Str(index: Int, value0: String) extends IndexedValue
+  case class Obj(index: Int, value0: (String, IndexedValue)*) extends IndexedValue
   case class Arr(index: Int, value: IndexedValue*) extends IndexedValue
-  case class Num(index: Int, s: CharSequence, decIndex: Int, expIndex: Int) extends IndexedValue
+  case class Num(index: Int, s: String, decIndex: Int, expIndex: Int) extends IndexedValue
+  // TODO this should probably be BigDecimal like Value to avoid losing precision.
   case class NumRaw(index: Int, d: Double) extends IndexedValue
   case class False(index: Int) extends IndexedValue{
     def value = false
@@ -85,9 +90,9 @@ object IndexedValue extends Transformer[IndexedValue]{
 
     def visitTrue(i: Int) = IndexedValue.True(i)
 
-    def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, i: Int) = IndexedValue.Num(i, s, decIndex, expIndex)
+    def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, i: Int) = IndexedValue.Num(i, s.toString, decIndex, expIndex)
     override def visitFloat64(d: Double, i: Int) = IndexedValue.NumRaw(i, d)
 
-    def visitString(s: CharSequence, i: Int) = IndexedValue.Str(i, s)
+    def visitString(s: CharSequence, i: Int) = IndexedValue.Str(i, s.toString)
   }
 }

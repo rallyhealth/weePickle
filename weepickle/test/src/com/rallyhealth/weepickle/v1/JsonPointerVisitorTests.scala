@@ -18,7 +18,7 @@ object JsonPointerVisitorTests extends TestSuite {
   override def tests: Tests = Tests {
     test("failures") {
       def assertPathFailure(json: String, expectedPath: String) = {
-        val cause = intercept[Exception](WeeJson.transform(json, rw))
+        val cause = intercept[Exception](WeeJson.read(json).transform(JsonPointerVisitor(rw)))
         val failureAtPath = findException(cause)
         failureAtPath.get.jsonPointer ==> expectedPath
       }

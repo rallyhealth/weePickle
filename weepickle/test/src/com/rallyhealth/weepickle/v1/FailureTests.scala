@@ -1,10 +1,9 @@
 package com.rallyhealth.weepickle.v0
 
-import utest._
+import com.rallyhealth.weejson.v0.jackson.VisitorException
 import com.rallyhealth.weepickle.v0.WeePickle.read
-import acyclic.file
-import com.rallyhealth.weejson.v0.{IncompleteParseException, ParseException}
-import com.rallyhealth.weepickle.v0.core.AbortException
+import com.rallyhealth.weepickle.v0.core.{Abort, AbortException}
+import utest._
 case class Fee(i: Int, s: String)
 sealed trait Fi
 object Fi{
@@ -74,7 +73,7 @@ object FailureTests extends TestSuite {
       val res =
         for(failureCase <- failureCases)
         yield try {
-          intercept[ParseException] { read[com.rallyhealth.weejson.v0.Value](failureCase) }
+          intercept[Exception] { read[com.rallyhealth.weejson.v0.Value](failureCase) }
           None
         }catch{
           case _:Throwable =>
@@ -83,14 +82,15 @@ object FailureTests extends TestSuite {
 
       val nonFailures = res.flatten
       assert(nonFailures.isEmpty)
-      intercept[IncompleteParseException]{read[com.rallyhealth.weejson.v0.Value](""" {"Comma instead if closing brace": true, """)}
-      intercept[IncompleteParseException]{read[com.rallyhealth.weejson.v0.Value](""" ["Unclosed array" """)}
+      intercept[Exception]{read[com.rallyhealth.weejson.v0.Value](""" {"Comma instead if closing brace": true, """)}
+      intercept[Exception]{read[com.rallyhealth.weejson.v0.Value](""" ["Unclosed array" """)}
     }
 
     test("facadeFailures"){
       def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v0.WeePickle.Reader](s: String, msgs: String*) = {
-        val err = intercept[AbortException] { com.rallyhealth.weepickle.v0.WeePickle.read[T](s) }
-        for (msg <- msgs) assert(err.getMessage.contains(msg))
+        val err = intercept[VisitorException] { com.rallyhealth.weepickle.v0.WeePickle.read[T](s) }
+        val errMsgs = Seq(err.getMessage, err.getCause.getMessage)
+        for (msg <- msgs) assert(errMsgs.exists(_.contains(msg)))
         err
       }
       test("caseClass"){
@@ -98,13 +98,13 @@ object FailureTests extends TestSuite {
         // the intercept macro play badly with each other
 
         test("invalidTag"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg at index 1")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg at index 1")
+          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "failure at jsonPointer=/$type off=11 line=1 col=12 token=VALUE_STRING")
+          test - assertErrorMsgDefault[Fi]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "failure at jsonPointer=/$type off=11 line=1 col=12 token=VALUE_STRING")
         }
 
         test("taggedInvalidBody"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v0.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 53")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v0.Fi.Fo", "i": true, "z": null}""", "expected number got boolean at index 53")
+          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v0.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "failure at jsonPointer=/i off=54 line=1 col=55 token=VALUE_TRUE")
+          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v0.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "failure at jsonPointer=/i off=54 line=1 col=55 token=VALUE_TRUE")
         }
       }
     }

@@ -8,7 +8,7 @@ class CharBuilderSpec extends PropSpec with Matchers with ScalaCheckPropertyChec
 
   property("append") {
     forAll { xs: List[Char] =>
-      val builder = new com.rallyhealth.weejson.v0.util.CharBuilder
+      val builder = new com.rallyhealth.weejson.v0.parser.util.CharBuilder
       xs.foreach(builder.append)
       builder.makeString shouldBe xs.mkString
     }
@@ -16,7 +16,7 @@ class CharBuilderSpec extends PropSpec with Matchers with ScalaCheckPropertyChec
 
   property("extend") {
     forAll { xs: List[String] =>
-      val builder = new com.rallyhealth.weejson.v0.util.CharBuilder
+      val builder = new com.rallyhealth.weejson.v0.parser.util.CharBuilder
       xs.foreach(builder.extend)
       builder.makeString shouldBe xs.mkString
     }

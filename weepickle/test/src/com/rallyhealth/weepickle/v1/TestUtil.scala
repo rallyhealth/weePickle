@@ -56,14 +56,11 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v0.Api](val api: Api){
     }
   }
 
-  def abuseCase[T: api.Reader](s: String*) = {
-    val strings = s.map(_.trim)
-
-    for (s <- strings) {
-      intercept[NumberFormatException] {
-        api.read[T](s)
-      }
+  def assertNumberFormatException[T: api.Reader](s: String) = {
+    val e = intercept[Exception] {
+      api.read[T](s.trim)
     }
+    e.getCause.getClass ==> classOf[NumberFormatException]
   }
 
   def parses[T: api.Reader](s: String*) = {

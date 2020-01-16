@@ -1,4 +1,4 @@
-package com.rallyhealth.weejson.v0.util
+package com.rallyhealth.weejson.v0.parser.util
 
 /**
  * CharBuilder is a specialized way to build Strings.

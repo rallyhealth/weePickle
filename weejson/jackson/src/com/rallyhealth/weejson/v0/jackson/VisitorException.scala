@@ -21,7 +21,7 @@ object VisitorException {
         append("col", pb.getTokenColumnNr.toString)
       case _ =>
     }
-    append("token", parser.currentToken().name())
+    append("token", Option(parser.currentToken()).map(_.name()).getOrElse("null"))
 
     new VisitorException(sb.result(), t)
   }

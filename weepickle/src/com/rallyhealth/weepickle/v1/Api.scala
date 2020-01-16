@@ -2,14 +2,16 @@ package com.rallyhealth.weepickle.v0
 
 import java.io.ByteArrayOutputStream
 
-import language.experimental.macros
-import language.higherKinds
-import com.rallyhealth.weepickle.v0.core._
-
-import scala.reflect.ClassTag
+import com.fasterxml.jackson.core.PrettyPrinter
+import com.rallyhealth.weejson.v0.jackson.{DefaultJsonFactory, WeeJackson}
 import com.rallyhealth.weejson.v0.{BaseRenderer, IndexedValue}
 import com.rallyhealth.weepack.v0.MsgPackWriter
+import com.rallyhealth.weepickle.v0.core._
 import com.rallyhealth.weepickle.v0.geny.WritableAsBytes
+
+import scala.language.experimental.macros
+import scala.language.higherKinds
+import scala.reflect.ClassTag
 /**
  * An instance of the com.rallyhealth.weepickle.v0 API. There's a default instance at
  * `com.rallyhealth.weepickle.v0.WeePickle`, but you can also implement it yourself to customize
@@ -64,24 +66,30 @@ trait Api
   /**
     * Write the given Scala value as a JSON string to the given Writer
     */
-  def writeTo[T: Writer](t: T,
-                         out: java.io.Writer,
-                         indent: Int = -1,
-                         escapeUnicode: Boolean = false): Unit = {
-    transform(t).to(new com.rallyhealth.weejson.v0.Renderer(out, indent = indent, escapeUnicode))
+  def writeTo[T: Writer](
+    t: T,
+    prettyPrinter: Option[PrettyPrinter],
+    out: java.io.Writer
+  ): Unit = {
+    val visitor = WeeJackson.toGenerator(
+      prettyPrinter.foldLeft(DefaultJsonFactory.Instance.createGenerator(out))(_.setPrettyPrinter(_))
+    )
+    transform(t).to(visitor)
   }
+
   /**
     * Write the given Scala value as a JSON string via a [[WritableAsBytes]]
     */
   def stream[T: Writer](t: T,
-                        indent: Int = -1,
-                        escapeUnicode: Boolean = false): WritableAsBytes = new WritableAsBytes{
+    indent: Int = -1,
+    escapeUnicode: Boolean = false): WritableAsBytes = new WritableAsBytes{
     def writeBytesTo(out: java.io.OutputStream) = {
       val w = new java.io.OutputStreamWriter(out, java.nio.charset.StandardCharsets.UTF_8)
-      transform(t).to(new BaseRenderer(w, indent = indent, escapeUnicode))
+      transform(t).to(BaseRenderer(w, indent = indent, escapeUnicode))
       w.flush()
     }
   }
+
   /**
     * Write the given Scala value as a MessagePack binary to the given OutputStream
     */

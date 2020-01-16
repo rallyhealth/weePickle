@@ -12,6 +12,8 @@ val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
 
 trait CommonModule extends ScalaModule {
 
+  protected def shade(name: String) = name + "-v0"
+
   def scalacOptions = T {
     // Not ready to deal with 2.13 collection deprecations.
     (if (scalaVersion() startsWith "2.12") Seq("-opt:l:method", "-Xfatal-warnings", "-deprecation", "-feature", "-language:higherKinds", "-language:implicitConversions") else Nil)
@@ -26,10 +28,10 @@ trait CommonModule extends ScalaModule {
     millSourcePath / s"src-$platformSegment"
   )
 }
+
 trait CommonPublishModule extends CommonModule with PublishModule with CrossScalaModule{
   def publishVersion = "0.2.0"
 
-  protected def shade(name: String) = name + "-v0"
   def pomSettings = PomSettings(
     description = artifactName(),
     organization = "com.rallyhealth",
@@ -78,33 +80,7 @@ trait CommonJvmModule extends CommonPublishModule with MiMa {
   }
 }
 
-trait CommonJsModule extends CommonPublishModule with ScalaJSModule{
-  def platformSegment = "js"
-  def scalaJSVersion = T{
-    if (isScalaOld())
-      "0.6.25"
-    else
-      "0.6.31"
-  }
-  def millSourcePath = super.millSourcePath / os.up
-  trait Tests extends super.Tests with CommonTestModule{
-    def platformSegment = "js"
-    def scalaJSVersion = CommonJsModule.this.scalaJSVersion
-  }
-}
-
 object core extends Module {
-
-  object js extends Cross[CoreJsModule](scalaVersions: _*)
-  class CoreJsModule(val crossScalaVersion: String) extends CommonJsModule {
-    def artifactName = shade("weepickle-core")
-    def ivyDeps = Agg(
-      ivy"org.scala-lang.modules::scala-collection-compat::2.1.2",
-      ivy"io.github.cquiroz::scala-java-time::2.0.0-RC3", // for java.time.Instant
-    )
-
-    object test extends Tests
-  }
 
   object jvm extends Cross[CoreJvmModule](scalaVersions: _*)
   class CoreJvmModule(val crossScalaVersion: String) extends CommonJvmModule {
@@ -164,16 +140,6 @@ object implicits extends Module {
     }
 
   }
-  object js extends Cross[JsModule](scalaVersions: _*)
-  class JsModule(val crossScalaVersion: String) extends ImplicitsModule with CommonJsModule{
-    def moduleDeps = Seq(core.js())
-    def artifactName = shade("weepickle-implicits")
-
-    object test extends Tests {
-      def moduleDeps = super.moduleDeps ++ Seq(weejson.js().test, core.js().test)
-    }
-  }
-
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends ImplicitsModule with CommonJvmModule{
     def moduleDeps = Seq(core.jvm())
@@ -185,16 +151,6 @@ object implicits extends Module {
 }
 
 object weepack extends Module {
-
-  object js extends Cross[JsModule](scalaVersions: _*)
-  class JsModule(val crossScalaVersion: String) extends CommonJsModule {
-    def moduleDeps = Seq(core.js())
-    def artifactName = shade("weepack")
-
-    object test extends Tests {
-      def moduleDeps = super.moduleDeps ++ Seq(weejson.js().test, core.js().test)
-    }
-  }
 
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends CommonJvmModule {
@@ -210,7 +166,7 @@ object weejson extends Module{
   trait JsonModule extends CommonPublishModule{
     def artifactName = shade("weejson")
   }
-  trait JawnTestModule extends CommonTestModule{
+  trait ScalaTestModule extends CommonTestModule{
     def ivyDeps = T{
       Agg(
         ivy"org.scalatest::scalatest::3.0.8",
@@ -220,17 +176,10 @@ object weejson extends Module{
     def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 
-  object js extends Cross[JsModule](scalaVersions: _*)
-  class JsModule(val crossScalaVersion: String) extends JsonModule with CommonJsModule{
-    def moduleDeps = Seq(core.js())
-
-    object test extends Tests with JawnTestModule
-  }
-
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends JsonModule with CommonJvmModule{
-    def moduleDeps = Seq(core.jvm())
-    object test extends Tests with JawnTestModule
+    def moduleDeps = Seq(core.jvm(), weejson.jackson())
+    object test extends Tests with ScalaTestModule
   }
 
   object argonaut extends Cross[ArgonautModule](scalaVersions: _*)
@@ -240,6 +189,22 @@ object weejson extends Module{
     def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = Agg(ivy"io.argonaut::argonaut:6.2.3")
   }
+
+  /**
+    * A pure scala parser forked from jawn.
+    * Sidelined in favor of jackson based on bench.JmhBench perf results.
+    */
+  object parser extends Cross[ParserModule](scalaVersions: _*)
+  class ParserModule(val crossScalaVersion: String) extends CommonModule with CrossScalaModule {
+    def artifactName = shade("weejson-parser")
+    def platformSegment = "jvm"
+    def moduleDeps = Seq(weejson.jvm())
+
+    object test extends Tests with ScalaTestModule {
+      def platformSegment = "jvm"
+    }
+  }
+
   object json4s extends Cross[Json4sModule](scalaVersions: _*)
   class Json4sModule(val crossScalaVersion: String) extends CommonPublishModule{
     def artifactName = shade("weejson-json4s")
@@ -282,13 +247,14 @@ object weejson extends Module{
 
   object jackson extends Cross[JacksonModule](scalaVersions:_*)
   class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
-    object test extends Tests with JawnTestModule {
+    object test extends Tests with ScalaTestModule {
       def platformSegment = "jvm"
+      def moduleDeps = Seq(weejson.jvm().test)
     }
 
     def artifactName = shade("weejson-jackson")
     def platformSegment = "jvm"
-    def moduleDeps = Seq(weejson.jvm())
+    def moduleDeps = Seq(core.jvm())
     def ivyDeps = T{
       Agg(
         ivy"com.fasterxml.jackson.core:jackson-core:2.10.2"
@@ -316,7 +282,7 @@ trait weepickleModule extends CommonPublishModule{
 object weepickle extends Module{
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends weepickleModule with CommonJvmModule{
-    def moduleDeps = Seq(weejson.jvm(), weepack.jvm(), implicits.jvm())
+    def moduleDeps = Seq(weejson.jvm(), weepack.jvm(), implicits.jvm(), weejson.jackson())
 
     object test extends Tests with CommonModule{
       def moduleDeps = {
@@ -325,19 +291,9 @@ object weepickle extends Module{
           weejson.circe(),
           weejson.json4s(),
           weejson.play(),
-          weejson.jackson(),
           core.jvm().test
         )
       }
-    }
-  }
-
-  object js extends Cross[JsModule](scalaVersions: _*)
-  class JsModule(val crossScalaVersion: String) extends weepickleModule with CommonJsModule {
-    def moduleDeps = Seq(weejson.js(), weepack.js(), implicits.js())
-
-    object test extends Tests with CommonModule{
-      def moduleDeps = super.moduleDeps ++ Seq(core.js().test)
     }
   }
 }
@@ -357,27 +313,10 @@ trait BenchModule extends CommonModule {
 }
 
 object bench extends Module {
-  object js extends BenchModule with ScalaJSModule {
-    def scalaJSVersion = "0.6.31"
-    def platformSegment = "js"
-    def moduleDeps = Seq(weepickle.js("2.12.8").test)
-    def run(args: String*) = T.command {
-      finalMainClassOpt() match{
-        case Left(err) => mill.eval.Result.Failure(err)
-        case Right(_) =>
-          ScalaJSWorkerApi.scalaJSWorker().run(
-            toolsClasspath().map(_.path),
-            jsEnvConfig(),
-            fullOpt().path.toIO
-          )
-          mill.eval.Result.Success(())
-      }
-    }
-  }
 
   object jvm extends BenchModule with Jmh{
     def platformSegment = "jvm"
-    def moduleDeps = Seq(weepickle.jvm("2.12.8").test)
+    def moduleDeps = Seq(weepickle.jvm("2.12.8").test, weejson.parser("2.12.8"))
     def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",

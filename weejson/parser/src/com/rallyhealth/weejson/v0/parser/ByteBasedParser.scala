@@ -1,6 +1,6 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v0.parser
 
-import scala.annotation.{switch, tailrec}
+import scala.annotation.switch
 
 /**
  * Trait used when the data to be parsed is in UTF-8.
@@ -45,7 +45,7 @@ trait ByteBasedParser[J] extends Parser[J] {
     // one go.
 
     var j = i + 1
-    val sb = new com.rallyhealth.weejson.v0.util.CharBuilder
+    val sb = new com.rallyhealth.weejson.v0.parser.util.CharBuilder
 
     var c: Int = byte(j) & 0xff
     while (c != 34) { // "

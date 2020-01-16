@@ -1,7 +1,9 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v0.parser
+
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
+import com.rallyhealth.weejson.v0.Transformer
 import com.rallyhealth.weepickle.v0.core.Visitor
 
 /**

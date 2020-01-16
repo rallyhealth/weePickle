@@ -11,7 +11,7 @@ import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, Visitor}
 class CallbackVisitor[T, J](delegate: Visitor[T, J])(callback: J => Unit) extends Visitor.Delegate[T, J](delegate) {
 
   private def emitFluently(j: J): J = {
-    if (j != null) callback(j)
+    callback(j)
     j
   }
 

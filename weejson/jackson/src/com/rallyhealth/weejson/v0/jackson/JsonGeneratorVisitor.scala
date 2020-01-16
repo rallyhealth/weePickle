@@ -1,8 +1,7 @@
 package com.rallyhealth.weejson.v0.jackson
 
 import com.fasterxml.jackson.core.JsonGenerator
-import com.rallyhealth.weejson.v0.JsVisitor
-import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, SimpleVisitor, Visitor}
+import com.rallyhealth.weepickle.v0.core.{ArrVisitor, JsVisitor, ObjVisitor, SimpleVisitor, Visitor}
 
 /**
   * Adapter to Jackson's [[JsonGenerator]] classes, used to serialize jvm objects to bytes.
@@ -12,7 +11,7 @@ import com.rallyhealth.weepickle.v0.core.{ArrVisitor, ObjVisitor, SimpleVisitor,
   * - YAMLGenerator
   * - SmileGenerator
   * - CBORGenerator
-  * - probably more on the web
+  * - more: https://github.com/FasterXML/jackson#data-format-modules
   */
 class JsonGeneratorVisitor(
   generator: JsonGenerator

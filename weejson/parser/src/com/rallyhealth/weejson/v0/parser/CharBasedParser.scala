@@ -1,4 +1,4 @@
-package com.rallyhealth.weejson.v0
+package com.rallyhealth.weejson.v0.parser
 
 import scala.annotation.switch
 
@@ -13,7 +13,7 @@ import scala.annotation.switch
  */
 trait CharBasedParser[J] extends Parser[J] {
 
-  private[this] final val charBuilder = new com.rallyhealth.weejson.v0.util.CharBuilder()
+  private[this] final val charBuilder = new com.rallyhealth.weejson.v0.parser.util.CharBuilder()
 
   /**
    * See if the string has any escape sequences. If not, return the

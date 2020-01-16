@@ -1,6 +1,6 @@
-package ujson
+package com.rallyhealth.weejson.v0.parser
 
-import com.rallyhealth.weejson.v0.{ByteBasedParser, Parser, Transformer}
+import com.rallyhealth.weejson.v0.Transformer
 import com.rallyhealth.weepickle.v0.core.{BufferingInputStreamParser, Visitor}
 /**
   * Parser that reads in bytes from an InputStream, buffering them in memory

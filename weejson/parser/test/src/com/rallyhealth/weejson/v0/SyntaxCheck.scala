@@ -3,6 +3,7 @@ package com.rallyhealth.weejson.v0
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 
+import com.rallyhealth.weejson.v0.parser.{ByteArrayParser, ByteBufferParser, CharSequenceParser, InputStreamParser, StringParser}
 import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 import org.scalacheck.Gen._
 import org.scalacheck._
@@ -12,7 +13,6 @@ import org.scalatest.prop._
 import scala.util.Try
 import com.rallyhealth.weepickle.v0.core.NoOpVisitor
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import ujson.InputStreamParser
 
 class SyntaxCheck extends PropSpec with Matchers with ScalaCheckPropertyChecks {
 

@@ -22,7 +22,7 @@ object PrimitiveTests extends TestSuite {
       test("unicode"){
         rw("叉烧包")
         com.rallyhealth.weepickle.v0.WeePickle.write("叉烧包") ==> "\"叉烧包\""
-        com.rallyhealth.weepickle.v0.WeePickle.write("叉烧包", escapeUnicode = true) ==> "\"\\u53c9\\u70e7\\u5305\""
+        com.rallyhealth.weepickle.v0.WeePickle.write("叉烧包", escapeUnicode = true).toLowerCase ==> "\"\\u53c9\\u70e7\\u5305\""
         com.rallyhealth.weepickle.v0.WeePickle.read[String]("\"\\u53c9\\u70e7\\u5305\"") ==> "叉烧包"
         com.rallyhealth.weepickle.v0.WeePickle.read[String]("\"叉烧包\"") ==> "叉烧包"
       }
@@ -57,7 +57,7 @@ object PrimitiveTests extends TestSuite {
       test("null") - rw(null: BigInt, "null")
       test("abuse cases") {
         test("10k digits") - parses[BigInt](s""" "1${"0" * 9999}" """)
-        test("100k digits") - abuseCase[BigInt](s""" "1${"0" * 99999}" """)
+        test("100k digits") - assertNumberFormatException[BigInt](s""" "1${"0" * 99999}" """)
       }
     }
     test("BigDecimal"){
@@ -84,11 +84,11 @@ object PrimitiveTests extends TestSuite {
         - If you need to kill a test run make sure you don't leave a stray node process in the background
          */
 
-        test("greater than max int exponential") -abuseCase[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """)
+        test("greater than max int exponential") -assertNumberFormatException[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """)
         test("10k digits integer") - parses[BigDecimal](s""" "1${"0" * 9999}" """)
-        test("100k digits integer") - abuseCase[BigDecimal](s""" "1${"0" * 99999}" """)
+        test("100k digits integer") - assertNumberFormatException[BigDecimal](s""" "1${"0" * 99999}" """)
         test("10k digits after the decimal") - parses[BigDecimal](s""" ".${"9" * 9999}" """)
-        test("100k digits after the decimal") - abuseCase[BigDecimal](s""" ".${"9" * 99999}" """)
+        test("100k digits after the decimal") - assertNumberFormatException[BigDecimal](s""" ".${"9" * 99999}" """)
         test("Not quite max int exponential") - parses[BigDecimal](s""" "1E${Integer.MAX_VALUE - 1}" """)
         // MathContext.UNLIMITED gives you unlimited precision normally you only get 128 bit decimal see [[BigDecimal.defaultMathContext]]
         test("amazingly small") - rw(BigDecimal("0.0000000000000000001", MathContext.UNLIMITED).pow(999))
