@@ -2,7 +2,8 @@ package com.rallyhealth.weepickle.v1
 import acyclic.file
 import utest._
 import com.rallyhealth.weepickle.v1.TestUtil._
-import com.rallyhealth.weepickle.v1.WeePickle.{read, write}
+import com.rallyhealth.weepickle.v1.WeePickle.read
+import com.rallyhealth.weepickle.v1.core.MutableCharSequenceVisitor
 
 object Custom {
   trait ThingBase{
@@ -149,6 +150,13 @@ object MacroTests extends TestSuite {
           // different code-path than for tag-first dicts, using an intermediate
           // AST, so make sure that code path works too.
           test - rw(C("a", "b"), """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")
+          test("mutable") {
+            // Make sure that the buffering done by the macro captures immutable values.
+            val r = new WeePickle.Reader.Delegate(new MutableCharSequenceVisitor(WeePickle.reader[C]))
+            val w = WeePickle.writer[C]
+            rw(C("a", "b"), """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")(r, w)
+          }
+
           test - rw(B(1), """{"i":1, "$type": "com.rallyhealth.weepickle.v1.Hierarchy.B"}""")
           test - rw(C("a", "b"): A, """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")
         }
