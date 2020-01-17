@@ -210,14 +210,14 @@ object StructTests extends TestSuite {
         type Thing = Seq[List[Map[Option[String], String]]]
         val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
         val out = new ByteArrayOutputStream()
-        WeePickle.stream(thing).writeBytesTo(out)
+        WeePickle.streamJson(thing).writeBytesTo(out)
         out.toByteArray ==> WeePickle.write(thing).getBytes
       }
       test("msgpack") {
         type Thing = Seq[List[Map[Option[String], String]]]
         val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
         val out = new ByteArrayOutputStream()
-        WeePickle.streamBinary(thing).writeBytesTo(out)
+        WeePickle.streamMsgPack(thing).writeBytesTo(out)
         out.toByteArray ==> WeePickle.writeMsgPack(thing)
       }
     }

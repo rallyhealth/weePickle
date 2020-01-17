@@ -56,17 +56,17 @@ trait Api
   /**
     * Write the given Scala value as a JSON struct
     */
-  def writeJs[T: Writer](t: T): com.rallyhealth.weejson.v1.Value = transform(t).to[com.rallyhealth.weejson.v1.Value]
+  def writeJsonAst[T: Writer](t: T): com.rallyhealth.weejson.v1.Value = transform(t).to[com.rallyhealth.weejson.v1.Value]
 
   /**
     * Write the given Scala value as a MessagePack struct
     */
-  def writeMsgAst[T: Writer](t: T): com.rallyhealth.weepack.v1.Msg = transform(t).to[com.rallyhealth.weepack.v1.Msg]
+  def writeMsgPackAst[T: Writer](t: T): com.rallyhealth.weepack.v1.Msg = transform(t).to[com.rallyhealth.weepack.v1.Msg]
 
   /**
     * Write the given Scala value as a JSON string to the given Writer
     */
-  def writeTo[T: Writer](
+  def writeJsonTo[T: Writer](
     t: T,
     prettyPrinter: Option[PrettyPrinter],
     out: java.io.Writer
@@ -80,7 +80,7 @@ trait Api
   /**
     * Write the given Scala value as a JSON string via a [[WritableAsBytes]]
     */
-  def stream[T: Writer](t: T,
+  def streamJson[T: Writer](t: T,
     indent: Int = -1,
     escapeUnicode: Boolean = false): WritableAsBytes = new WritableAsBytes{
     def writeBytesTo(out: java.io.OutputStream) = {
@@ -91,16 +91,9 @@ trait Api
   }
 
   /**
-    * Write the given Scala value as a MessagePack binary to the given OutputStream
-    */
-  def writeMsgPackTo[T: Writer](t: T, out: java.io.OutputStream): Unit = {
-    transform(t).to(new com.rallyhealth.weepack.v1.MsgPackWriter(out))
-  }
-
-  /**
     * Write the given Scala value as a MessagePack binary via a [[WritableAsBytes]]
     */
-  def streamBinary[T: Writer](t: T): WritableAsBytes = new WritableAsBytes{
+  def streamMsgPack[T: Writer](t: T): WritableAsBytes = new WritableAsBytes{
     def writeBytesTo(out: java.io.OutputStream) = transform(t).to(new MsgPackWriter(out))
   }
 

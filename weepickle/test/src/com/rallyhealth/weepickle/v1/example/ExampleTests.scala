@@ -378,7 +378,7 @@ object ExampleTests extends TestSuite {
 
     test("msgReadWrite"){
       val big = Big(1, true, "lol", 'Z', Thing(7, ""))
-      val msg: com.rallyhealth.weepack.v1.Msg = com.rallyhealth.weepickle.v1.WeePickle.writeMsgAst(big)
+      val msg: com.rallyhealth.weepack.v1.Msg = com.rallyhealth.weepickle.v1.WeePickle.writeMsgPackAst(big)
       com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Big](msg) ==> big
     }
 
@@ -472,7 +472,7 @@ object ExampleTests extends TestSuite {
       }
       test("intermediate"){
         val data = Seq(Thing(1, "g"), Thing(2, "k"))
-        val json = com.rallyhealth.weepickle.v1.WeePickle.writeJs(data)
+        val json = com.rallyhealth.weepickle.v1.WeePickle.writeJsonAst(data)
 
         json.arr.remove(1)
         json(0)("myFieldA") = 1337
