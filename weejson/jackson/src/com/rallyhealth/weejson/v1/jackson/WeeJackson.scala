@@ -25,9 +25,9 @@ object WeeJackson {
     */
   def parseSingle[J](parser: Parser, visitor: Visitor[_, J]): J = {
     parseMultiple(parser, visitor) match {
-      case Nil => throw VisitorException(parser.parser, new NoSuchElementException("Reached end of input, but Visitor produced no result."))
+      case Nil => throw VisitorException("Reached end of input, but Visitor produced no result.", parser.parser, null)
       case head :: Nil => head
-      case many => throw new VisitorException(s"Expected 1 result. Visitor produced many.", null)
+      case many => throw VisitorException("Expected 1 result. Visitor produced many.", parser.parser, null)
     }
   }
 
@@ -52,7 +52,7 @@ object WeeJackson {
       builder.result()
     } catch {
       case NonFatal(t) =>
-        throw VisitorException(p, t)
+        throw VisitorException("Parser or Visitor failure", p, t)
       }
     finally {
       Try(p.close())

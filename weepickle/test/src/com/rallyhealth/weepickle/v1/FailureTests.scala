@@ -98,13 +98,13 @@ object FailureTests extends TestSuite {
         // the intercept macro play badly with each other
 
         test("invalidTag"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "failure at jsonPointer=/$type off=11 line=1 col=12 token=VALUE_STRING")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "failure at jsonPointer=/$type off=11 line=1 col=12 token=VALUE_STRING")
+          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "jsonPointer=/$type index=11 line=1 col=12 token=VALUE_STRING")
+          test - assertErrorMsgDefault[Fi]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "jsonPointer=/$type index=11 line=1 col=12 token=VALUE_STRING")
         }
 
         test("taggedInvalidBody"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "failure at jsonPointer=/i off=54 line=1 col=55 token=VALUE_TRUE")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "failure at jsonPointer=/i off=54 line=1 col=55 token=VALUE_TRUE")
+          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "jsonPointer=/i index=54 line=1 col=55 token=VALUE_TRUE")
+          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "jsonPointer=/i index=54 line=1 col=55 token=VALUE_TRUE")
         }
       }
     }
