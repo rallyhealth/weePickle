@@ -179,4 +179,10 @@ class JsonGeneratorVisitor(
     generator.writeEndObject()
     generator
   }
+
+  override def close(): Unit = {
+    if (!generator.isClosed) {
+      generator.close()
+    }
+  }
 }

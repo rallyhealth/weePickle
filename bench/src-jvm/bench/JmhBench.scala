@@ -71,7 +71,7 @@ class JmhBench {
   @Benchmark
   def ccToBytesWeeJackson(bh: Blackhole): Unit = {
     val out = new ByteArrayOutputStream()
-    val visitor = WeeJackson.toGenerator(DefaultJsonFactory.Instance.createGenerator(out))
+    val visitor = WeeJackson.toJsonSingle(DefaultJsonFactory.Instance.createGenerator(out))
     WeePickle.transform(Common.benchmarkSampleData).transform(visitor).close()
     bh.consume(out.toByteArray)
   }
@@ -84,7 +84,7 @@ class JmhBench {
   @Benchmark
   def ccToStringWeeJackson(bh: Blackhole): Unit = {
     val writer = new StringWriter()
-    val visitor = WeeJackson.toGenerator(DefaultJsonFactory.Instance.createGenerator(writer))
+    val visitor = WeeJackson.toJsonSingle(DefaultJsonFactory.Instance.createGenerator(writer))
     WeePickle.transform(Common.benchmarkSampleData).to(visitor).close()
     bh.consume(writer.toString)
   }

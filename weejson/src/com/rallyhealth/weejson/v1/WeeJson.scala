@@ -3,7 +3,7 @@ package com.rallyhealth.weejson.v1
 import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 
 object WeeJson {
-  def transform[T](t: Readable, v: com.rallyhealth.weepickle.v1.core.Visitor[_, T]): T = t.transform(v)
+  def transform[T](r: Readable, v: com.rallyhealth.weepickle.v1.core.Visitor[_, T]): T = r.transform(v)
 
   /**
     * Read the given JSON input as a JSON struct

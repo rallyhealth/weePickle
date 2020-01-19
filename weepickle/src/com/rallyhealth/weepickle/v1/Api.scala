@@ -2,9 +2,7 @@ package com.rallyhealth.weepickle.v1
 
 import java.io.ByteArrayOutputStream
 
-import com.fasterxml.jackson.core.PrettyPrinter
-import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
-import com.rallyhealth.weejson.v1.{BaseRenderer, IndexedValue}
+import com.rallyhealth.weejson.v1.{BytesRenderer, IndexedValue}
 import com.rallyhealth.weepack.v1.MsgPackWriter
 import com.rallyhealth.weepickle.v1.core._
 import com.rallyhealth.weepickle.v1.geny.WritableAsBytes
@@ -64,29 +62,13 @@ trait Api
   def writeMsgPackAst[T: Writer](t: T): com.rallyhealth.weepack.v1.Msg = transform(t).to[com.rallyhealth.weepack.v1.Msg]
 
   /**
-    * Write the given Scala value as a JSON string to the given Writer
-    */
-  def writeJsonTo[T: Writer](
-    t: T,
-    prettyPrinter: Option[PrettyPrinter],
-    out: java.io.Writer
-  ): Unit = {
-    val visitor = WeeJackson.toGenerator(
-      prettyPrinter.foldLeft(DefaultJsonFactory.Instance.createGenerator(out))(_.setPrettyPrinter(_))
-    )
-    transform(t).to(visitor)
-  }
-
-  /**
     * Write the given Scala value as a JSON string via a [[WritableAsBytes]]
     */
   def streamJson[T: Writer](t: T,
     indent: Int = -1,
     escapeUnicode: Boolean = false): WritableAsBytes = new WritableAsBytes{
     def writeBytesTo(out: java.io.OutputStream) = {
-      val w = new java.io.OutputStreamWriter(out, java.nio.charset.StandardCharsets.UTF_8)
-      transform(t).to(BaseRenderer(w, indent = indent, escapeUnicode))
-      w.flush()
+      transform(t).to(BytesRenderer(out, indent, escapeUnicode))
     }
   }
 
@@ -231,7 +213,7 @@ trait AttributeTagged extends Api{
     val keyVisitor = ctx.visitKey(-1)
 
     ctx.visitKeyValue(keyVisitor.visitString(tagName, -1))
-    ctx.visitValue(out.visitString(objectTypeKeyWriteMap(tag), -1), -1)
+    ctx.visitValue(ctx.subVisitor.visitString(objectTypeKeyWriteMap(tag), -1), -1)
     w.writeToObject(ctx, v)
     val res = ctx.visitEnd(-1)
     res

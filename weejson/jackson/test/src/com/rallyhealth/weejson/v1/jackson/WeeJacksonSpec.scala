@@ -41,7 +41,7 @@ class WeeJacksonSpec
     "like WeeJson.write" in {
       forAll { value: Value =>
         val writer = new StringWriter()
-        value.transform(WeeJackson.toGenerator(Instance.createGenerator(writer))).close()
+        value.transform(WeeJackson.toJsonSingle(Instance.createGenerator(writer)))
         writer.toString should ===(WeeJson.write(value))
       }
     }

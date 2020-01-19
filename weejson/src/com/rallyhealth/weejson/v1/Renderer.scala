@@ -1,24 +1,42 @@
 package com.rallyhealth.weejson.v1
 
-import java.io.{ByteArrayOutputStream, StringWriter}
+import java.io.{ByteArrayOutputStream, OutputStream, StringWriter}
 
 import com.fasterxml.jackson.core.json.JsonWriteFeature
 import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
-import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator, PrettyPrinter}
-import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.fasterxml.jackson.core.{JsonGenerator, PrettyPrinter}
+import com.rallyhealth.weejson.v1.BaseRenderer.configurePrettyPrinting
+import com.rallyhealth.weejson.v1.jackson.DefaultJsonFactory._
+import com.rallyhealth.weejson.v1.jackson.WeeJackson
 import com.rallyhealth.weepickle.v1.core.Visitor
 
 object BytesRenderer {
 
-  def apply(): Visitor[_, BytesWriter] = Renderer(new BytesWriter)
+  def apply(): Visitor[_, ExposedByteArrayOutputStream] = {
+    apply(new ExposedByteArrayOutputStream)
+  }
 
-  class BytesWriter(out: java.io.ByteArrayOutputStream = new ByteArrayOutputStream())
-    extends java.io.OutputStreamWriter(out) {
+  def apply[Out <: OutputStream](
+    out: Out,
+    indent: Int = -1,
+    escapeUnicode: Boolean = false
+  ): Visitor[_, Out] = {
+    // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
+    // The java.io.Writer is the return value, so the caller can do with it as they please.
+    val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
 
-    def toBytes = {
-      this.flush()
-      out.toByteArray
-    }
+    WeeJackson
+      .toJsonSingle(BaseRenderer.configurePrettyPrinting(generator, indent, escapeUnicode))
+      .map(_ => out)
+  }
+
+  class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
+
+    /**
+      * Returns the internal buffer for performance sensitive cases.
+      * Only the first [[size()]] bytes actually contain data.
+      */
+    def internalBuffer: Array[Byte] = buf
   }
 
 }
@@ -47,8 +65,17 @@ object BaseRenderer {
     indent: Int = -1,
     escapeUnicode: Boolean = false
   ): Visitor[_, T] = {
-    val generator = DefaultJsonFactory.Instance.createGenerator(out)
+    // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
+    // The java.io.Writer is the return value, so the caller can do with it as they please.
+    val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
+    WeeJackson.toJsonSingle(generator).map(_ => out)
+  }
 
+  def configurePrettyPrinting(
+    generator: JsonGenerator,
+    indent: Int,
+    escapeUnicode: Boolean
+  ): JsonGenerator = {
     if (indent != -1) {
       generator.setPrettyPrinter(CustomPrettyPrinter(indent))
     }
@@ -56,12 +83,7 @@ object BaseRenderer {
     if (escapeUnicode) {
       generator.enable(JsonWriteFeature.ESCAPE_NON_ASCII.mappedFeature())
     }
-
-    WeeJackson.toGenerator(generator)
-      .map { gen =>
-        gen.flush()
-        out
-      }
+    generator
   }
 
   object CustomPrettyPrinter {

@@ -25,7 +25,7 @@ import java.time.Instant
   *           or else [[Any]] by visitors that do their work by side-effecting instead of returning [[J]].
   * @tparam J the result of visiting elements (e.g. a json AST or side-effecting writer)
   */
-trait Visitor[-T, +J] {
+trait Visitor[-T, +J] extends AutoCloseable {
   /**
     * @param index json source position at the start of the `[` being visited
     * @return a [[Visitor]] used for visiting the elements of the array
@@ -110,6 +110,25 @@ trait Visitor[-T, +J] {
     override def mapFunction(v: J): Z = f(v)
     def mapNonNullsFunction(v: J): Z = f(v)
   }
+
+  /**
+    * ==Responsibility==
+    * Generally, whoever creates the visitor should be responsible for closing it,
+    * i.e. not intermediate `transform(v: Visitor)` methods themselves.
+    *
+    * ==Self Closing==
+    * Given that common usage is most often single-valued (e.g. "{}"),
+    * rather than multi-valued (e.g. "{} {} {}"), Visitors may self-close
+    * (e.g. `visitor.map{v => Try(v.close); v)`} after a single value to
+    * prevent resource leaks, but are encouraged to expose both forms
+    * (i.e. single/multiple), if supportable.
+    *
+    * ==Multiple close() calls/Idempotency==
+    * Visitors are encouraged to respond gracefully if close() is called multiple times.
+    * If an underlying resource would throw if already closed, this may mean adding a
+    * `private var isClosed: Boolean` field to prevent multiple calls.
+    */
+  override def close(): Unit = ()
 }
 
 /**
@@ -183,6 +202,8 @@ object Visitor{
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = delegatedReader.visitBinary(bytes, offset, len, index)
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = delegatedReader.visitExt(tag, bytes, offset, len, index)
     override def visitTimestamp(instant: Instant, index: Int): J = delegatedReader.visitTimestamp(instant, index)
+
+    override def close(): Unit = delegatedReader.close()
   }
 
   class ArrDelegate[T, J](protected val arrVisitor: ArrVisitor[T, J]) extends ArrVisitor[T, J] {
@@ -248,6 +269,8 @@ object Visitor{
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = mapFunction(delegatedReader.visitBinary(bytes, offset, len, index))
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = mapFunction(delegatedReader.visitExt(tag, bytes, offset, len, index))
     override def visitTimestamp(instant: Instant, index: Int): Z = mapFunction(delegatedReader.visitTimestamp(instant, index))
+
+    override def close(): Unit = delegatedReader.close()
   }
 
 

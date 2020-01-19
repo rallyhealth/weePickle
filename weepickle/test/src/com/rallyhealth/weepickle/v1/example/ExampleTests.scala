@@ -535,7 +535,7 @@ object ExampleTests extends TestSuite {
         WeeJson.transform(exampleAst, StringRenderer()).toString ==> "[1,2,3]"
 
         // Or to a byte array
-        WeeJson.transform(exampleAst, BytesRenderer()).toBytes ==> "[1,2,3]".getBytes
+        WeeJson.transform(exampleAst, BytesRenderer()).toByteArray ==> "[1,2,3]".getBytes
 
         // Re-formatting JSON, either compacting it
         WeeJson.transform("[1, 2, 3]", StringRenderer()).toString ==> "[1,2,3]"

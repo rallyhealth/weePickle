@@ -112,9 +112,7 @@ sealed trait Value extends Readable with WritableAsBytes{
   def render(indent: Int = -1, escapeUnicode: Boolean = false): String = this.transform(StringRenderer(indent, escapeUnicode)).toString
 
   def writeBytesTo(out: java.io.OutputStream, indent: Int = -1, escapeUnicode: Boolean = false): Unit = {
-    val w = new java.io.OutputStreamWriter(out, java.nio.charset.StandardCharsets.UTF_8)
-    this.transform(BaseRenderer(w, indent, escapeUnicode))
-    w.flush()
+    this.transform(BytesRenderer(out, indent, escapeUnicode))
   }
   def writeBytesTo(out: java.io.OutputStream): Unit = writeBytesTo(out, -1, false)
 }
