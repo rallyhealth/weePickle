@@ -18,7 +18,7 @@ val scalaPlayVersions = Seq(
 
 trait CommonModule extends ScalaModule {
 
-  protected def shade(name: String) = name + "-v0"
+  protected def shade(name: String) = name + "-v1"
 
   def scalacOptions = T {
     // Not ready to deal with 2.13 collection deprecations.
@@ -36,7 +36,7 @@ trait CommonModule extends ScalaModule {
 }
 
 trait CommonPublishModule extends CommonModule with PublishModule with CrossScalaModule{
-  def publishVersion = "0.2.0"
+  def publishVersion = "1.0.0-RC1"
 
   def pomSettings = PomSettings(
     description = artifactName(),
@@ -262,7 +262,7 @@ object weejson extends Module{
   class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
     object test extends Tests with ScalaTestModule {
       def platformSegment = "jvm"
-      def moduleDeps = Seq(weejson.jvm().test)
+      def moduleDeps = Seq(weejson.jvm().test, parser())
     }
 
     def artifactName = shade("weejson-jackson")

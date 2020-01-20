@@ -1,5 +1,7 @@
 package com.rallyhealth.weepickle.v1.core
 
+import java.time.Instant
+
 import com.rallyhealth.weepickle.v1.core.Visitor.{ArrDelegate, ObjDelegate}
 
 /**
@@ -49,4 +51,6 @@ class CallbackVisitor[T, J](delegate: Visitor[T, J])(callback: J => Unit) extend
   override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int): J = emitFluently(super.visitBinary(bytes, offset, len, index))
 
   override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int): J = emitFluently(super.visitExt(tag, bytes, offset, len, index))
+
+  override def visitTimestamp(instant: Instant, index: Int): J = emitFluently(super.visitTimestamp(instant, index))
 }

@@ -42,7 +42,7 @@ class WeeJacksonSpec
       forAll { value: Value =>
         val writer = new StringWriter()
         value.transform(WeeJackson.toJsonSingle(Instance.createGenerator(writer)))
-        writer.toString should ===(WeeJson.write(value))
+        writer.toString should ===(value.transform(parser.StringRenderer()).toString)
       }
     }
   }

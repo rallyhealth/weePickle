@@ -4,7 +4,7 @@ mill mill.scalalib.GenIdea/idea
 # https://github.com/lihaoyi/mill/issues/478 would help here.
 #
 # IntelliJ uTest runner only works with <= 2.12 otherwise you get:
-# ClassNotFoundException for com.rallyhealth.weepickle.v0.JsonTests: com.rallyhealth.weepickle.v0.JsonTests
+# ClassNotFoundException for com.rallyhealth.weepickle.v1.JsonTests: com.rallyhealth.weepickle.v1.JsonTests
 echo "Removing:"
 rm -fv .idea_modules/*.js-* .idea_modules/*.js.* .idea_modules/*-2.11* .idea_modules/*-2.13*
 

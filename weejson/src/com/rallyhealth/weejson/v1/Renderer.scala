@@ -46,7 +46,7 @@ object StringRenderer {
   def apply(
     indent: Int = -1,
     escapeUnicode: Boolean = false
-  ): Visitor[_, StringWriter] = BaseRenderer(new java.io.StringWriter(), indent, escapeUnicode)
+  ): Visitor[Any, StringWriter] = BaseRenderer(new java.io.StringWriter(), indent, escapeUnicode)
 }
 
 object Renderer {
@@ -55,7 +55,7 @@ object Renderer {
     out: W,
     indent: Int = -1,
     escapeUnicode: Boolean = false
-  ): Visitor[_, W] = BaseRenderer(out, indent, escapeUnicode)
+  ): Visitor[Any, W] = BaseRenderer(out, indent, escapeUnicode)
 }
 
 object BaseRenderer {
@@ -64,7 +64,7 @@ object BaseRenderer {
     out: T,
     indent: Int = -1,
     escapeUnicode: Boolean = false
-  ): Visitor[_, T] = {
+  ): Visitor[Any, T] = {
     // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
     // The java.io.Writer is the return value, so the caller can do with it as they please.
     val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
