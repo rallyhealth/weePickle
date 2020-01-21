@@ -2,17 +2,16 @@ package com.rallyhealth.weejson.v1
 
 import java.io.{ByteArrayOutputStream, OutputStream, StringWriter}
 
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.json.JsonWriteFeature
-import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
-import com.fasterxml.jackson.core.{JsonGenerator, PrettyPrinter}
 import com.rallyhealth.weejson.v1.BaseRenderer.configurePrettyPrinting
 import com.rallyhealth.weejson.v1.jackson.DefaultJsonFactory._
-import com.rallyhealth.weejson.v1.jackson.WeeJackson
+import com.rallyhealth.weejson.v1.jackson.{CustomPrettyPrinter, WeeJackson}
 import com.rallyhealth.weepickle.v1.core.Visitor
 
 object BytesRenderer {
 
-  def apply(): Visitor[_, ExposedByteArrayOutputStream] = {
+  def apply(): Visitor[Any, ExposedByteArrayOutputStream] = {
     apply(new ExposedByteArrayOutputStream)
   }
 
@@ -20,7 +19,7 @@ object BytesRenderer {
     out: Out,
     indent: Int = -1,
     escapeUnicode: Boolean = false
-  ): Visitor[_, Out] = {
+  ): Visitor[Any, Out] = {
     // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
     // The java.io.Writer is the return value, so the caller can do with it as they please.
     val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
@@ -86,25 +85,6 @@ object BaseRenderer {
     generator
   }
 
-  object CustomPrettyPrinter {
 
-    class FieldSepPrettyPrinter(base: DefaultPrettyPrinter) extends DefaultPrettyPrinter(base) {
-
-      override def writeObjectFieldValueSeparator(g: JsonGenerator): Unit = {
-        // https://stackoverflow.com/a/56159005
-        g.writeRaw(": ")
-      }
-    }
-
-    def apply(indent: Int): PrettyPrinter = {
-      val indenter = new DefaultIndenter(" " * indent, DefaultIndenter.SYS_LF)
-
-      new FieldSepPrettyPrinter(
-        new DefaultPrettyPrinter()
-          .withObjectIndenter(indenter)
-          .withArrayIndenter(indenter)
-      )
-    }
-  }
 
 }

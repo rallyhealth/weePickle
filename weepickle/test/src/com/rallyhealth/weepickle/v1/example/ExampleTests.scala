@@ -5,6 +5,7 @@ import com.rallyhealth.weepickle.v1.TestUtil
 import utest._
 import com.rallyhealth.weepickle.v1.WeePickle.{macroRW, ReaderWriter => RW}
 import com.rallyhealth.weejson.v1._
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.WeePack
 import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
 import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
@@ -96,18 +97,18 @@ object ExampleTests extends TestSuite {
 
   import TestUtil._
   val tests = Tests {
-    test("simple"){
+    test("simple") {
       import com.rallyhealth.weepickle.v1.WeePickle._
 
-      write(1)                          ==> "1"
+      FromScala(1).transform(ToJson.string) ==> "1"
 
-      write(Seq(1, 2, 3))               ==> "[1,2,3]"
+      FromScala(Seq(1, 2, 3)).transform(ToJson.string) ==> "[1,2,3]"
 
-      read[Seq[Int]]("[1,2,3]")         ==> List(1, 2, 3)
+      FromJson("[1,2,3]").transform(ToScala[Seq[Int]]) ==> List(1, 2, 3)
 
-      write((1, "omg", true))           ==> """[1,"omg",true]"""
+      FromScala((1, "omg", true)).transform(ToJson.string) ==> """[1,"omg",true]"""
 
-      read[(Int, String, Boolean)]("""[1,"omg",true]""") ==> (1, "omg", true)
+      FromJson("""[1,"omg",true]""").transform(ToScala[(Int, String, Boolean)]) ==> (1, "omg", true)
     }
     test("binary"){
       import com.rallyhealth.weepickle.v1.WeePickle._

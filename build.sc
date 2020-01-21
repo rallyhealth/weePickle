@@ -212,6 +212,26 @@ object weejson extends Module{
     }
   }
 
+  /**
+    * A pure scala parser forked from jawn.
+    * Sidelined in favor of jackson based on bench.JmhBench perf results.
+    */
+  object yaml extends Cross[YamlModule](scalaVersions: _*)
+  class YamlModule(val crossScalaVersion: String) extends CommonModule with CrossScalaModule {
+    def artifactName = shade("weeyaml")
+    def platformSegment = "jvm"
+    def moduleDeps = Seq(jackson())
+    def ivyDeps = Agg(
+      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson().jacksonVersion}"
+    )
+
+    object test extends Tests with ScalaTestModule {
+      def platformSegment = "jvm"
+
+      override def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm())
+    }
+  }
+
   object json4s extends Cross[Json4sModule](scalaVersions: _*)
   class Json4sModule(val crossScalaVersion: String) extends CommonPublishModule{
     def artifactName = shade("weejson-json4s")
@@ -260,6 +280,7 @@ object weejson extends Module{
 
   object jackson extends Cross[JacksonModule](scalaVersions:_*)
   class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
+    val jacksonVersion = "2.10.2"
     object test extends Tests with ScalaTestModule {
       def platformSegment = "jvm"
       def moduleDeps = Seq(weejson.jvm().test, parser())
@@ -270,7 +291,7 @@ object weejson extends Module{
     def moduleDeps = Seq(core.jvm())
     def ivyDeps = T{
       Agg(
-        ivy"com.fasterxml.jackson.core:jackson-core:2.10.2"
+        ivy"com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
       )
     }
   }

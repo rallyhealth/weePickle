@@ -24,6 +24,17 @@ trait Api
     with Api.NoOpMappers
     with JsReaderWriters
     with MsgReaderWriters{
+
+  object ToScala {
+    def apply[Out](implicit pickleOut: Reader[Out]): Visitor[_, Out] = pickleOut
+  }
+
+  object FromScala {
+    def apply[In](scala: In)(implicit pickleIn: Writer[In]): Transformable = new Transformable {
+      override def transform[T](into: Visitor[_, T]): T = pickleIn.transform(scala, into)
+    }
+  }
+
   /**
     * Reads the given MessagePack input into a Scala value
     */
