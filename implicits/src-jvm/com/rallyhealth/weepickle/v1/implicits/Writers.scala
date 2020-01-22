@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v1.implicits
 
 import java.time._
+import java.util.Date
 
 import com.rallyhealth.weepickle.v1.core.Visitor
 
@@ -13,4 +14,5 @@ trait Writers extends DefaultWriters {
   implicit val InstantWriter: Writer[Instant] = new Writer[Instant] {
     override def write0[V](out: Visitor[_, V], v: Instant): V = out.visitTimestamp(v, -1)
   }
+  implicit val DateWriter: Writer[Date] = InstantWriter.comap(_.toInstant)
 }
