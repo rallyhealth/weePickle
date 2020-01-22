@@ -52,8 +52,8 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api){
     if (checkBinaryJson){
       val rewrittenBinary = api.writer[T].transform(roundTrippedBinary, ToMsgPack.bytes)
 
-      val writtenBinaryStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(writtenBinary)
-      val rewrittenBinaryStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(rewrittenBinary)
+      val writtenBinaryStr = com.rallyhealth.weepickle.v1.core.TestUtil.bytesToString(writtenBinary)
+      val rewrittenBinaryStr = com.rallyhealth.weepickle.v1.core.TestUtil.bytesToString(rewrittenBinary)
       assert(writtenBinaryStr == rewrittenBinaryStr)
     }
   }

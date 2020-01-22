@@ -1,4 +1,4 @@
-package com.rallyhealth.weepickle.v1.core
+package com.rallyhealth.weepack.v1
 
 /**
   * Defines common functionality to any parser that works on a `java.io.InputStream`

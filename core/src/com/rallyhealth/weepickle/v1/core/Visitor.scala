@@ -317,18 +317,54 @@ trait ArrVisitor[-T, +J] extends ObjArrVisitor[T, J]{
 }
 
 /**
-  * Signals failure processsing JSON after parsing.
+  * Enriches an exception with parser-level information.
+  * This could be a problem with either the parsing
+  * or with the Visitor consuming the data.
+  *
+  * @param shortMsg free-text of what/where went wrong.
+  * @param index    byte or character position of the input data (1-indexed)
+  * @param line     line of text (if applicable) (1-indexed)
+  * @param col      column of text (if applicable) (1-indexed)
+  * @param token    textual representation of the json token (if applicable)
   */
-case class AbortException(clue: String,
-                          index: Int,
-                          line: Int,
-                          col: Int,
-                          cause: Throwable) extends Exception(clue + " at index " + index, cause)
+class TransformException(
+  val shortMsg: String,
+  val jsonPointer: String,
+  val index: Option[Long],
+  val line: Option[Long],
+  val col: Option[Long],
+  val token: Option[String],
+  cause: Throwable
+) extends Exception(
+  {
+    val sb = new StringBuilder(shortMsg)
+
+    @inline def append(k: String, v: String): Unit = sb.append(' ').append(k).append('=').append(v)
+
+    @inline def appendOpt(k: String, v: Option[Any]): Unit = v.foreach(v => sb.append(' ').append(k).append('=').append(v))
+
+    append("jsonPointer", jsonPointer)
+    appendOpt("index", index)
+    appendOpt("line", line)
+    appendOpt("col", col)
+    appendOpt("token", token)
+    sb.result()
+  },
+  cause
+) {
+
+  override def fillInStackTrace(): Throwable = {
+    // Only include if adds info not already present in the wrapped exception.
+    if (cause == null) {
+      super.fillInStackTrace()
+    }
+    this
+  }
+}
 
 /**
   * Throw this inside a [[Visitor]]'s handler functions to fail the processing
   * of JSON. The Facade just needs to provide the error message, and it is up
-  * to the driver to ensure it is properly wrapped in a [[AbortException]]
-  * with the relevant source information.
+  * to the driver to ensure it is wrapped with relevant parser-level information.
   */
-case class Abort(msg: String) extends Exception(msg)
+class Abort(msg: String, index: Int) extends Exception(s"$msg at $index")

@@ -178,7 +178,7 @@ trait Types{ types =>
         val lengthSoFar = facadesIndex - start
         if (lengthSoFar != readers.length) {
           throw new Abort(
-            "expected " + readers.length + " items in sequence, found " + lengthSoFar
+            "expected " + readers.length + " items in sequence, found " + lengthSoFar, index
           )
         }
         start = facadesIndex
@@ -251,8 +251,8 @@ trait Types{ types =>
 
 
   def taggedExpectedMsg: String
-  def taggedArrayContext[T](taggedReader: TaggedReader[T], index: Int): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
-  def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
+  def taggedArrayContext[T](taggedReader: TaggedReader[T], index: Int): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg, index)
+  def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg, index)
   def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_, R], v: T): R
 
   private[this] def scanChildren[T, V](xs: Seq[T])(f: T => V) = {

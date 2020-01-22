@@ -16,7 +16,7 @@ class MsgPackReader(val startIndex: Int = 0, input0: Array[Byte]) extends BaseMs
 class InputStreamMsgPackReader(val data: java.io.InputStream,
                                val minStartBufferSize: Int,
                                val maxStartBufferSize: Int)
-extends BaseMsgPackReader with com.rallyhealth.weepickle.v1.core.BufferingInputStreamParser{
+extends BaseMsgPackReader with BufferingInputStreamParser{
   def startIndex = 0
 }
 

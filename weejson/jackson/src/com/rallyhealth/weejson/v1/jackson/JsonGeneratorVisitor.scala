@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, SimpleVisitor, Visitor}
 
 /**
+  * See [[JsonRenderer]] for high level use.
+  *
   * Adapter to Jackson's [[JsonGenerator]] classes, used to serialize jvm objects to bytes.
   *
   * Allows WeePickle to emit all of jackson's supported serialization formats:
@@ -12,6 +14,9 @@ import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, Sim
   * - SmileGenerator
   * - CBORGenerator
   * - more: https://github.com/FasterXML/jackson#data-format-modules
+  *
+  * @note Important for perf to call close().
+  *       Otherwise jackson will not return its buffer to the pool for reuse.
   */
 class JsonGeneratorVisitor(
   generator: JsonGenerator

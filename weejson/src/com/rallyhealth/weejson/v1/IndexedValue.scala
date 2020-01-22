@@ -1,6 +1,5 @@
 package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v1.core.Util.reject
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, Visitor}
 
 import scala.collection.mutable
@@ -25,7 +24,6 @@ object IndexedValue extends Transformer[IndexedValue]{
   case class Obj(index: Int, value0: (String, IndexedValue)*) extends IndexedValue
   case class Arr(index: Int, value: IndexedValue*) extends IndexedValue
   case class Num(index: Int, s: String, decIndex: Int, expIndex: Int) extends IndexedValue
-  // TODO this should probably be BigDecimal like Value to avoid losing precision.
   case class NumRaw(index: Int, d: Double) extends IndexedValue
   case class False(index: Int) extends IndexedValue{
     def value = false
@@ -37,7 +35,7 @@ object IndexedValue extends Transformer[IndexedValue]{
     def value = null
   }
 
-  def transform[T](j: IndexedValue, f: Visitor[_, T]): T = try{
+  def transform[T](j: IndexedValue, f: Visitor[_, T]): T = {
     j match{
       case IndexedValue.Null(i) => f.visitNull(i)
       case IndexedValue.True(i) => f.visitTrue(i)
@@ -47,19 +45,19 @@ object IndexedValue extends Transformer[IndexedValue]{
       case IndexedValue.NumRaw(i, d) => f.visitFloat64(d, i)
       case IndexedValue.Arr(i, items @_*) =>
         val ctx = f.visitArray(-1, -1).narrow
-        for(item <- items) try ctx.visitValue(transform(item, ctx.subVisitor), item.index) catch reject(item.index)
+        for(item <- items) ctx.visitValue(transform(item, ctx.subVisitor), item.index)
         ctx.visitEnd(i)
       case IndexedValue.Obj(i, items @_*) =>
         val ctx = f.visitObject(-1, -1).narrow
         for((k, item) <- items) {
-          val keyVisitor = try ctx.visitKey(i) catch reject(i)
+          val keyVisitor = ctx.visitKey(i)
 
           ctx.visitKeyValue(keyVisitor.visitString(k, i))
-          try ctx.visitValue(transform(item, ctx.subVisitor), item.index) catch reject(item.index)
+          ctx.visitValue(transform(item, ctx.subVisitor), item.index)
         }
         ctx.visitEnd(i)
     }
-  } catch reject(j.index)
+  }
 
 
   object Builder extends JsVisitor[IndexedValue, IndexedValue]{

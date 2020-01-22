@@ -1,7 +1,8 @@
 package com.rallyhealth.weepickle.v1
 
-import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, VisitorException}
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
+import com.rallyhealth.weepickle.v1.core.TransformException
 import utest._
 case class Fee(i: Int, s: String)
 sealed trait Fi
@@ -87,7 +88,7 @@ object FailureTests extends TestSuite {
 
     test("facadeFailures"){
       def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v1.WeePickle.Reader](s: String, msgs: String*) = {
-        val err = intercept[VisitorException] { FromJson(s).transform(ToScala[T]) }
+        val err = intercept[TransformException] { FromJson(s).transform(ToScala[T]) }
         val errMsgs = Seq(err.getMessage, err.getCause.getMessage)
         for (msg <- msgs) assert(errMsgs.exists(_.contains(msg)))
         err

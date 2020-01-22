@@ -37,7 +37,7 @@ class JsonGeneratorOutputStream(
       digest()
     } catch {
       case NonFatal(cause) =>
-        throw VisitorException("Parser or Visitor failure", parser, cause)
+        throw JsonParserException("Parser or Visitor failure", parser, cause)
     }
   }
 
@@ -51,7 +51,7 @@ class JsonGeneratorOutputStream(
       }
     } catch {
       case NonFatal(t) =>
-        throw VisitorException("Parser or Visitor failure", parser, t)
+        throw JsonParserException("Parser or Visitor failure", parser, t)
     }
   }
 

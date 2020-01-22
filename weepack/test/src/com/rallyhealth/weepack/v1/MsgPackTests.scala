@@ -3,7 +3,7 @@ package com.rallyhealth.weepack.v1
 import java.time.Instant
 
 import com.rallyhealth.weejson.v1._
-import com.rallyhealth.weepickle.v1.core.Util
+import com.rallyhealth.weepickle.v1.core.{TestUtil, Util}
 import utest._
 
 object MsgPackTests extends TestSuite{
@@ -17,13 +17,13 @@ object MsgPackTests extends TestSuite{
         val (tag, expectedJson) = testCase.obj.find{_._1 != "msgpack"}.get
         val packedStr = packed0.str
         println(k + " " + tag + " " + expectedJson + " " + packedStr)
-        val packed = Util.stringToBytes(packedStr)
+        val packed = TestUtil.stringToBytes(packedStr)
 
         val jsonified0 = WeePack.transform(packed, com.rallyhealth.weejson.v1.Value)
 
         val jsonified = tag match{
-          case "binary" => com.rallyhealth.weejson.v1.Str(Util.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
-          case "ext" => com.rallyhealth.weejson.v1.Arr(jsonified0(0), com.rallyhealth.weejson.v1.Str(Util.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray)))
+          case "binary" => com.rallyhealth.weejson.v1.Str(TestUtil.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
+          case "ext" => com.rallyhealth.weejson.v1.Arr(jsonified0(0), com.rallyhealth.weejson.v1.Str(TestUtil.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray)))
           case "timestamp" =>
             val instant = Instant.parse(jsonified0.str)
             com.rallyhealth.weejson.v1.Arr(instant.getEpochSecond, instant.getNano)
@@ -34,7 +34,7 @@ object MsgPackTests extends TestSuite{
         val msg = WeePack.read(packed)
 
         val rewrittenBytes = WeePack.write(msg)
-        val rewritten = Util.bytesToString(rewrittenBytes)
+        val rewritten = TestUtil.bytesToString(rewrittenBytes)
         val possibilities = testCase("msgpack").arr.map(_.str)
 
         assert(possibilities.contains(rewritten))

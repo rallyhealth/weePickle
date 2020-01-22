@@ -342,7 +342,7 @@ object Macros {
                   }
                 }
                 throw new com.rallyhealth.weepickle.v1.core.Abort(
-                  "missing keys in dictionary: " + keys.mkString(", ")
+                  "missing keys in dictionary: " + keys.mkString(", "), index
                 )
               }
               $companion.apply(

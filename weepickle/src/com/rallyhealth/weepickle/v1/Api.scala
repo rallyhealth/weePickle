@@ -125,7 +125,7 @@ trait AttributeTagged extends Api{
           val typeName = objectTypeKeyReadMap(v.toString).toString
           val facade0 = taggedReader.findReader(typeName)
           if (facade0 == null) {
-            throw new Abort("invalid tag for tagged object: " + typeName)
+            throw new Abort("invalid tag for tagged object: " + typeName, index)
           }
           val fastCtx = facade0.visitObject(-1, index)
           context = fastCtx
@@ -133,16 +133,16 @@ trait AttributeTagged extends Api{
         }
       }
       def visitEnd(index: Int) = {
-        if (context == null) throw new Abort("expected tagged dictionary")
+        if (context == null) throw new Abort("expected tagged dictionary", index)
         else if (fastPath) context.visitEnd(index).asInstanceOf[T]
         else{
           val x = context.visitEnd(index).asInstanceOf[IndexedValue.Obj]
-          val tagInfo = x.value0.find(_._1.toString == taggedReader.tagName).getOrElse(throw Abort(s"missing tag key: ${taggedReader.tagName}"))
+          val tagInfo = x.value0.find(_._1.toString == taggedReader.tagName).getOrElse(throw new Abort(s"missing tag key: ${taggedReader.tagName}", index))
           val keyAttr = tagInfo._2
           val key = keyAttr.asInstanceOf[IndexedValue.Str].value0.toString
           val delegate = taggedReader.findReader(key)
           if (delegate == null){
-            throw new AbortException("invalid tag for tagged object: " + key, keyAttr.index, -1, -1, null)
+            throw new Abort("invalid tag for tagged object: " + key, index)
           }
           val ctx2 = delegate.visitObject(-1, -1)
           for (p <- x.value0) {

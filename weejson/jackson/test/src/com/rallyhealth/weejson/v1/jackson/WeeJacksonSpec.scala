@@ -21,19 +21,7 @@ class WeeJacksonSpec
   "parse" - {
     "like WeeJson" in forAll { value: Value =>
       val str = WeeJson.write(value)
-      WeeJackson.parseSingle(str, Value) should ===(value)
-    }
-
-    "multiple results" - {
-      "newline delim" in parseValuesDelimitedBy("\n")
-      "space delim" in parseValuesDelimitedBy(" ")
-      "tab delim" in parseValuesDelimitedBy("\t")
-
-      def parseValuesDelimitedBy(delim: String) = {
-        val input = Seq("{}", "[]", "true", "5", "null").mkString(delim)
-        val values = WeeJackson.parseMultiple(Instance.createParser(input), Value)
-        values should ===(List(Obj(), Arr(), True, Num(5), Null))
-      }
+      FromJson(str).transform(Value) should ===(value)
     }
   }
 

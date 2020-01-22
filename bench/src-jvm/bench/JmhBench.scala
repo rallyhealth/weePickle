@@ -3,7 +3,7 @@ package bench
 import java.io.{ByteArrayOutputStream, StringWriter}
 import java.util.concurrent.TimeUnit
 
-import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, FromJson, JsonRenderer, WeeJackson}
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, FromJson, JsonRenderer}
 import com.rallyhealth.weepack.v1.ToMsgPack
 import com.rallyhealth.weepickle.v1.Common
 import com.rallyhealth.weepickle.v1.WeePickle._
@@ -50,12 +50,12 @@ class JmhBench {
 
   @Benchmark
   def bytesToCcWeeJackson(bh: Blackhole): Unit = {
-    bh.consume(WeeJackson.parseSingle(Common.benchmarkSampleJsonBytes, reader[Seq[Common.Data]]))
+    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(reader[Seq[Common.Data]]))
   }
 
   @Benchmark
   def bytesToCcWeeJacksonAsync(bh: Blackhole): Unit = {
-    bh.consume(WeeJackson.parseSingle(Common.benchmarkSampleJsonBytes, reader[Seq[Common.Data]]))
+    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(reader[Seq[Common.Data]]))
   }
 
 //  @Benchmark

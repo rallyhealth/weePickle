@@ -3,6 +3,16 @@ package com.rallyhealth.weejson.v1.jackson
 import com.fasterxml.jackson.core.{JsonGenerator, PrettyPrinter}
 import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
 
+/**
+  * {{{
+  * {
+  *   "generates": "output",
+  *   "in this": {
+  *     "popular": "format"
+  *   }
+  * }
+  * }}}
+  */
 object CustomPrettyPrinter {
 
   class FieldSepPrettyPrinter(base: DefaultPrettyPrinter) extends DefaultPrettyPrinter(base) {
