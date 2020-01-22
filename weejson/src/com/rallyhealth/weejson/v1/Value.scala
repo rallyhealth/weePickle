@@ -1,6 +1,6 @@
 package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v1.core.{Transformable, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Transformable, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -157,41 +157,41 @@ object Value extends AstTransformer[Value]{
 
   def transform[T](j: Value, f: Visitor[_, T]): T = {
     j match{
-      case Null => f.visitNull(-1)
-      case True => f.visitTrue(-1)
-      case False => f.visitFalse(-1)
-      case Str(s) => f.visitString(s, -1)
+      case Null => f.visitNull()
+      case True => f.visitTrue()
+      case False => f.visitFalse()
+      case Str(s) => f.visitString(s)
       case Num(d) =>
         // precision sensitive
-        if (d.isValidLong) f.visitInt64(d.longValue, -1)
-        else if (d.isDecimalDouble) f.visitFloat64(d.doubleValue, -1)
-        else f.visitFloat64String(d.toString, -1)
+        if (d.isValidLong) f.visitInt64(d.longValue)
+        else if (d.isDecimalDouble) f.visitFloat64(d.doubleValue)
+        else f.visitFloat64String(d.toString)
       case Arr(items) => transformArray(f, items)
       case Obj(items) => transformObject(f, items)
     }
   }
 
-  def visitArray(length: Int, index: Int) = new AstArrVisitor[ArrayBuffer](xs => Arr(xs))
+  def visitArray(length: Int): ArrVisitor[Value, Value] = new AstArrVisitor[ArrayBuffer](xs => Arr(xs))
 
-  def visitObject(length: Int, index: Int) = new AstObjVisitor[mutable.LinkedHashMap[String, Value]](xs => Obj(xs))
+  def visitObject(length: Int): ObjVisitor[Value, Value] = new AstObjVisitor[mutable.LinkedHashMap[String, Value]](xs => Obj(xs))
 
-  def visitNull(index: Int) = Null
+  def visitNull(): Value = Null
 
-  def visitFalse(index: Int) = False
+  def visitFalse(): Value = False
 
-  def visitTrue(index: Int) = True
+  def visitTrue(): Value = True
 
-  override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int): Num = {
-    Num(BigDecimal(s.toString))
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Num = {
+    Num(BigDecimal(cs.toString))
   }
 
-  override def visitInt32(i: Int, index: Int): Value =  Num(BigDecimal(i))
+  override def visitInt32(i: Int): Value =  Num(BigDecimal(i))
 
-  override def visitInt64(i: Long, index: Int): Value = Num(BigDecimal(i))
+  override def visitInt64(l: Long): Value = Num(BigDecimal(l))
 
-  override def visitFloat64(d: Double, index: Int): Value = Num(BigDecimal(d))
+  override def visitFloat64(d: Double): Value = Num(BigDecimal(d))
 
-  def visitString(s: CharSequence, index: Int) = Str(s.toString)
+  def visitString(cs: CharSequence): Value = Str(cs.toString)
 
   /**
     * Thrown when weepickle tries to convert a JSON blob into a given data

@@ -37,9 +37,9 @@ abstract class BaseMsgPackReader{
     dropBufferUntil(index)
     val n = byte(index)
     (n & 0xFF: @switch) match{
-      case MPK.Nil => incrementIndex(1); visitor.visitNull(index)
-      case MPK.False => incrementIndex(1); visitor.visitFalse(index)
-      case MPK.True => incrementIndex(1); visitor.visitTrue(index)
+      case MPK.Nil => incrementIndex(1); visitor.visitNull()
+      case MPK.False => incrementIndex(1); visitor.visitFalse()
+      case MPK.True => incrementIndex(1); visitor.visitTrue()
 
       case MPK.Bin8 => parseBin(parseUInt8(index + 1), visitor)
       case MPK.Bin16 => parseBin(parseUInt16(index + 1), visitor)
@@ -49,18 +49,18 @@ abstract class BaseMsgPackReader{
       case MPK.Ext16 => parseExt(parseUInt16(index + 1), visitor)
       case MPK.Ext32 => parseExt(parseUInt32(index + 1), visitor)
 
-      case MPK.Float32 => visitor.visitFloat64(java.lang.Float.intBitsToFloat(parseUInt32(index + 1)), index)
-      case MPK.Float64 => visitor.visitFloat64(java.lang.Double.longBitsToDouble(parseUInt64(index + 1)), index)
+      case MPK.Float32 => visitor.visitFloat64(java.lang.Float.intBitsToFloat(parseUInt32(index + 1)))
+      case MPK.Float64 => visitor.visitFloat64(java.lang.Double.longBitsToDouble(parseUInt64(index + 1)))
 
-      case MPK.UInt8 => visitor.visitInt32(parseUInt8(index + 1), index)
-      case MPK.UInt16 => visitor.visitInt32(parseUInt16(index + 1), index)
-      case MPK.UInt32 => visitor.visitInt64(parseUInt32(index + 1) & 0xffffffffL, index)
-      case MPK.UInt64 => visitor.visitUInt64(parseUInt64(index + 1), index)
+      case MPK.UInt8 => visitor.visitInt32(parseUInt8(index + 1))
+      case MPK.UInt16 => visitor.visitInt32(parseUInt16(index + 1))
+      case MPK.UInt32 => visitor.visitInt64(parseUInt32(index + 1) & 0xffffffffL)
+      case MPK.UInt64 => visitor.visitUInt64(parseUInt64(index + 1))
 
-      case MPK.Int8 => visitor.visitInt32(parseUInt8(index + 1).toByte, index)
-      case MPK.Int16 => visitor.visitInt32(parseUInt16(index + 1).toShort, index)
-      case MPK.Int32 => visitor.visitInt32(parseUInt32(index + 1), index)
-      case MPK.Int64 => visitor.visitInt64(parseUInt64(index + 1), index)
+      case MPK.Int8 => visitor.visitInt32(parseUInt8(index + 1).toByte)
+      case MPK.Int16 => visitor.visitInt32(parseUInt16(index + 1).toShort)
+      case MPK.Int32 => visitor.visitInt32(parseUInt32(index + 1))
+      case MPK.Int64 => visitor.visitInt64(parseUInt64(index + 1))
 
       case MPK.FixExt1 => incrementIndex(1); parseExt(1, visitor)
       case MPK.FixExt2 => incrementIndex(1); parseExt(2, visitor)
@@ -81,7 +81,7 @@ abstract class BaseMsgPackReader{
         if (x <= MPK.PositiveFixInt) {
           // positive fixint
           incrementIndex(1)
-          visitor.visitInt32(x & 0x7f, index)
+          visitor.visitInt32(x & 0x7f)
         } else if (x <= MPK.FixMap) {
           val n = x & 0x0f
           incrementIndex(1)
@@ -97,7 +97,7 @@ abstract class BaseMsgPackReader{
           parseStr (n, visitor)
         } else if (x >= 0xe0) { // negative fixint
           incrementIndex(1)
-          visitor.visitInt32 (x | 0xffffffe0, index)
+          visitor.visitInt32(x | 0xffffffe0)
         } else ???
     }
   }
@@ -117,7 +117,7 @@ abstract class BaseMsgPackReader{
           */
         val seconds = Integer.toUnsignedLong(parseUInt32(index))
         val instant = Instant.ofEpochSecond(seconds)
-        visitor.visitTimestamp(instant, index)
+        visitor.visitTimestamp(instant)
 
       case -1 if n == 8 =>
 
@@ -132,7 +132,7 @@ abstract class BaseMsgPackReader{
         val nanos = nano30seconds34 >>> 34
         val seconds = nano30seconds34 & 0x03ffffffffL
         val instant = Instant.ofEpochSecond(seconds, nanos)
-        visitor.visitTimestamp(instant, index)
+        visitor.visitTimestamp(instant)
 
       case -1 if n == 12 =>
 
@@ -149,48 +149,48 @@ abstract class BaseMsgPackReader{
         val nanos = parseUInt32(index)
         val seconds = parseUInt64(index)
         val instant = Instant.ofEpochSecond(seconds, nanos)
-        visitor.visitTimestamp(instant, index)
+        visitor.visitTimestamp(instant)
 
       case _ =>
         val (arr, i, j) = sliceBytes(index, n)
-        visitor.visitExt(extType, arr, i, j, index)
+        visitor.visitExt(extType, arr, i, j)
     }
   }
 
   def parseStr[T](n: Int, visitor: Visitor[_, T]) = {
-    val res = visitor.visitString(sliceString(index, index + n), index)
+    val res = visitor.visitString(sliceString(index, index + n))
     incrementIndex(n)
     res
   }
   def parseBin[T](n: Int, visitor: Visitor[_, T]) = {
     val (arr, i, j) = sliceBytes(index, n)
-    val res = visitor.visitBinary(arr, i, j, index)
+    val res = visitor.visitBinary(arr, i, j)
     incrementIndex(n)
     res
   }
   def parseMap[T](n: Int, visitor: Visitor[_, T]) = {
-    val obj = visitor.visitObject(n, index)
+    val obj = visitor.visitObject(n)
 
     var i = 0
     while(i < n){
-      val keyVisitor = obj.visitKey(index)
+      val keyVisitor = obj.visitKey()
       obj.visitKeyValue(parse(keyVisitor.asInstanceOf[Visitor[_, T]]))
-      obj.narrow.visitValue(parse(obj.subVisitor.asInstanceOf[Visitor[_, T]]), index)
+      obj.narrow.visitValue(parse(obj.subVisitor.asInstanceOf[Visitor[_, T]]))
       i += 1
     }
-    obj.visitEnd(index)
+    obj.visitEnd()
   }
   def parseArray[T](n: Int, visitor: Visitor[_, T]) = {
-    val arr = visitor.visitArray(n, index)
+    val arr = visitor.visitArray(n)
 
     var i = 0
 
     while(i < n){
       val v = parse(arr.subVisitor.asInstanceOf[Visitor[_, T]])
-      arr.narrow.visitValue(v, index)
+      arr.narrow.visitValue(v)
       i += 1
     }
-    arr.visitEnd(index)
+    arr.visitEnd()
   }
   def parseUInt8(i: Int) = {
     setIndex(i + 1)

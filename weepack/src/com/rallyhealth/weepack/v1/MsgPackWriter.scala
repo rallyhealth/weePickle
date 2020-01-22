@@ -9,7 +9,7 @@ import com.rallyhealth.weepack.v1.{MsgPackKeys => MPK}
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream())
     extends MsgVisitor[T, T] {
-  override def visitArray(length: Int, index: Int) = new ArrVisitor[T, T] {
+  override def visitArray(length: Int): ArrVisitor[T, T] = new ArrVisitor[T, T] {
     require(length != -1, "Length of com.rallyhealth.weepack.v1 array must be known up front")
     if (length <= 15){
       out.write(MPK.FixArrMask | length)
@@ -21,11 +21,11 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
       writeUInt32(length)
     }
     def subVisitor = MsgPackWriter.this
-    def visitValue(v: T, index: Int): Unit = () // do nothing
-    def visitEnd(index: Int) = out // do nothing
+    def visitValue(v: T): Unit = () // do nothing
+    def visitEnd(): T = out // do nothing
   }
 
-  override def visitObject(length: Int, index: Int) = new ObjVisitor[T, T] {
+  override def visitObject(length: Int): ObjVisitor[T, T] = new ObjVisitor[T, T] {
     require(length != -1, "Length of com.rallyhealth.weepack.v1 object must be known up front")
     if (length <= 15){
       out.write(MPK.FixMapMask | length)
@@ -37,43 +37,43 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
       writeUInt32(length)
     }
     def subVisitor = MsgPackWriter.this
-    def visitKey(index: Int)= MsgPackWriter.this
+    def visitKey(): Visitor[_, _] = MsgPackWriter.this
     def visitKeyValue(s: Any): Unit = () // do nothing
-    def visitValue(v: T, index: Int): Unit = () // do nothing
-    def visitEnd(index: Int) = out // do nothing
+    def visitValue(v: T): Unit = () // do nothing
+    def visitEnd(): T = out // do nothing
   }
 
 
-  override def visitNull(index: Int) = {
+  override def visitNull(): T = {
     out.write(MPK.Nil)
     out
   }
 
-  override def visitFalse(index: Int) = {
+  override def visitFalse(): T = {
     out.write(MPK.False)
     out
   }
 
-  override def visitTrue(index: Int) = {
+  override def visitTrue(): T = {
     out.write(MPK.True)
     out
   }
 
-  override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
-    visitFloat64(s.toString.toDouble, index)
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): T = {
+    visitFloat64(cs.toString.toDouble)
   }
 
-  override def visitFloat64(d: Double, index: Int) = {
+  override def visitFloat64(d: Double): T = {
     out.write(MPK.Float64)
     writeUInt64(java.lang.Double.doubleToLongBits(d))
     out
   }
-  override def visitFloat32(d: Float, index: Int) = {
+  override def visitFloat32(d: Float): T = {
     out.write(MPK.Float32)
     writeUInt32(java.lang.Float.floatToIntBits(d))
     out
   }
-  override def visitInt32(i: Int, index: Int) = {
+  override def visitInt32(i: Int): T = {
     if (i >= 0){
       if (i <= 127) out.write(i)
       else if (i <= 255){
@@ -106,30 +106,30 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
     out
   }
 
-  override def visitInt64(i: Long, index: Int) = {
-    if (i >= Int.MinValue && i <= Int.MaxValue){
-      visitInt32(i.toInt, index)
-    }else if (i >= 0 && i <= 0xffffffffL){
+  override def visitInt64(l: Long): T = {
+    if (l >= Int.MinValue && l <= Int.MaxValue){
+      visitInt32(l.toInt)
+    }else if (l >= 0 && l <= 0xffffffffL){
       out.write(MPK.UInt32)
-      writeUInt32(i.toInt)
+      writeUInt32(l.toInt)
     }else{
       out.write(MPK.Int64)
-      writeUInt64(i)
+      writeUInt64(l)
     }
     out
   }
 
-  override def visitUInt64(i: Long, index: Int) = {
-    if (i >= 0) visitInt64(i, index)
+  override def visitUInt64(ul: Long): T = {
+    if (ul >= 0) visitInt64(ul)
     else{
       out.write(MPK.UInt64)
-      writeUInt64(i)
+      writeUInt64(ul)
     }
     out
   }
 
-  override def visitString(s: CharSequence, index: Int) = {
-    val bytes = s.toString.getBytes(StandardCharsets.UTF_8)
+  override def visitString(cs: CharSequence): T = {
+    val bytes = cs.toString.getBytes(StandardCharsets.UTF_8)
     val length = bytes.length
     if (length <= 31){
       out.write(MPK.FixStrMask | length)
@@ -147,7 +147,7 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
     out.write(bytes, 0, length)
     out
   }
-  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = {
+  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): T = {
     if (len <= 255) {
       out.write(MPK.Bin8)
       writeUInt8(len)
@@ -184,7 +184,7 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
     out.write(((i >> 0) & 0xff).toInt)
   }
 
-  def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = {
+  def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): T = {
     len match{
       case 1 => out.write(MPK.FixExt1)
       case 2 => out.write(MPK.FixExt2)
@@ -208,13 +208,13 @@ class MsgPackWriter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStrea
     out
   }
 
-  def visitChar(s: Char, index: Int) = {
+  def visitChar(c: Char): T = {
     out.write(MPK.UInt16)
-    writeUInt16(s)
+    writeUInt16(c)
     out
   }
 
-  override def visitTimestamp(instant: Instant, index: Int): T = {
+  override def visitTimestamp(instant: Instant): T = {
     val seconds: Long = instant.getEpochSecond
     val nanos: Int = instant.getNano
     if (nanos == 0 && (seconds & 0xffffffff00000000L) == 0L) {

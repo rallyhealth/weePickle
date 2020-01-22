@@ -341,7 +341,7 @@ object ExampleTests extends TestSuite {
 
         object StringLongs extends com.rallyhealth.weepickle.v1.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {
-            def write0[V](out: Visitor[_, V], v: Long) = out.visitString(v.toString, -1)
+            def write0[V](out: Visitor[_, V], v: Long) = out.visitString(v.toString)
           }
         }
 
@@ -350,7 +350,7 @@ object ExampleTests extends TestSuite {
 
         object NumLongs extends com.rallyhealth.weepickle.v1.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {
-            def write0[V](out: Visitor[_, V], v: Long) = out.visitFloat64String(v.toString, -1)
+            def write0[V](out: Visitor[_, V], v: Long) = out.visitFloat64String(v.toString)
           }
         }
 

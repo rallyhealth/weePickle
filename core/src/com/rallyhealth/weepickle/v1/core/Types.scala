@@ -82,8 +82,8 @@ trait Types{ types =>
   object Reader{
     class Delegate[T, J](delegatedReader: Visitor[T, J])
       extends Visitor.Delegate[T, J](delegatedReader) with Reader[J]{
-      override def visitObject(length: Int, index: Int): ObjVisitor[Any, J] = super.visitObject(length, index).asInstanceOf[ObjVisitor[Any, J]]
-      override def visitArray(length: Int, index: Int): ArrVisitor[Any, J] = super.visitArray(length, index).asInstanceOf[ArrVisitor[Any, J]]
+      override def visitObject(length: Int): ObjVisitor[Any, J] = super.visitObject(length).asInstanceOf[ObjVisitor[Any, J]]
+      override def visitArray(length: Int): ArrVisitor[Any, J] = super.visitArray(length).asInstanceOf[ArrVisitor[Any, J]]
     }
 
     abstract class MapReader[-T, V, Z](delegatedReader: Visitor[T, V])
@@ -91,8 +91,8 @@ trait Types{ types =>
 
       def mapNonNullsFunction(t: V): Z
 
-      override def visitObject(length: Int, index: Int) = super.visitObject(length, index).asInstanceOf[ObjVisitor[Any, Z]]
-      override def visitArray(length: Int, index: Int) = super.visitArray(length, index).asInstanceOf[ArrVisitor[Any, Z]]
+      override def visitObject(length: Int): ObjVisitor[Any, Z] = super.visitObject(length).asInstanceOf[ObjVisitor[Any, Z]]
+      override def visitArray(length: Int): ArrVisitor[Any, Z] = super.visitArray(length).asInstanceOf[ArrVisitor[Any, Z]]
     }
     def merge[T](readers0: Reader[_ <: T]*) = {
       new TaggedReader.Node(readers0.asInstanceOf[Seq[TaggedReader[T]]]:_*)
@@ -110,7 +110,7 @@ trait Types{ types =>
     def transform[V](v: T, out: Visitor[_, V]) = write(out, v)
     def write0[V](out: Visitor[_, V], v: T): V
     def write[V](out: Visitor[_, V], v: T): V = {
-      if (v == null) out.visitNull(-1)
+      if (v == null) out.visitNull()
       else write0(out, v)
     }
     def comapNulls[U](f: U => T) = new Writer.MapWriterNulls[U, T](this, f)
@@ -141,22 +141,19 @@ trait Types{ types =>
 
   class TupleNWriter[V](val writers: Array[Writer[_]], val f: V => Array[Any]) extends Writer[V]{
     def write0[R](out: Visitor[_, R], v: V): R = {
-      if (v == null) out.visitNull(-1)
+      if (v == null) out.visitNull()
       else{
-        val ctx = out.visitArray(writers.length, -1)
+        val ctx = out.visitArray(writers.length)
         val vs = f(v)
         var i = 0
         while(i < writers.length){
-          ctx.visitValue(
-            writers(i).asInstanceOf[Writer[Any]].write(
-              ctx.subVisitor.asInstanceOf[Visitor[Any, Nothing]],
-              vs(i)
-            ),
-            -1
-          )
+          ctx.visitValue(writers(i).asInstanceOf[Writer[Any]].write(
+                        ctx.subVisitor.asInstanceOf[Visitor[Any, Nothing]],
+                        vs(i)
+                      ))
           i += 1
         }
-        ctx.visitEnd(-1)
+        ctx.visitEnd()
       }
     }
   }
@@ -164,22 +161,20 @@ trait Types{ types =>
   class TupleNReader[V](val readers: Array[Reader[_]], val f: Array[Any] => V) extends SimpleReader[V]{
 
     override def expectedMsg = "expected sequence"
-    override def visitArray(length: Int, index: Int) = new ArrVisitor[Any, V] {
+    override def visitArray(length: Int): ArrVisitor[Any, V] = new ArrVisitor[Any, V] {
       val b = new Array[Any](readers.length)
       var facadesIndex = 0
 
       var start = facadesIndex
-      def visitValue(v: Any, index: Int): Unit = {
+      def visitValue(v: Any): Unit = {
         b(facadesIndex % readers.length) = v
         facadesIndex = facadesIndex + 1
       }
 
-      def visitEnd(index: Int) = {
+      def visitEnd(): V = {
         val lengthSoFar = facadesIndex - start
         if (lengthSoFar != readers.length) {
-          throw new Abort(
-            "expected " + readers.length + " items in sequence, found " + lengthSoFar, index
-          )
+          throw new Abort("expected " + readers.length + " items in sequence, found " + lengthSoFar)
         }
         start = facadesIndex
 
@@ -211,7 +206,7 @@ trait Types{ types =>
         * Set by [[visitKeyValue]]
         */
       var currentIndex = -1
-      def visitValue(v: Any, index: Int): Unit = {
+      def visitValue(v: Any): Unit = {
         if (currentIndex != -1 && ((found & (1L << currentIndex)) == 0)) {
           storeAggregatedValue(currentIndex, v)
           found |= (1L << currentIndex)
@@ -223,25 +218,25 @@ trait Types{ types =>
     def length(v: V): Int
     def writeToObject[R](ctx: ObjVisitor[_, R], v: V): Unit
     def write0[R](out: Visitor[_, R], v: V): R = {
-      if (v == null) out.visitNull(-1)
+      if (v == null) out.visitNull()
       else{
-        val ctx = out.visitObject(length(v), -1)
+        val ctx = out.visitObject(length(v))
         writeToObject(ctx, v)
-        ctx.visitEnd(-1)
+        ctx.visitEnd()
       }
     }
   }
   class SingletonR[T](t: T) extends CaseR[T]{
     override def expectedMsg = "expected dictionary"
-    override def visitObject(length: Int, index: Int): ObjVisitor[Any, T] = new ObjVisitor[Any, T] {
+    override def visitObject(length: Int): ObjVisitor[Any, T] = new ObjVisitor[Any, T] {
       def subVisitor: Visitor[_, _] = NoOpVisitor
 
-      def visitKey(index: Int): Visitor[_, _] = NoOpVisitor
+      def visitKey(): Visitor[_, _] = NoOpVisitor
       def visitKeyValue(s: Any) = ()
 
-      def visitValue(v: Any, index: Int): Unit = ()
+      def visitValue(v: Any): Unit = ()
 
-      def visitEnd(index: Int) = t
+      def visitEnd(): T = t
     }
   }
   class SingletonW[T](f: T) extends CaseW[T] {
@@ -251,8 +246,8 @@ trait Types{ types =>
 
 
   def taggedExpectedMsg: String
-  def taggedArrayContext[T](taggedReader: TaggedReader[T], index: Int): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg, index)
-  def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg, index)
+  def taggedArrayContext[T](taggedReader: TaggedReader[T]): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
+  def taggedObjectContext[T](taggedReader: TaggedReader[T]): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
   def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_, R], v: T): R
 
   private[this] def scanChildren[T, V](xs: Seq[T])(f: T => V) = {
@@ -279,8 +274,8 @@ trait Types{ types =>
     def findReader(s: String): Reader[T]
 
     override def expectedMsg = taggedExpectedMsg
-    override def visitArray(length: Int, index: Int) = taggedArrayContext(this, index)
-    override def visitObject(length: Int, index: Int) = taggedObjectContext(this, index)
+    override def visitArray(length: Int) = taggedArrayContext(this)
+    override def visitObject(length: Int) = taggedObjectContext(this)
   }
   object TaggedReader{
     class Leaf[T](override val tagName: String, tag: String, r: Reader[T]) extends TaggedReader[T]{
@@ -314,8 +309,8 @@ trait Types{ types =>
   }
 
   trait TaggedReaderWriter[T] extends ReaderWriter[T] with TaggedReader[T] with TaggedWriter[T] with SimpleReader[T]{
-    override def visitArray(length: Int, index: Int) = taggedArrayContext(this, index)
-    override def visitObject(length: Int, index: Int) = taggedObjectContext(this, index)
+    override def visitArray(length: Int) = taggedArrayContext(this)
+    override def visitObject(length: Int) = taggedObjectContext(this)
 
   }
   object TaggedReaderWriter{

@@ -53,6 +53,7 @@ object TypedFoo{
 
 object MacroTests extends TestSuite {
 
+
   // Doesn't work :(
 //  case class A_(objects: Option[C_]); case class C_(nodes: Option[C_])
 

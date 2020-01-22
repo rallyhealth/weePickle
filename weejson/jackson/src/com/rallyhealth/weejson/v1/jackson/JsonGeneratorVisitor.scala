@@ -25,11 +25,8 @@ class JsonGeneratorVisitor(
   private val keyVisitor = new SimpleVisitor[Any, JsonGenerator] {
     override def expectedMsg: String = "expected string key"
 
-    override def visitString(
-      s: CharSequence,
-      index: Int
-    ): JsonGenerator = {
-      generator.writeFieldName(s.toString)
+    override def visitString(cs: CharSequence): JsonGenerator = {
+      generator.writeFieldName(cs.toString)
       generator
     }
   }
@@ -37,31 +34,21 @@ class JsonGeneratorVisitor(
   private val arrVisitor = new ArrVisitor[Any, JsonGenerator] {
     override def subVisitor: Visitor[_, _] = JsonGeneratorVisitor.this
 
-    override def visitValue(
-      v: Any,
-      index: Int
-    ): Unit = ()
+    override def visitValue(v: Any): Unit = ()
 
-    override def visitEnd(
-      index: Int
-    ): JsonGenerator = {
+    override def visitEnd(): JsonGenerator = {
       generator.writeEndArray()
       generator
     }
   }
 
-  override def visitArray(
-    length: Int,
-    index: Int
-  ): ArrVisitor[Any, JsonGenerator] = {
+  override def visitArray(length: Int): ArrVisitor[Any, JsonGenerator] = {
     generator.writeStartArray()
     arrVisitor
   }
 
   val objVisitor = new ObjVisitor[Any, JsonGenerator] {
-    override def visitKey(
-      index: Int
-    ): Visitor[_, _] = keyVisitor
+    override def visitKey(): Visitor[_, _] = keyVisitor
 
     override def visitKeyValue(
       v: Any
@@ -69,90 +56,59 @@ class JsonGeneratorVisitor(
 
     override def subVisitor: Visitor[_, _] = JsonGeneratorVisitor.this
 
-    override def visitValue(
-      v: Any,
-      index: Int
-    ): Unit = ()
+    override def visitValue(v: Any): Unit = ()
 
-    override def visitEnd(
-      index: Int
-    ): JsonGenerator = {
+    override def visitEnd(): JsonGenerator = {
       generator.writeEndObject()
       generator
     }
   }
 
-  override def visitObject(
-    length: Int,
-    index: Int
-  ): ObjVisitor[Any, JsonGenerator] = {
+  override def visitObject(length: Int): ObjVisitor[Any, JsonGenerator] = {
     generator.writeStartObject()
     objVisitor
   }
 
-  override def visitNull(
-    index: Int
-  ): JsonGenerator = {
+  override def visitNull(): JsonGenerator = {
     generator.writeNull()
     generator
   }
 
-  override def visitFalse(
-    index: Int
-  ): JsonGenerator = {
+  override def visitFalse(): JsonGenerator = {
     generator.writeBoolean(false)
     generator
   }
 
-  override def visitTrue(
-    index: Int
-  ): JsonGenerator = {
+  override def visitTrue(): JsonGenerator = {
     generator.writeBoolean(true)
     generator
   }
 
-  override def visitInt64(
-    l: Long,
-    index: Int
-  ): JsonGenerator = {
+  override def visitInt64(l: Long): JsonGenerator = {
     generator.writeNumber(l)
     generator
   }
 
-  override def visitInt32(
-    i: Int,
-    index: Int
-  ): JsonGenerator = {
+  override def visitInt32(i: Int): JsonGenerator = {
     generator.writeNumber(i)
     generator
   }
 
-  override def visitFloat32(
-    f: Float,
-    index: Int
-  ): JsonGenerator = {
+  override def visitFloat32(f: Float): JsonGenerator = {
     generator.writeNumber(f)
     generator
   }
 
-  override def visitFloat64(
-    d: Double,
-    index: Int
-  ): JsonGenerator = {
+  override def visitFloat64(d: Double): JsonGenerator = {
     generator.writeNumber(d)
     generator
   }
 
-  override def visitFloat64StringParts(
-    s: CharSequence,
-    decIndex: Int,
-    expIndex: Int,
-    index: Int
-  ): JsonGenerator = {
-    visitFloat64String(s.toString, index)
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): JsonGenerator = {
+    visitFloat64String(cs.toString)
   }
 
-  override def visitFloat64String(s: String, index: Int): JsonGenerator = {
+  override def visitFloat64String(s: String): JsonGenerator = {
     if (generator.canWriteFormattedNumbers) {
       generator.writeNumber(s)
     } else {
@@ -161,20 +117,17 @@ class JsonGeneratorVisitor(
     generator
   }
 
-  override def visitString(
-    s: CharSequence,
-    index: Int
-  ): JsonGenerator = {
-    generator.writeString(s.toString)
+  override def visitString(cs: CharSequence): JsonGenerator = {
+    generator.writeString(cs.toString)
     generator
   }
 
-  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int): JsonGenerator = {
+  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): JsonGenerator = {
     generator.writeBinary(bytes, offset, len)
     generator
   }
 
-  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int): JsonGenerator = {
+  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): JsonGenerator = {
     // Not a standard structure, but no idea what else to do with this.
     // At least reading it back is *possible*.
     generator.writeStartObject()

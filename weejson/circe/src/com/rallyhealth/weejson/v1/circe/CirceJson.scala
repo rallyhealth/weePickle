@@ -1,36 +1,36 @@
 package com.rallyhealth.weejson.v1.circe
 
-import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 import io.circe.{Json, JsonNumber}
 
 import scala.collection.mutable.ArrayBuffer
 object CirceJson extends com.rallyhealth.weejson.v1.AstTransformer[Json]{
 
   override def transform[T](j: Json, f: Visitor[_, T]) = j.fold(
-    f.visitNull(-1),
-    if (_) f.visitTrue(-1) else f.visitFalse(-1),
-    n => f.visitFloat64(n.toDouble, -1),
-    f.visitString(_, -1),
+    f.visitNull(),
+    if (_) f.visitTrue() else f.visitFalse(),
+    n => f.visitFloat64(n.toDouble),
+    (s: String) => f.visitString(s),
     arr => transformArray(f, arr),
     obj => transformObject(f, obj.toList)
   )
 
-  def visitArray(length: Int, index: Int) = new AstArrVisitor[Vector](x => Json.arr(x:_*))
+  def visitArray(length: Int): ArrVisitor[Json, Json] = new AstArrVisitor[Vector](x => Json.arr(x:_*))
 
-  def visitObject(length: Int, index: Int) = new AstObjVisitor[ArrayBuffer[(String, Json)]](vs => Json.obj(vs.toSeq:_*))
+  def visitObject(length: Int): ObjVisitor[Json, Json] = new AstObjVisitor[ArrayBuffer[(String, Json)]](vs => Json.obj(vs.toSeq:_*))
 
-  def visitNull(index: Int) = Json.Null
+  def visitNull(): Json = Json.Null
 
-  def visitFalse(index: Int) = Json.False
+  def visitFalse(): Json = Json.False
 
-  def visitTrue(index: Int) = Json.True
+  def visitTrue(): Json = Json.True
 
-  def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
+  def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Json = {
     Json.fromJsonNumber(
-      if (decIndex == -1 && expIndex == -1) JsonNumber.fromIntegralStringUnsafe(s.toString)
-      else JsonNumber.fromDecimalStringUnsafe(s.toString)
+      if (decIndex == -1 && expIndex == -1) JsonNumber.fromIntegralStringUnsafe(cs.toString)
+      else JsonNumber.fromDecimalStringUnsafe(cs.toString)
     )
   }
 
-  def visitString(s: CharSequence, index: Int) = Json.fromString(s.toString)
+  def visitString(cs: CharSequence): Json = Json.fromString(cs.toString)
 }

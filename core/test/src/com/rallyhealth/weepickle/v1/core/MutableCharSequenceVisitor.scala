@@ -18,42 +18,37 @@ class MutableCharSequenceVisitor[T, J](v: Visitor[T, J]) extends Visitor.Delegat
     r
   }
 
-  override def visitArray(length: Int, index: Int): ArrVisitor[T, J] = {
-    val arr = super.visitArray(length, index)
+  override def visitArray(length: Int): ArrVisitor[T, J] = {
+    val arr = super.visitArray(length)
     new ArrVisitor[T, J] {
       override def subVisitor: Visitor[_, _] = new MutableCharSequenceVisitor(arr.subVisitor)
 
-      override def visitValue(v: T, index: Int): Unit = arr.visitValue(v, index)
+      override def visitValue(v: T): Unit = arr.visitValue(v)
 
-      override def visitEnd(index: Int): J = arr.visitEnd(index)
+      override def visitEnd(): J = arr.visitEnd()
     }
   }
 
-  override def visitObject(length: Int, index: Int): ObjVisitor[T, J] = {
-    val obj = super.visitObject(length, index)
+  override def visitObject(length: Int): ObjVisitor[T, J] = {
+    val obj = super.visitObject(length)
     new ObjVisitor[T, J] {
-      override def visitKey(index: Int): Visitor[_, _] = obj.visitKey(index)
+      override def visitKey(): Visitor[_, _] = obj.visitKey()
 
       override def visitKeyValue(v: Any): Unit = obj.visitKeyValue(v)
 
       override def subVisitor: Visitor[_, _] = new MutableCharSequenceVisitor(obj.subVisitor)
 
-      override def visitValue(v: T, index: Int): Unit = obj.visitValue(v, index)
+      override def visitValue(v: T): Unit = obj.visitValue(v)
 
-      override def visitEnd(index: Int): J = obj.visitEnd(index)
+      override def visitEnd(): J = obj.visitEnd()
     }
   }
 
-  override def visitString(s: CharSequence, index: Int): J = withMutableString(s) { mut =>
-    super.visitString(mut, index)
+  override def visitString(cs: CharSequence): J = withMutableString(cs) { mut =>
+    super.visitString(mut)
   }
 
-  override def visitFloat64StringParts(
-    s: CharSequence,
-    decIndex: Int,
-    expIndex: Int,
-    index: Int
-  ): J = withMutableString(s) { mut =>
-    super.visitFloat64StringParts(mut, decIndex, expIndex, index)
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = withMutableString(cs) { mut =>
+    super.visitFloat64StringParts(mut, decIndex, expIndex)
   }
 }

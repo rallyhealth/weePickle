@@ -39,9 +39,9 @@ class VisitorJsonGenerator[J](
     new ArrVisitor[Any, J] {
       override def subVisitor: Visitor[Nothing, J] = rootVisitor
 
-      override def visitValue(v: Any, index: Int): Unit = ()
+      override def visitValue(v: Any): Unit = ()
 
-      override def visitEnd(index: Int): Nothing = {
+      override def visitEnd(): Nothing = {
         throw new IllegalStateException("programming error: illegal call to dummy ArrVisitor")
       }
     }
@@ -91,29 +91,29 @@ class VisitorJsonGenerator[J](
 
   override def useDefaultPrettyPrinter(): JsonGenerator = this
 
-  override def writeStartArray(): Unit = push(facade.visitArray(-1, index).narrow)
+  override def writeStartArray(): Unit = push(facade.visitArray(-1).narrow)
 
-  override def writeStartObject(): Unit = push(facade.visitObject(-1, index).narrow)
+  override def writeStartObject(): Unit = push(facade.visitObject(-1).narrow)
 
   override def writeEndObject(): Unit = writeEndObjArr()
 
   override def writeEndArray(): Unit = writeEndObjArr()
 
-  private def writeEndObjArr(): Unit = visitValue(pop().visitEnd(index))
+  private def writeEndObjArr(): Unit = visitValue(pop().visitEnd())
 
   override def writeFieldName(name: String): Unit = {
     val objVisitor = top.asInstanceOf[ObjVisitor[Any, _]]
-    objVisitor.visitKeyValue(objVisitor.visitKey(index).visitString(name, index))
+    objVisitor.visitKeyValue(objVisitor.visitKey().visitString(name))
   }
 
   override def writeFieldName(name: SerializableString): Unit = writeFieldName(name.getValue)
 
   override def writeString(text: String): Unit = {
-    visitValue(facade.visitString(text, index))
+    visitValue(facade.visitString(text))
   }
 
   override def writeString(buf: Array[Char], off: Int, len: Int): Unit = {
-    visitValue(facade.visitString(charSequence(buf, off, len), index))
+    visitValue(facade.visitString(charSequence(buf, off, len)))
   }
 
   override def writeString(text: SerializableString): Unit = {
@@ -139,7 +139,7 @@ class VisitorJsonGenerator[J](
   override def writeRawValue(text: Array[Char], offset: Int, len: Int): Unit = throw notSupported
 
   override def writeBinary(bv: Base64Variant, data: Array[Byte], offset: Int, len: Int): Unit = {
-    visitValue(facade.visitBinary(data, offset, len, index))
+    visitValue(facade.visitBinary(data, offset, len))
   }
 
   override def writeBinary(bv: Base64Variant, data: InputStream, dataLength: Int): Int = {
@@ -158,36 +158,36 @@ class VisitorJsonGenerator[J](
       r = data.read(buffer, size, buffer.length - size)
     }
     data.close()
-    visitValue(facade.visitBinary(buffer, 0, size, index))
+    visitValue(facade.visitBinary(buffer, 0, size))
     size
   }
 
   override def writeNumber(v: Int): Unit = {
-    visitValue(facade.visitInt32(v, index))
+    visitValue(facade.visitInt32(v))
   }
 
   override def writeNumber(v: Long): Unit = {
-    visitValue(facade.visitInt64(v, index))
+    visitValue(facade.visitInt64(v))
   }
 
   override def writeNumber(v: BigInteger): Unit = {
-    visitValue(facade.visitFloat64StringParts(v.toString, -1, -1, index))
+    visitValue(facade.visitFloat64StringParts(v.toString, -1, -1))
   }
 
   override def writeNumber(v: Double): Unit = {
-    visitValue(facade.visitFloat64(v, index))
+    visitValue(facade.visitFloat64(v))
   }
 
   override def writeNumber(v: Float): Unit = {
-    visitValue(facade.visitFloat64(v, index))
+    visitValue(facade.visitFloat64(v))
   }
 
   override def writeNumber(v: java.math.BigDecimal): Unit = {
-    visitValue(facade.visitFloat64String(v.toString, index))
+    visitValue(facade.visitFloat64String(v.toString))
   }
 
   override def writeNumber(encodedValue: String): Unit = {
-    visitValue(facade.visitFloat64String(encodedValue, index))
+    visitValue(facade.visitFloat64String(encodedValue))
   }
 
   override def writeBoolean(state: Boolean): Unit = {
@@ -195,11 +195,11 @@ class VisitorJsonGenerator[J](
     else writeFalse()
   }
 
-  def writeTrue(): Unit = visitValue(facade.visitTrue(index))
+  def writeTrue(): Unit = visitValue(facade.visitTrue())
 
-  def writeFalse(): Unit = visitValue(facade.visitFalse(index))
+  def writeFalse(): Unit = visitValue(facade.visitFalse())
 
-  override def writeNull(): Unit = visitValue(facade.visitNull(index))
+  override def writeNull(): Unit = visitValue(facade.visitNull())
 
   override def writeObject(pojo: Any): Unit = objectCodec.writeValue(this, pojo)
 
@@ -219,7 +219,7 @@ class VisitorJsonGenerator[J](
   }
 
   private def visitValue(any: Any): Unit = {
-    top.visitValue(any, index)
+    top.visitValue(any)
   }
 
   private def notSupported: UnsupportedOperationException = new UnsupportedOperationException()

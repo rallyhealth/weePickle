@@ -50,7 +50,7 @@ class JsonTransformable(parser: JsonParser) extends Transformable {
 
   override def transform[T](visitor: Visitor[_, T]): T = {
     if (parser.nextToken() == null) {
-      return visitor.visitNull(0)
+      return visitor.visitNull()
     }
 
     val builder = List.newBuilder[T]

@@ -9,39 +9,39 @@ class Json4sJson(useBigDecimalForDouble: Boolean, useBigIntForLong: Boolean)
   extends com.rallyhealth.weejson.v1.AstTransformer[JValue] {
   def transform[T](j: JValue, f: Visitor[_, T]) = j match{
     case JArray(xs) => transformArray(f, xs)
-    case JBool(b) => if (b) f.visitTrue(-1) else f.visitFalse(-1)
-    case JDecimal(d) => f.visitFloat64String(d.toString, -1)
-    case JDouble(d) => f.visitFloat64(d, -1)
-    case JInt(i) => f.visitFloat64StringParts(i.toString, -1, -1, -1)
-    case JLong(l) => f.visitFloat64StringParts(l.toString, -1, -1, -1)
-    case JNothing => f.visitNull(-1)
-    case JNull => f.visitNull(-1)
+    case JBool(b) => if (b) f.visitTrue() else f.visitFalse()
+    case JDecimal(d) => f.visitFloat64String(d.toString)
+    case JDouble(d) => f.visitFloat64(d)
+    case JInt(i) => f.visitFloat64StringParts(i.toString, -1, -1)
+    case JLong(l) => f.visitFloat64StringParts(l.toString, -1, -1)
+    case JNothing => f.visitNull()
+    case JNull => f.visitNull()
     case JObject(kvs) => transformObject(f, kvs)
     case JSet(xs) => transformArray(f, xs)
-    case JString(s) => f.visitString(s, -1)
+    case JString(s) => f.visitString(s)
   }
 
 
-  def visitArray(length: Int, index: Int) = new AstArrVisitor[List](x => JArray(x))
-  def visitObject(length: Int, index: Int) = new AstObjVisitor[List[(String, JValue)]](JObject(_))
+  def visitArray(length: Int): ArrVisitor[JValue, JValue] = new AstArrVisitor[List](x => JArray(x))
+  def visitObject(length: Int): ObjVisitor[JValue, JValue] = new AstObjVisitor[List[(String, JValue)]](JObject(_))
 
-  def visitNull(index: Int) = JNull
+  def visitNull(): JValue = JNull
 
-  def visitFalse(index: Int) = JBool(false)
+  def visitFalse(): JValue = JBool(false)
 
-  def visitTrue(index: Int) = JBool(true)
+  def visitTrue(): JValue = JBool(true)
 
-  override def visitFloat64(d: Double, index: Int) = JDouble(d)
+  override def visitFloat64(d: Double): JValue = JDouble(d)
 
-  def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
+  def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): JValue = {
     if (decIndex == -1 && expIndex == -1) {
-      if (useBigIntForLong) JInt(BigInt(s.toString))
-      else JLong(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length))
+      if (useBigIntForLong) JInt(BigInt(cs.toString))
+      else JLong(com.rallyhealth.weepickle.v1.core.Util.parseLong(cs, 0, cs.length))
     } else {
-      if (useBigDecimalForDouble) JDecimal(BigDecimal(s.toString))
-      else JDouble(s.toString.toDouble)
+      if (useBigDecimalForDouble) JDecimal(BigDecimal(cs.toString))
+      else JDouble(cs.toString.toDouble)
     }
   }
 
-  def visitString(s: CharSequence, index: Int) = JString(s.toString)
+  def visitString(cs: CharSequence): JValue = JString(cs.toString)
 }

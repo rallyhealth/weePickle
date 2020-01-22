@@ -18,7 +18,7 @@ object OptionPickler extends com.rallyhealth.weepickle.v1.AttributeTagged {
 
   override implicit def OptionReader[T: Reader]: Reader[Option[T]] = {
     new Reader.Delegate[Any, Option[T]](implicitly[Reader[T]].map(Some(_))){
-      override def visitNull(index: Int) = None
+      override def visitNull(): Option[T] = None
     }
   }
 }

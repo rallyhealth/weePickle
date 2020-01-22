@@ -8,9 +8,9 @@ import com.rallyhealth.weepickle.v1.core.Visitor
   */
 trait MsgVisitor[-T, +J] extends Visitor[T, J]{
 
-  def visitFloat64String(s: String, index: Int) = this.visitFloat64(s.toDouble, index)
+  def visitFloat64String(s: String): J = this.visitFloat64(s.toDouble)
 
-  def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = {
-    this.visitFloat64(s.toString.toDouble, index)
+  def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = {
+    this.visitFloat64(cs.toString.toDouble)
   }
 }

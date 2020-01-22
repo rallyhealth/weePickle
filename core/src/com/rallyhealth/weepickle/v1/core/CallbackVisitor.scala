@@ -16,41 +16,41 @@ class CallbackVisitor[T, J](delegate: Visitor[T, J])(callback: J => Unit) extend
     j
   }
 
-  override def visitObject(length: Int, index: Int): ObjVisitor[T, J] = new ObjDelegate(super.visitObject(length, index)) {
-    override def visitEnd(index: Int): J = emitFluently(super.visitEnd(index))
+  override def visitObject(length: Int): ObjVisitor[T, J] = new ObjDelegate(super.visitObject(length)) {
+    override def visitEnd(): J = emitFluently(super.visitEnd())
   }
 
-  override def visitArray(length: Int, index: Int): ArrVisitor[T, J] = new ArrDelegate(super.visitArray(length, index)) {
-    override def visitEnd(index: Int): J = emitFluently(super.visitEnd(index))
+  override def visitArray(length: Int): ArrVisitor[T, J] = new ArrDelegate(super.visitArray(length)) {
+    override def visitEnd(): J = emitFluently(super.visitEnd())
   }
 
-  override def visitNull(index: Int): J = emitFluently(super.visitNull(index))
+  override def visitNull(): J = emitFluently(super.visitNull())
 
-  override def visitTrue(index: Int): J = emitFluently(super.visitTrue(index))
+  override def visitTrue(): J = emitFluently(super.visitTrue())
 
-  override def visitFalse(index: Int): J = emitFluently(super.visitFalse(index))
+  override def visitFalse(): J = emitFluently(super.visitFalse())
 
-  override def visitString(s: CharSequence, index: Int): J = emitFluently(super.visitString(s, index))
+  override def visitString(cs: CharSequence): J = emitFluently(super.visitString(cs))
 
-  override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int): J = emitFluently(super.visitFloat64StringParts(s, decIndex, expIndex, index))
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = emitFluently(super.visitFloat64StringParts(cs, decIndex, expIndex))
 
-  override def visitFloat64(d: Double, index: Int): J = emitFluently(super.visitFloat64(d, index))
+  override def visitFloat64(d: Double): J = emitFluently(super.visitFloat64(d))
 
-  override def visitFloat32(d: Float, index: Int): J = emitFluently(super.visitFloat32(d, index))
+  override def visitFloat32(d: Float): J = emitFluently(super.visitFloat32(d))
 
-  override def visitInt32(i: Int, index: Int): J = emitFluently(super.visitInt32(i, index))
+  override def visitInt32(i: Int): J = emitFluently(super.visitInt32(i))
 
-  override def visitInt64(i: Long, index: Int): J = emitFluently(super.visitInt64(i, index))
+  override def visitInt64(l: Long): J = emitFluently(super.visitInt64(l))
 
-  override def visitUInt64(i: Long, index: Int): J = emitFluently(super.visitUInt64(i, index))
+  override def visitUInt64(ul: Long): J = emitFluently(super.visitUInt64(ul))
 
-  override def visitFloat64String(s: String, index: Int): J = emitFluently(super.visitFloat64String(s, index))
+  override def visitFloat64String(s: String): J = emitFluently(super.visitFloat64String(s))
 
-  override def visitChar(s: Char, index: Int): J = emitFluently(super.visitChar(s, index))
+  override def visitChar(c: Char): J = emitFluently(super.visitChar(c))
 
-  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int): J = emitFluently(super.visitBinary(bytes, offset, len, index))
+  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = emitFluently(super.visitBinary(bytes, offset, len))
 
-  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int): J = emitFluently(super.visitExt(tag, bytes, offset, len, index))
+  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J = emitFluently(super.visitExt(tag, bytes, offset, len))
 
-  override def visitTimestamp(instant: Instant, index: Int): J = emitFluently(super.visitTimestamp(instant, index))
+  override def visitTimestamp(instant: Instant): J = emitFluently(super.visitTimestamp(instant))
 }

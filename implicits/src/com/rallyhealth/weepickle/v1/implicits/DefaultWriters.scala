@@ -9,42 +9,42 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits with LowPriWriters{
   implicit val StringWriter: Writer[String] = new Writer[String] {
-    def write0[R](out: Visitor[_, R], v: String): R = out.visitString(v, -1)
+    def write0[R](out: Visitor[_, R], v: String): R = out.visitString(v)
   }
   implicit val UnitWriter: Writer[Unit] = new Writer[Unit] {
     def write0[R](out: Visitor[_, R], v: Unit): R = {
-      out.visitObject(0, -1).visitEnd(-1)
+      out.visitObject(0).visitEnd()
     }
   }
 
   implicit val DoubleWriter: Writer[Double] = new Writer[Double] {
-    def write0[R](out: Visitor[_, R], v: Double): R = out.visitFloat64(v, -1)
+    def write0[R](out: Visitor[_, R], v: Double): R = out.visitFloat64(v)
   }
   implicit val IntWriter: Writer[Int] = new Writer[Int] {
-    def write0[V](out: Visitor[_, V], v: Int) = out.visitInt32(v, -1)
+    def write0[V](out: Visitor[_, V], v: Int) = out.visitInt32(v)
   }
 
   implicit val FloatWriter: Writer[Float] = new Writer[Float] {
-    def write0[R](out: Visitor[_, R], v: Float): R = out.visitFloat32(v, -1)
+    def write0[R](out: Visitor[_, R], v: Float): R = out.visitFloat32(v)
   }
   implicit val ShortWriter: Writer[Short] = new Writer[Short] {
-    def write0[V](out: Visitor[_, V], v: Short) = out.visitInt32(v, -1)
+    def write0[V](out: Visitor[_, V], v: Short) = out.visitInt32(v)
   }
   implicit val ByteWriter: Writer[Byte] = new Writer[Byte] {
-    def write0[V](out: Visitor[_, V], v: Byte) = out.visitInt32(v, -1)
+    def write0[V](out: Visitor[_, V], v: Byte) = out.visitInt32(v)
   }
 
   implicit val BooleanWriter: Writer[Boolean] = new Writer[Boolean] {
     def write0[R](out: Visitor[_, R], v: Boolean): R = {
-      if(v) out.visitTrue(-1) else out.visitFalse(-1)
+      if(v) out.visitTrue() else out.visitFalse()
     }
   }
   implicit val CharWriter: Writer[Char] = new Writer[Char] {
-    def write0[V](out: Visitor[_, V], v: Char) = out.visitChar(v, -1)
+    def write0[V](out: Visitor[_, V], v: Char) = out.visitChar(v)
   }
   implicit val UUIDWriter: Writer[UUID] = StringWriter.comap[UUID](_.toString)
   implicit val LongWriter = new Writer[Long] {
-    def write0[V](out: Visitor[_, V], v: Long) = out.visitInt64(v, -1)
+    def write0[V](out: Visitor[_, V], v: Long) = out.visitInt64(v)
   }
   implicit val BigIntWriter: Writer[BigInt] = StringWriter.comap[BigInt](_.toString)
   implicit val BigDecimalWriter: Writer[BigDecimal] = StringWriter.comap[BigDecimal](_.toString)
@@ -61,19 +61,19 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Genera
   implicit def ArrayWriter[T](implicit r: Writer[T]): Writer[Array[T]] = {
     if (r == ByteWriter) new Writer[Array[T]] {
       def write0[R](out: Visitor[_, R], v: Array[T]): R = {
-        out.visitBinary(v.asInstanceOf[Array[Byte]], 0, v.length, -1)
+        out.visitBinary(v.asInstanceOf[Array[Byte]], 0, v.length)
       }
     }
     else new Writer[Array[T]] {
       def write0[R](out: Visitor[_, R], v: Array[T]): R = {
-        val ctx = out.visitArray(v.length, -1).narrow
+        val ctx = out.visitArray(v.length).narrow
         var i = 0
         while (i < v.length) {
-          ctx.visitValue(r.write(ctx.subVisitor, v(i)), -1)
+          ctx.visitValue(r.write(ctx.subVisitor, v(i)))
           i += 1
         }
 
-        ctx.visitEnd(-1)
+        ctx.visitEnd()
       }
     }
   }
@@ -81,15 +81,15 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Genera
                 (implicit kw: Writer[K], vw: Writer[V]): Writer[M[K, V]] = {
     if (kw eq StringWriter) new Writer[M[String, V]]{
       def write0[R](out: Visitor[_, R], v: M[String, V]): R = {
-        val ctx = out.visitObject(v.size, -1).narrow
+        val ctx = out.visitObject(v.size).narrow
         for(pair <- v){
           val (k1, v1) = pair
-          val keyVisitor = ctx.visitKey(-1)
-          ctx.visitKeyValue(keyVisitor.visitString(k1, -1))
-          ctx.visitValue(vw.write(ctx.subVisitor, v1), -1)
+          val keyVisitor = ctx.visitKey()
+          ctx.visitKeyValue(keyVisitor.visitString(k1))
+          ctx.visitValue(vw.write(ctx.subVisitor, v1))
 
         }
-        ctx.visitEnd(-1)
+        ctx.visitEnd()
       }
     }.asInstanceOf[Writer[M[K, V]]]
     else SeqLikeWriter[Seq, (K, V)].comap[M[K, V]](_.toSeq)
@@ -106,10 +106,10 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Genera
 
   implicit val DurationWriter: Writer[Duration] = new Writer[Duration]{
     def write0[R](out: Visitor[_, R], v: Duration): R = v match{
-      case Duration.Inf => out.visitString("inf", -1)
-      case Duration.MinusInf => out.visitString("-inf", -1)
-      case x if x eq Duration.Undefined => out.visitString("undef", -1)
-      case _ => out.visitString(v.toNanos.toString, -1)
+      case Duration.Inf => out.visitString("inf")
+      case Duration.MinusInf => out.visitString("-inf")
+      case x if x eq Duration.Undefined => out.visitString("undef")
+      case _ => out.visitString(v.toNanos.toString)
     }
   }
 
@@ -119,19 +119,19 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Genera
   implicit def EitherWriter[T1: Writer, T2: Writer]: Writer[Either[T1, T2]] = new Writer[Either[T1, T2]]{
     def write0[R](out: Visitor[_, R], v: Either[T1, T2]): R = v match{
       case Left(t1) =>
-        val ctx = out.visitArray(2, -1).narrow
-        ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("0", -1, -1, -1), -1)
+        val ctx = out.visitArray(2).narrow
+        ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("0", -1, -1))
 
-        ctx.visitValue(implicitly[Writer[T1]].write(ctx.subVisitor, t1), -1)
+        ctx.visitValue(implicitly[Writer[T1]].write(ctx.subVisitor, t1))
 
-        ctx.visitEnd(-1)
+        ctx.visitEnd()
       case Right(t2) =>
-        val ctx = out.visitArray(2, -1).narrow
-        ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("1", -1, -1, -1), -1)
+        val ctx = out.visitArray(2).narrow
+        ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("1", -1, -1))
 
-        ctx.visitValue(implicitly[Writer[T2]].write(ctx.subVisitor, t2), -1)
+        ctx.visitValue(implicitly[Writer[T2]].write(ctx.subVisitor, t2))
 
-        ctx.visitEnd(-1)
+        ctx.visitEnd()
     }
   }
   implicit def RightWriter[T1: Writer, T2: Writer]: Writer[Right[T1, T2]] =
@@ -146,15 +146,15 @@ trait DefaultWriters extends com.rallyhealth.weepickle.v1.core.Types with Genera
 trait LowPriWriters extends com.rallyhealth.weepickle.v1.core.Types{
   implicit def SeqLikeWriter[C[_] <: Iterable[_], T](implicit r: Writer[T]): Writer[C[T]] = new Writer[C[T]] {
     def write0[R](out: Visitor[_, R], v: C[T]): R = {
-      val ctx = out.visitArray(v.size, -1).narrow
+      val ctx = out.visitArray(v.size).narrow
       val x = v.iterator
       while(x.nonEmpty){
         val next = x.next().asInstanceOf[T]
         val written = r.write(ctx.subVisitor, next)
-        ctx.visitValue(written, -1)
+        ctx.visitValue(written)
       }
 
-      ctx.visitEnd(-1)
+      ctx.visitEnd()
     }
   }
 }

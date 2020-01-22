@@ -21,41 +21,41 @@ object NoOpVisitor extends NoOpVisitor[Unit](())
 object NullVisitor extends NoOpVisitor[Null](null)
 
 class NoOpVisitor[J](returnValue: J) extends Visitor[Any, J] {
-  def visitArray(length: Int, index: Int): ArrVisitor[Any, J] = new ArrVisitor[Any, J] {
+  def visitArray(length: Int): ArrVisitor[Any, J] = new ArrVisitor[Any, J] {
     def subVisitor = NoOpVisitor.this
-    def visitValue(v: Any, index: Int): Unit = ()
-    def visitEnd(index: Int): J = returnValue
+    def visitValue(v: Any): Unit = ()
+    def visitEnd(): J = returnValue
   }
-  def visitObject(length: Int, index: Int): ObjVisitor[Any, J] = new ObjVisitor[Any, J] {
+  def visitObject(length: Int): ObjVisitor[Any, J] = new ObjVisitor[Any, J] {
     def subVisitor = NoOpVisitor.this
-    def visitKey(index: Int) = NoOpVisitor
+    def visitKey(): Visitor[_, _] = NoOpVisitor
     def visitKeyValue(s: Any): Unit = ()
-    def visitValue(v: Any, index: Int): Unit = ()
-    def visitEnd(index: Int): J = returnValue
+    def visitValue(v: Any): Unit = ()
+    def visitEnd(): J = returnValue
   }
 
-  def visitNull(index: Int): J = returnValue
-  def visitFalse(index: Int): J = returnValue
-  def visitTrue(index: Int): J = returnValue
-  def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int, index: Int) = returnValue
-  def visitString(s: CharSequence, index: Int) = returnValue
+  def visitNull(): J = returnValue
+  def visitFalse(): J = returnValue
+  def visitTrue(): J = returnValue
+  def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = returnValue
+  def visitString(cs: CharSequence): J = returnValue
 
-  def visitFloat64(d: Double, index: Int) = returnValue
+  def visitFloat64(d: Double): J = returnValue
 
-  def visitFloat32(d: Float, index: Int) = returnValue
+  def visitFloat32(d: Float): J = returnValue
 
-  def visitInt32(i: Int, index: Int) = returnValue
+  def visitInt32(i: Int): J = returnValue
 
-  def visitInt64(i: Long, index: Int) = returnValue
-  def visitUInt64(i: Long, index: Int) = returnValue
+  def visitInt64(l: Long): J = returnValue
+  def visitUInt64(ul: Long): J = returnValue
 
-  def visitFloat64String(s: String, index: Int) = returnValue
+  def visitFloat64String(s: String): J = returnValue
 
-  def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int) = returnValue
+  def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = returnValue
 
-  def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int) = returnValue
+  def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J = returnValue
 
-  def visitChar(s: Char, index: Int) = returnValue
+  def visitChar(c: Char): J = returnValue
 
-  def visitTimestamp(instant: Instant, index: Int): J = returnValue
+  def visitTimestamp(instant: Instant): J = returnValue
 }

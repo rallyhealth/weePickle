@@ -99,15 +99,15 @@ private class JsonPointerVisitor[T, J](
   parentPath: HasPath
 ) extends Visitor.Delegate[T, J](delegate) {
 
-  override def visitObject(length: Int, index: Int): ObjVisitor[T, J] = {
-    val objVisitor = parentPath.wrap(super.visitObject(length, index))
+  override def visitObject(length: Int): ObjVisitor[T, J] = {
+    val objVisitor = parentPath.wrap(super.visitObject(length))
     new ObjVisitor[T, J] with HasPath {
       private var key: String = _
 
-      override def visitKey(index: Int): Visitor[_, _] = new JsonPointerVisitor[Nothing, Any](objVisitor.visitKey(index), this) {
-        override def visitString(s: CharSequence, index: Int): Any = {
-          key = s.toString
-          wrap(this.delegate.visitString(key, index))
+      override def visitKey(): Visitor[_, _] = new JsonPointerVisitor[Nothing, Any](objVisitor.visitKey(), this) {
+        override def visitString(cs: CharSequence): Any = {
+          key = cs.toString
+          wrap(this.delegate.visitString(key))
         }
       }
 
@@ -120,13 +120,13 @@ private class JsonPointerVisitor[T, J](
         new JsonPointerVisitor(objVisitor.subVisitor.asInstanceOf[Visitor[T, J]], this)
       }
 
-      override def visitValue(v: T, index: Int): Unit = {
+      override def visitValue(v: T): Unit = {
         key = null // reset before visitEnd.
-        wrap(objVisitor.visitValue(v, index))
+        wrap(objVisitor.visitValue(v))
       }
 
-      override def visitEnd(index: Int): J = {
-        wrap(objVisitor.visitEnd(index))
+      override def visitEnd(): J = {
+        wrap(objVisitor.visitEnd())
       }
 
       override def pathComponent: Option[String] = Option(key).map(_.replaceAllLiterally("~", "~0").replaceAllLiterally("/", "~1"))
@@ -135,8 +135,8 @@ private class JsonPointerVisitor[T, J](
     }
   }
 
-  override def visitArray(length: Int, index: Int): ArrVisitor[T, J] = {
-    val arrVisitor = parentPath.wrap(super.visitArray(length, index))
+  override def visitArray(length: Int): ArrVisitor[T, J] = {
+    val arrVisitor = parentPath.wrap(super.visitArray(length))
     new ArrVisitor[T, J] with HasPath {
       private var i = -1
 
@@ -145,13 +145,13 @@ private class JsonPointerVisitor[T, J](
         new JsonPointerVisitor(arrVisitor.subVisitor.asInstanceOf[Visitor[T, J]], this)
       }
 
-      override def visitValue(v: T, index: Int): Unit = {
-        wrap(arrVisitor.visitValue(v, index))
+      override def visitValue(v: T): Unit = {
+        wrap(arrVisitor.visitValue(v))
       }
 
-      override def visitEnd(index: Int): J = {
+      override def visitEnd(): J = {
         i = -1
-        wrap(arrVisitor.visitEnd(index))
+        wrap(arrVisitor.visitEnd())
       }
 
       override def pathComponent: Option[String] = if (i >= 0) Some(i.toString) else None
@@ -160,38 +160,33 @@ private class JsonPointerVisitor[T, J](
     }
   }
 
-  override def visitNull(index: Int): J = parentPath.wrap(super.visitNull(index))
+  override def visitNull(): J = parentPath.wrap(super.visitNull())
 
-  override def visitTrue(index: Int): J = parentPath.wrap(super.visitTrue(index))
+  override def visitTrue(): J = parentPath.wrap(super.visitTrue())
 
-  override def visitFalse(index: Int): J = parentPath.wrap(super.visitFalse(index))
+  override def visitFalse(): J = parentPath.wrap(super.visitFalse())
 
-  override def visitString(s: CharSequence, index: Int): J = parentPath.wrap(super.visitString(s, index))
+  override def visitString(cs: CharSequence): J = parentPath.wrap(super.visitString(cs))
 
-  override def visitFloat64StringParts(
-    s: CharSequence,
-    decIndex: Int,
-    expIndex: Int,
-    index: Int
-  ): J = parentPath.wrap(super.visitFloat64StringParts(s, decIndex, expIndex, index))
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = parentPath.wrap(super.visitFloat64StringParts(cs, decIndex, expIndex))
 
-  override def visitFloat64(d: Double, index: Int): J = parentPath.wrap(super.visitFloat64(d, index))
+  override def visitFloat64(d: Double): J = parentPath.wrap(super.visitFloat64(d))
 
-  override def visitFloat32(d: Float, index: Int): J = parentPath.wrap(super.visitFloat32(d, index))
+  override def visitFloat32(d: Float): J = parentPath.wrap(super.visitFloat32(d))
 
-  override def visitInt32(i: Int, index: Int): J = parentPath.wrap(super.visitInt32(i, index))
+  override def visitInt32(i: Int): J = parentPath.wrap(super.visitInt32(i))
 
-  override def visitInt64(i: Long, index: Int): J = parentPath.wrap(super.visitInt64(i, index))
+  override def visitInt64(l: Long): J = parentPath.wrap(super.visitInt64(l))
 
-  override def visitUInt64(i: Long, index: Int): J = parentPath.wrap(super.visitUInt64(i, index))
+  override def visitUInt64(ul: Long): J = parentPath.wrap(super.visitUInt64(ul))
 
-  override def visitFloat64String(s: String, index: Int): J = parentPath.wrap(super.visitFloat64String(s, index))
+  override def visitFloat64String(s: String): J = parentPath.wrap(super.visitFloat64String(s))
 
-  override def visitChar(s: Char, index: Int): J = parentPath.wrap(super.visitChar(s, index))
+  override def visitChar(c: Char): J = parentPath.wrap(super.visitChar(c))
 
-  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int, index: Int): J = parentPath.wrap(super.visitBinary(bytes, offset, len, index))
+  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = parentPath.wrap(super.visitBinary(bytes, offset, len))
 
-  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int, index: Int): J = parentPath.wrap(super.visitExt(tag, bytes, offset, len, index))
+  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J = parentPath.wrap(super.visitExt(tag, bytes, offset, len))
 
   override def toString: String = parentPath.toString
 }

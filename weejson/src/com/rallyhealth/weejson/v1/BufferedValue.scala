@@ -1,0 +1,101 @@
+package com.rallyhealth.weejson.v1
+
+import java.time.Instant
+
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, Visitor}
+
+import scala.collection.mutable
+
+/**
+  * A version of [[com.rallyhealth.weejson.v1.Value]] used to buffer data in raw form.
+  *
+  * This is used by the case class macros to buffer data for polymorphic types
+  * when the discriminator is not the first element, e.g. {"foo": 1, "$type": "discriminator"}.
+  * It is important that all types be immutable.
+  */
+sealed trait BufferedValue
+
+object BufferedValue extends Transformer[BufferedValue]{
+
+  case class Str(value0: String) extends BufferedValue
+  case class Obj(value0: (String, BufferedValue)*) extends BufferedValue
+  case class Arr(value: BufferedValue*) extends BufferedValue
+  case class Num(s: String, decIndex: Int, expIndex: Int) extends BufferedValue
+  case class NumLong(l: Long) extends BufferedValue
+  case class NumRaw(d: Double) extends BufferedValue
+  case class Timestamp(i: Instant) extends BufferedValue
+  case object False extends BufferedValue{
+    def value = false
+  }
+  case object True extends BufferedValue{
+    def value = true
+  }
+  case object Null extends BufferedValue{
+    def value = null
+  }
+
+  def transform[T](j: BufferedValue, f: Visitor[_, T]): T = {
+    j match{
+      case BufferedValue.Null => f.visitNull()
+      case BufferedValue.True => f.visitTrue()
+      case BufferedValue.False => f.visitFalse()
+      case BufferedValue.Str(s) => f.visitString(s)
+      case BufferedValue.Num(s, d, e) => f.visitFloat64StringParts(s, d, e)
+      case BufferedValue.NumLong(l) => f.visitInt64(l)
+      case BufferedValue.NumRaw(d) => f.visitFloat64(d)
+      case BufferedValue.Timestamp(i) => f.visitTimestamp(i)
+      case BufferedValue.Arr(items @_*) =>
+        val ctx = f.visitArray(-1).narrow
+        for(item <- items) ctx.visitValue(transform(item, ctx.subVisitor))
+        ctx.visitEnd()
+      case BufferedValue.Obj(items @_*) =>
+        val ctx = f.visitObject(-1).narrow
+        for((k, item) <- items) {
+          val keyVisitor = ctx.visitKey()
+
+          ctx.visitKeyValue(keyVisitor.visitString(k))
+          ctx.visitValue(transform(item, ctx.subVisitor))
+        }
+        ctx.visitEnd()
+    }
+  }
+
+
+  object Builder extends JsVisitor[BufferedValue, BufferedValue]{
+    def visitArray(length: Int): ArrVisitor[BufferedValue, BufferedValue] = new ArrVisitor[BufferedValue, BufferedValue.Arr] {
+      val out = mutable.Buffer.empty[BufferedValue]
+      def subVisitor = Builder
+      def visitValue(v: BufferedValue): Unit = {
+        out.append(v)
+      }
+      def visitEnd(): BufferedValue.Arr = BufferedValue.Arr(out.toSeq:_*)
+    }
+
+    def visitObject(length: Int): ObjVisitor[BufferedValue, BufferedValue] = new ObjVisitor[BufferedValue, BufferedValue.Obj] {
+      val out = mutable.Buffer.empty[(String, BufferedValue)]
+      var currentKey: String = _
+      def subVisitor = Builder
+      def visitKey(): Visitor[_, _] = BufferedValue.Builder
+      def visitKeyValue(s: Any): Unit = currentKey = s.asInstanceOf[BufferedValue.Str].value0.toString
+      def visitValue(v: BufferedValue): Unit = {
+        out.append((currentKey, v))
+      }
+      def visitEnd(): BufferedValue.Obj = BufferedValue.Obj(out.toSeq:_*)
+    }
+
+    def visitNull(): BufferedValue = BufferedValue.Null
+
+    def visitFalse(): BufferedValue = BufferedValue.False
+
+    def visitTrue(): BufferedValue = BufferedValue.True
+
+    override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): BufferedValue = BufferedValue.Num(cs.toString, decIndex, expIndex)
+    override def visitFloat64(d: Double): BufferedValue = BufferedValue.NumRaw(d)
+
+    override def visitInt64(l: Long): BufferedValue = NumLong(l)
+
+    def visitString(cs: CharSequence): BufferedValue = BufferedValue.Str(cs.toString)
+
+    override def visitTimestamp(instant: Instant): BufferedValue = Timestamp(instant)
+  }
+}

@@ -2,7 +2,7 @@ package com.rallyhealth.weepickle.v1.core
 
 object Util {
 
-  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int, index: Int): Long = {
+  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int): Long = {
     val expMul =
       if (expIndex == -1) 1
       else{
@@ -10,7 +10,7 @@ object Util {
         val e = parseLong(s, expIndex + 1, s.length())
         var i = 0
         while(i < e){
-          if (mult >= Long.MaxValue / 10) throw new Abort("expected integer", index)
+          if (mult >= Long.MaxValue / 10) throw new Abort("expected integer")
           mult = mult * 10
           i += 1
         }

@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1
 
-import com.rallyhealth.weejson.v1.IndexedValue
+import com.rallyhealth.weejson.v1.BufferedValue
 import com.rallyhealth.weepickle.v1.core._
 
 import scala.language.experimental.macros
@@ -92,7 +92,7 @@ trait AttributeTagged extends Api{
   }
 
   def taggedExpectedMsg = "expected dictionary"
-  override def taggedObjectContext[T](taggedReader: TaggedReader[T], index: Int): ObjVisitor[Any, T] = {
+  override def taggedObjectContext[T](taggedReader: TaggedReader[T]): ObjVisitor[Any, T] = {
     new ObjVisitor[Any, T]{
       private[this] var fastPath = false
       private[this] var context: ObjVisitor[Any, _] = null
@@ -100,8 +100,8 @@ trait AttributeTagged extends Api{
         if (context == null) com.rallyhealth.weepickle.v1.core.StringVisitor
         else context.subVisitor
 
-      def visitKey(index: Int) = {
-        if (context != null) context.visitKey(index)
+      def visitKey(): Visitor[_, _] = {
+        if (context != null) context.visitKey()
         else com.rallyhealth.weepickle.v1.core.StringVisitor
       }
       def visitKeyValue(s: Any): Unit = {
@@ -110,65 +110,67 @@ trait AttributeTagged extends Api{
           if (s.toString == taggedReader.tagName) () //do nothing
           else {
             // otherwise, go slow path
-            val slowCtx = IndexedValue.Builder.visitObject(-1, index).narrow
-            val keyVisitor = slowCtx.visitKey(index)
-            val xxx = keyVisitor.visitString(s.toString, index)
+            val slowCtx = BufferedValue.Builder.visitObject(-1).narrow
+            val keyVisitor = slowCtx.visitKey()
+            val xxx = keyVisitor.visitString(s.toString)
             slowCtx.visitKeyValue(xxx)
             context = slowCtx
           }
         }
       }
 
-      def visitValue(v: Any, index: Int): Unit = {
-        if (context != null) context.visitValue(v, index)
+      def visitValue(v: Any): Unit = {
+        if (context != null) context.visitValue(v)
         else {
           val typeName = objectTypeKeyReadMap(v.toString).toString
           val facade0 = taggedReader.findReader(typeName)
           if (facade0 == null) {
-            throw new Abort("invalid tag for tagged object: " + typeName, index)
+            throw new Abort("invalid tag for tagged object: " + typeName)
           }
-          val fastCtx = facade0.visitObject(-1, index)
+          val fastCtx = facade0.visitObject(-1)
           context = fastCtx
           fastPath = true
         }
       }
-      def visitEnd(index: Int) = {
-        if (context == null) throw new Abort("expected tagged dictionary", index)
-        else if (fastPath) context.visitEnd(index).asInstanceOf[T]
+      def visitEnd(): T = {
+        if (context == null) throw new Abort("expected tagged dictionary")
+        else if (fastPath) context.visitEnd().asInstanceOf[T]
         else{
-          val x = context.visitEnd(index).asInstanceOf[IndexedValue.Obj]
-          val tagInfo = x.value0.find(_._1.toString == taggedReader.tagName).getOrElse(throw new Abort(s"missing tag key: ${taggedReader.tagName}", index))
+          val x = context.visitEnd().asInstanceOf[BufferedValue.Obj]
+          val tagInfo = x.value0.find(_._1.toString == taggedReader.tagName).getOrElse(throw new Abort(s"missing tag key: ${taggedReader.tagName}"))
           val keyAttr = tagInfo._2
-          val key = keyAttr.asInstanceOf[IndexedValue.Str].value0.toString
-          val delegate = taggedReader.findReader(key)
-          if (delegate == null){
-            throw new Abort("invalid tag for tagged object: " + key, index)
+          val key = keyAttr.asInstanceOf[BufferedValue.Str].value0.toString
+          val reader = taggedReader.findReader(key)
+          if (reader == null){
+            throw new Abort("invalid tag for tagged object: " + key)
           }
-          val ctx2 = delegate.visitObject(-1, -1)
+          // Replaying buffered content requires new path tracking for exceptions thrown by the reader.
+          val delegate = JsonPointerVisitor(reader)
+          val ctx2 = delegate.visitObject(-1)
           for (p <- x.value0) {
             val (k0, v) = p
             val k = k0.toString
             if (k != taggedReader.tagName){
-              val keyVisitor = ctx2.visitKey(-1)
+              val keyVisitor = ctx2.visitKey()
 
-              ctx2.visitKeyValue(keyVisitor.visitString(k, -1))
-              ctx2.visitValue(IndexedValue.transform(v, ctx2.subVisitor), -1)
+              ctx2.visitKeyValue(keyVisitor.visitString(k))
+              ctx2.visitValue(BufferedValue.transform(v, ctx2.subVisitor))
             }
           }
-          ctx2.visitEnd(index)
+          ctx2.visitEnd()
         }
       }
 
     }
   }
   def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_,  R], v: T): R = {
-    val ctx = out.asInstanceOf[Visitor[Any, R]].visitObject(w.length(v) + 1, -1)
-    val keyVisitor = ctx.visitKey(-1)
+    val ctx = out.asInstanceOf[Visitor[Any, R]].visitObject(w.length(v) + 1)
+    val keyVisitor = ctx.visitKey()
 
-    ctx.visitKeyValue(keyVisitor.visitString(tagName, -1))
-    ctx.visitValue(ctx.subVisitor.visitString(objectTypeKeyWriteMap(tag), -1), -1)
+    ctx.visitKeyValue(keyVisitor.visitString(tagName))
+    ctx.visitValue(ctx.subVisitor.visitString(objectTypeKeyWriteMap(tag)))
     w.writeToObject(ctx, v)
-    val res = ctx.visitEnd(-1)
+    val res = ctx.visitEnd()
     res
   }
 }

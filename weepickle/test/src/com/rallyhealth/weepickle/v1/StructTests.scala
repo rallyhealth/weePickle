@@ -134,7 +134,7 @@ object StructTests extends TestSuite {
           implicitly[WeePickle.Reader[Bar]]
             .map(identity)
         ) {
-          override def visitNull(index: Int): AlwaysReturn.Bar = Bar()
+          override def visitNull(): AlwaysReturn.Bar = Bar()
         }
       }
 

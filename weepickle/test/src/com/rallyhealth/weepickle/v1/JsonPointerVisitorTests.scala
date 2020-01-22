@@ -61,44 +61,44 @@ object JsonPointerVisitorTests extends TestSuite {
         val visitor = JsonPointerVisitor(NoOpVisitor)
         visitor.toString ==> ""
 
-        val obj = visitor.visitObject(-1, -1)
+        val obj = visitor.visitObject(-1)
         obj.toString ==> ""
 
-        obj.visitKey(-1).visitString("foo", -1)
+        obj.visitKey().visitString("foo")
         obj.toString ==> "/foo"
         obj.visitKeyValue(())
 
         val foo = obj.subVisitor
         foo.toString ==> "/foo"
 
-        val arr = foo.visitArray(-1, -1).narrow
+        val arr = foo.visitArray(-1).narrow
         arr.toString ==> "/foo" // still describes the array, itself.
 
         val fooBar = arr.subVisitor
         fooBar.toString ==> "/foo/0"
-        fooBar.visitString("bar", -1)
-        arr.visitValue((), -1)
+        fooBar.visitString("bar")
+        arr.visitValue(())
         fooBar.toString ==> "/foo/0"
 
         val fooBaz = arr.subVisitor
         fooBaz.toString ==> "/foo/1"
-        fooBaz.visitString("baz", -1)
-        arr.visitValue((), -1)
+        fooBaz.visitString("baz")
+        arr.visitValue(())
         fooBaz.toString ==> "/foo/1"
 
-        arr.visitEnd(-1)
+        arr.visitEnd()
         arr.toString ==> "/foo" // if visitEnd fails, pointing to the array seems more reasonable than /foo/1.
-        obj.visitValue((), -1)
+        obj.visitValue(())
         obj.toString ==> ""
 
         def appendKey(key: String, expectedPath: String) = {
-          obj.visitKey(-1).visitString(key, -1)
+          obj.visitKey().visitString(key)
           obj.toString ==> expectedPath
           obj.visitKeyValue(())
           val sub = obj.subVisitor
           sub.toString ==> expectedPath
-          sub.visitInt32(42, -1)
-          obj.visitValue((), -1)
+          sub.visitInt32(42)
+          obj.visitValue(())
         }
 
         appendKey("""""", """/""")
@@ -111,7 +111,7 @@ object JsonPointerVisitorTests extends TestSuite {
         appendKey(""" """, """/ """)
         appendKey("""m~n""", """/m~0n""")
 
-        obj.visitEnd(-1)
+        obj.visitEnd()
         obj.toString ==> ""
         visitor.toString ==> ""
       }

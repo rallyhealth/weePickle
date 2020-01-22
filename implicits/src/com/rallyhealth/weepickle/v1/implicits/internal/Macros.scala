@@ -300,7 +300,7 @@ object Macros {
           yield q"private[this] lazy val ${arg.localReader} = implicitly[${c.prefix}.Reader[${arg.argType}]]"
         }
         new ${c.prefix}.CaseR[$targetType]{
-          override def visitObject(length: Int, index: Int) = new CaseObjectContext{
+          override def visitObject(length: Int) = new CaseObjectContext{
             ..${
               for (arg <- args)
               yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"
@@ -311,7 +311,7 @@ object Macros {
                 yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"
               }
             }
-            def visitKey(index: Int) = com.rallyhealth.weepickle.v1.core.StringVisitor
+            def visitKey() = com.rallyhealth.weepickle.v1.core.StringVisitor
             def visitKeyValue(s: Any) = {
               currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
                 case ..${
@@ -322,7 +322,7 @@ object Macros {
               }
             }
 
-            def visitEnd(index: Int) = {
+            def visitEnd() = {
               ..${
                 for(arg <- args if arg.readingCheckDefault)
                 yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
@@ -342,7 +342,7 @@ object Macros {
                   }
                 }
                 throw new com.rallyhealth.weepickle.v1.core.Abort(
-                  "missing keys in dictionary: " + keys.mkString(", "), index
+                  "missing keys in dictionary: " + keys.mkString(", ")
                 )
               }
               $companion.apply(
@@ -395,15 +395,14 @@ object Macros {
       def write(arg: Argument) = {
         val snippet = q"""
 
-          val keyVisitor = ctx.visitKey(-1)
+          val keyVisitor = ctx.visitKey()
           ctx.visitKeyValue(
             keyVisitor.visitString(
-              ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped}),
-              -1
+              ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped})
             )
           )
           val w = implicitly[${c.prefix}.Writer[${arg.argType}]]
-          ctx.narrow.visitValue(w.write(ctx.subVisitor, v.${TermName(arg.raw)}), -1)
+          ctx.narrow.visitValue(w.write(ctx.subVisitor, v.${TermName(arg.raw)}))
         """
 
         /**
