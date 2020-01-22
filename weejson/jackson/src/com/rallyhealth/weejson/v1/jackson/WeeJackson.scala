@@ -3,7 +3,7 @@ package com.rallyhealth.weejson.v1.jackson
 import java.io.{File, InputStream}
 import java.nio.file.Path
 
-import com.fasterxml.jackson.core.{JsonGenerator, JsonParser}
+import com.fasterxml.jackson.core.JsonParser
 import com.rallyhealth.weejson.v1.jackson.DefaultJsonFactory.Instance
 import com.rallyhealth.weepickle.v1.core.{CallbackVisitor, Visitor}
 
@@ -16,45 +16,6 @@ import scala.util.control.NonFatal
   * @see https://github.com/FasterXML/jackson
   */
 object WeeJackson {
-
-  /**
-    * Generates a single json value (e.g. `{"a": 1, "b": 2}`, `[1,2,3]`, `"pony"`, or `42`),
-    * then closes, releasing underlying buffers back to the pool and preventing further writes.
-    *
-    * ==Configuration==
-    * - [[com.fasterxml.jackson.core.json.JsonWriteFeature]]
-    * - [[JsonGenerator.Feature]]
-    *
-    * @see https://github.com/FasterXML/jackson-core/wiki/JsonGenerator-Features
-    */
-  def toJsonSingle(generator: JsonGenerator): Visitor[Any, JsonGenerator] = {
-    toJsonMultiple(generator).map { gen =>
-      Try(gen.close())
-      gen
-    }
-  }
-
-  /**
-    * Generates multiple json values (e.g. `{} "pony" 42`) separated by
-    * [[com.fasterxml.jackson.core.PrettyPrinter.DEFAULT_ROOT_VALUE_SEPARATOR]].
-    *
-    * ==close()==
-    * The caller is responsible for calling .close(). Otherwise, data may not be
-    * flushed, buffers will not be released back to the pool, performance may
-    * suffer due to buffer reallocation.
-    *
-    *  ==Configuration==
-    * - [[com.fasterxml.jackson.core.json.JsonWriteFeature]]
-    * - [[JsonGenerator.Feature]]
-    *
-    * @see https://github.com/FasterXML/jackson-core/wiki/JsonGenerator-Features
-    */
-  def toJsonMultiple(generator: JsonGenerator): Visitor[Any, JsonGenerator] = {
-    new JsonGeneratorVisitor(generator).map { gen =>
-      gen.flush()
-      gen
-    }
-  }
 
   /**
     * Parses a single JSON value using the default Jackson parser.

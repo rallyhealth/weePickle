@@ -1,9 +1,8 @@
 package com.rallyhealth.weejson.v1.argonaut
 
 import argonaut.{Json, JsonNumber, JsonObject}
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.Visitor
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 object ArgonautJson extends com.rallyhealth.weejson.v1.AstTransformer[Json]{

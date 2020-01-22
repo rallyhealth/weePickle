@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v1.example
 
 import acyclic.file
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import utest._
 import com.rallyhealth.weepickle.v1.example.Simple.Thing
 
@@ -32,50 +33,50 @@ object OptionsAsNullTests extends TestSuite {
 
       // Quick check to ensure we didn't break anything
       test("primitive"){
-        write("A String") ==> "\"A String\""
-        read[String]("\"A String\"") ==> "A String"
-        write(1) ==> "1"
-        read[Int]("1") ==> 1
-        write(Thing(1, "gg")) ==> """{"myFieldA":1,"myFieldB":"gg"}"""
-        read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==> Thing(1, "gg")
+        fromScala("A String").transform(ToJson.string) ==> "\"A String\""
+        FromJson("\"A String\"").transform(toScala[String]) ==> "A String"
+        fromScala(1).transform(ToJson.string) ==> "1"
+        FromJson("1").transform(toScala[Int]) ==> 1
+        fromScala(Thing(1, "gg")).transform(ToJson.string) ==> """{"myFieldA":1,"myFieldB":"gg"}"""
+        FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(toScala[Thing]) ==> Thing(1, "gg")
       }
 
       test("none"){
-        write[None.type](None) ==> "null"
-        read[None.type]("null") ==> None
+        fromScala[None.type](None).transform(ToJson.string) ==> "null"
+        FromJson("null").transform(toScala[None.type]) ==> None
       }
 
       test("some"){
-        write(Some("abc")) ==> "\"abc\""
-        read[Some[String]]("\"abc\"") ==> Some("abc")
-        write(Some(1)) ==> "1"
-        read[Some[Int]]("1") ==> Some(1)
-        write(Some(3.14159)) ==> "3.14159"
-        read[Some[Double]]("3.14159") ==> Some(3.14159)
+        fromScala(Some("abc")).transform(ToJson.string) ==> "\"abc\""
+        FromJson("\"abc\"").transform(toScala[Some[String]]) ==> Some("abc")
+        fromScala(Some(1)).transform(ToJson.string) ==> "1"
+        FromJson("1").transform(toScala[Some[Int]]) ==> Some(1)
+        fromScala(Some(3.14159)).transform(ToJson.string) ==> "3.14159"
+        FromJson("3.14159").transform(toScala[Some[Double]]) ==> Some(3.14159)
       }
 
       test("option"){
-        write(Option("abc")) ==> "\"abc\""
-        read[Option[String]]("\"abc\"") ==> Some("abc")
-        read[Option[String]]("null") ==> None
+        fromScala(Option("abc")).transform(ToJson.string) ==> "\"abc\""
+        FromJson("\"abc\"").transform(toScala[Option[String]]) ==> Some("abc")
+        FromJson("null").transform(toScala[Option[String]]) ==> None
       }
 
       test("caseClass"){
-        write(Opt(None, None)) ==> """{"a":null,"b":null}"""
-        read[Opt]("""{"a":null,"b":null}""") ==> Opt(None, None)
-        write(Opt(Some("abc"), Some(1))) ==> """{"a":"abc","b":1}"""
+        fromScala(Opt(None, None)).transform(ToJson.string) ==> """{"a":null,"b":null}"""
+        FromJson("""{"a":null,"b":null}""").transform(toScala[Opt]) ==> Opt(None, None)
+        fromScala(Opt(Some("abc"), Some(1))).transform(ToJson.string) ==> """{"a":"abc","b":1}"""
       }
 
       test("optionCaseClass"){
         implicit val thingReader = implicitly[Reader[Thing]]
         implicit val thingWriter = implicitly[Writer[Thing]]
 
-        write(Opt(None, None)) ==> """{"a":null,"b":null}"""
-        read[Opt]("""{"a":null,"b":null}""") ==> Opt(None, None)
-        write(Opt(Some("abc"), Some(1))) ==> """{"a":"abc","b":1}"""
+        fromScala(Opt(None, None)).transform(ToJson.string) ==> """{"a":null,"b":null}"""
+        FromJson("""{"a":null,"b":null}""").transform(toScala[Opt]) ==> Opt(None, None)
+        fromScala(Opt(Some("abc"), Some(1))).transform(ToJson.string) ==> """{"a":"abc","b":1}"""
 
-        write(Option(Thing(1, "gg"))) ==> """{"myFieldA":1,"myFieldB":"gg"}"""
-        read[Option[Thing]]("""{"myFieldA":1,"myFieldB":"gg"}""") ==> Option(Thing(1, "gg"))
+        fromScala(Option(Thing(1, "gg"))).transform(ToJson.string) ==> """{"myFieldA":1,"myFieldB":"gg"}"""
+        FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(toScala[Option[Thing]]) ==> Option(Thing(1, "gg"))
       }
 
       // New tests.  Work as expected.
@@ -94,19 +95,19 @@ object OptionsAsNullTests extends TestSuite {
         }
 
         'customClass {
-          write(new CustomThing2(10, "Custom")) ==> "\"10 Custom\""
-          val r = read[CustomThing2]("\"10 Custom\"")
+          fromScala(new CustomThing2(10, "Custom")).transform(ToJson.string) ==> "\"10 Custom\""
+          val r = FromJson("\"10 Custom\"").transform(toScala[CustomThing2])
           assert(r.i == 10, r.s == "Custom")
         }
 
         'optCustomClass_Some {
-          write(Some(new CustomThing2(10, "Custom"))) ==> "\"10 Custom\""
-          val r = read[Option[CustomThing2]]("\"10 Custom\"")
+          fromScala(Some(new CustomThing2(10, "Custom"))).transform(ToJson.string) ==> "\"10 Custom\""
+          val r = FromJson("\"10 Custom\"").transform(toScala[Option[CustomThing2]])
           assert(r.get.i == 10, r.get.s == "Custom")
         }
 
         'optCustomClass_None {
-          read[Option[CustomThing2]]("null") ==> None
+          FromJson("null").transform(toScala[Option[CustomThing2]]) ==> None
         }
 
       }
@@ -121,14 +122,14 @@ object OptionsAsNullTests extends TestSuite {
             json => new Bar(json(1).num.toInt, json(0).str)
           )
 
-        write(Bar(123, "abc")) ==> """["abc",123]"""
-        read[Bar]("""["abc",123]""") ==> Bar(123, "abc")
+        fromScala(Bar(123, "abc")).transform(ToJson.string) ==> """["abc",123]"""
+        FromJson("""["abc",123]""").transform(toScala[Bar]) ==> Bar(123, "abc")
 
         // New tests.  Last one fails.  Why?
         'option {
-          'write {write(Some(Bar(123, "abc"))) ==> """["abc",123]"""}
-          'readSome {read[Option[Bar]]("""["abc",123]""") ==> Some(Bar(123, "abc"))}
-          'readNull {read[Option[Bar]]("""null""") ==> None}
+          'write {fromScala(Some(Bar(123, "abc"))).transform(ToJson.string) ==> """["abc",123]"""}
+          'readSome {FromJson("""["abc",123]""").transform(toScala[Option[Bar]]) ==> Some(Bar(123, "abc"))}
+          'readNull {FromJson("""null""").transform(toScala[Option[Bar]]) ==> None}
         }
       }
 

@@ -105,12 +105,5 @@ object JsonTests extends TestSuite {
 
       }
     }
-    test("writeBytesTo"){
-      val out = new java.io.ByteArrayOutputStream()
-      parsed.writeBytesTo(out)
-      val s = new String(out.toByteArray)
-      val parsedAgain = WeeJson.read(s)
-      assert(parsed == parsedAgain)
-    }
   }
 }

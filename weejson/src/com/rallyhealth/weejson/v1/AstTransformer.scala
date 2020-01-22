@@ -1,19 +1,19 @@
 package com.rallyhealth.weejson.v1
 
+import com.rallyhealth.weejson.v1.jackson.FromJson
 import com.rallyhealth.weepickle.v1.core._
 
 import scala.collection.compat._
-//import scala.language.higherKinds
 
 trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I]{
-  def apply(t: Readable): I = t.transform(this)
+  def apply(s: String): I = FromJson(s).transform(this)
 
-  def transformArray[T](f: Visitor[_, T], items: Iterable[I]) = {
+  def transformArray[T](f: Visitor[_, T], items: Iterable[I]): T = {
     val ctx = f.visitArray(items.size, -1).narrow
     for(item <- items) ctx.visitValue(transform(item, ctx.subVisitor), -1)
     ctx.visitEnd(-1)
   }
-  def transformObject[T](f: Visitor[_, T], items: Iterable[(String, I)]) = {
+  def transformObject[T](f: Visitor[_, T], items: Iterable[(String, I)]): T = {
     val ctx = f.visitObject(items.size, -1).narrow
     for(kv <- items) {
       val keyVisitor = ctx.visitKey(-1)
@@ -28,20 +28,20 @@ trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I]{
 
     private[this] var key: String = null
     private[this] val vs = factory.newBuilder
-    def subVisitor = AstTransformer.this
-    def visitKey(index: Int) = com.rallyhealth.weepickle.v1.core.StringVisitor
-    def visitKeyValue(s: Any): Unit = key = s.toString
+    override def subVisitor: Visitor[_, _] = AstTransformer.this
+    override def visitKey(index: Int): Visitor[_, _] = com.rallyhealth.weepickle.v1.core.StringVisitor
+    override def visitKeyValue(s: Any): Unit = key = s.toString
 
-    def visitValue(v: I, index: Int): Unit = vs += (key -> v)
+    override def visitValue(v: I, index: Int): Unit = vs += (key -> v)
 
-    def visitEnd(index: Int) = build(vs.result)
+    override def visitEnd(index: Int) = build(vs.result)
   }
   class AstArrVisitor[T[_]](build: T[I] => I)
                            (implicit factory: Factory[I, T[I]]) extends ArrVisitor[I, I]{
-    def subVisitor = AstTransformer.this
+    override def subVisitor: Visitor[_, _] = AstTransformer.this
     private[this] val vs = factory.newBuilder
-    def visitValue(v: I, index: Int): Unit = vs += v
+    override def visitValue(v: I, index: Int): Unit = vs += v
 
-    def visitEnd(index: Int) = build(vs.result())
+    override def visitEnd(index: Int): I = build(vs.result())
   }
 }

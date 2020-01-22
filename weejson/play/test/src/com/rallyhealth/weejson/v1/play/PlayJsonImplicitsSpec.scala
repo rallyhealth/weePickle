@@ -1,6 +1,7 @@
 package com.rallyhealth.weejson.v1.play
 
-import com.rallyhealth.weepickle.v1.WeePickle
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.{FreeSpec, Inside, Matchers}
 import play.api.libs.json._
@@ -18,8 +19,8 @@ class PlayJsonImplicitsSpec
       val message = WeePickleEnvelope(PlayCiphertext("pony"))
 
       "weepickle" - {
-        "weepickle.write" in assert(WeePickle.write(message) === string)
-        "weepickle.read" in assert(WeePickle.read[WeePickleEnvelope](string) === message)
+        "weepickle.write" in assert(FromScala(message).transform(ToJson.string) === string)
+        "weepickle.read" in assert(FromJson(string).transform(ToScala[WeePickleEnvelope]) === message)
       }
 
       "play-json" - {
@@ -37,8 +38,8 @@ class PlayJsonImplicitsSpec
       "weepickle" - {
         import com.rallyhealth.weejson.v1.play.PlayJsonImplicits.PlayJsonConversions._
 
-        "weepickle.write" in assert(WeePickle.write(message) === string)
-        "weepickle.read" in assert(WeePickle.read[PlayEnvelope](string) === message)
+        "weepickle.write" in assert(FromScala(message).transform(ToJson.string) === string)
+        "weepickle.read" in assert(FromJson(string).transform(ToScala[PlayEnvelope]) === message)
       }
 
       "play-json" - {
@@ -57,7 +58,7 @@ class PlayJsonImplicitsSpec
 
       "weepickle" - {
         "weepickle.read" in {
-          (the[Exception] thrownBy (WeePickle.read[Envelope](json))).getCause shouldBe a[JsResultException]
+          (the[Exception] thrownBy (FromJson(json).transform(ToScala[Envelope]))).getCause shouldBe a[JsResultException]
         }
       }
 
@@ -81,7 +82,7 @@ class PlayJsonImplicitsSpec
         import com.rallyhealth.weejson.v1.play.PlayJsonImplicits.PlayJsonConversions._
 
         "weepickle.read" in {
-          (the[Exception] thrownBy (WeePickle.read[Envelope](json))).getCause shouldBe a[JsResultException]
+          (the[Exception] thrownBy (FromJson(json)).transform(ToScala[Envelope])).getCause shouldBe a[JsResultException]
         }
       }
 

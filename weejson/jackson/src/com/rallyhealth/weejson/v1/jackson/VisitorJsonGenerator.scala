@@ -145,7 +145,7 @@ class VisitorJsonGenerator[J](
   override def writeBinary(bv: Base64Variant, data: InputStream, dataLength: Int): Int = {
     // Size to dataLength + 1. If the estimate is correct, we can avoid doubling the buffer,
     // i.e. last read() will be made with 1 buf slot free, and will return -1.
-    var buffer = Array.ofDim[Byte](if (dataLength > 0) dataLength + 1 else 8 * 1024)
+    var buffer = Array.ofDim[Byte](if (dataLength > 0) dataLength + 1 else 32)
     var size = 0
     var r = data.read(buffer)
     while (r != -1) {

@@ -1,6 +1,8 @@
 package com.rallyhealth.weepickle.v1
 import utest._
 import acyclic.file
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
+import com.rallyhealth.weepack.v1.{FromMsgPack, ToMsgPack}
 /**
 * Created by haoyi on 4/22/14.
 */
@@ -20,26 +22,26 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api){
                                        (normalize: T => V,
                                         escapeUnicode: Boolean = false,
                                         checkBinaryJson: Boolean = true) = {
-    val writtenT = api.write(t)
+    val writtenT = api.writer[T].transform(t, ToJson.string)
 
     // Test JSON round tripping
     val strings = sIn.map(_.trim)
 
     for (s <- strings) {
-      val readS = api.read[T](s)
+      val readS = FromJson(s).transform(api.reader[T])
       val normalizedReadString = normalize(readS)
       val normalizedValue = normalize(t)
       assert(normalizedReadString == normalizedValue)
     }
 
-    val normalizedReadWrittenT = normalize(api.read[T](writtenT))
+    val normalizedReadWrittenT = normalize(FromJson(writtenT).transform(api.reader[T]))
     val normalizedT = normalize(t)
     assert(normalizedReadWrittenT == normalizedT)
 
     // Test binary round tripping
-    val writtenBinary = api.writeMsgPack(t)
+    val writtenBinary = api.writer[T].transform(t, ToMsgPack.bytes)
     // println(com.rallyhealth.weepickle.v1.core.Util.bytesToString(writtenBinary))
-    val roundTrippedBinary = api.readMsgPack[T](writtenBinary)
+    val roundTrippedBinary = FromMsgPack(writtenBinary).transform(api.reader[T])
     (roundTrippedBinary, t) match{
       case (lhs: Array[_], rhs: Array[_]) => assert(lhs.toSeq == rhs.toSeq)
       case _ => assert(roundTrippedBinary == t)
@@ -48,7 +50,7 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api){
 
     // Test binary-JSON equivalence
     if (checkBinaryJson){
-      val rewrittenBinary = api.writeMsgPack(roundTrippedBinary)
+      val rewrittenBinary = api.writer[T].transform(roundTrippedBinary, ToMsgPack.bytes)
 
       val writtenBinaryStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(writtenBinary)
       val rewrittenBinaryStr = com.rallyhealth.weepickle.v1.core.Util.bytesToString(rewrittenBinary)
@@ -58,7 +60,7 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api){
 
   def assertNumberFormatException[T: api.Reader](s: String) = {
     val e = intercept[Exception] {
-      api.read[T](s.trim)
+      FromJson(s.trim).transform(api.reader[T])
     }
     e.getCause.getClass ==> classOf[NumberFormatException]
   }
@@ -67,7 +69,7 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api){
     val strings = s.map(_.trim)
 
     for (s <- strings) {
-        api.read[T](s)
+        FromJson(s).transform(api.reader[T])
     }
   }
 }

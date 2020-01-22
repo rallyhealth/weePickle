@@ -35,7 +35,7 @@ abstract class JsonGeneratorOps(
 
   def string: Visitor[Any, String] = {
     val writer = new StringWriter()
-    WeeJackson.toJsonSingle(wrap(writer)).map(_ => writer.toString)
+    JsonRenderer(wrap(writer)).map(_ => writer.toString)
   }
 
   def bytes: Visitor[Any, Array[Byte]] = {
@@ -43,11 +43,11 @@ abstract class JsonGeneratorOps(
   }
 
   def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[Any, OutputStream] = {
-    WeeJackson.toJsonSingle(noClose(wrap(out))).map(_ => out)
+    JsonRenderer(noClose(wrap(out))).map(_ => out)
   }
 
   def writer[Writer <: java.io.Writer](writer: Writer): Visitor[Any, Writer] = {
-    WeeJackson.toJsonSingle(noClose(wrap(writer))).map(_ => writer)
+    JsonRenderer(noClose(wrap(writer))).map(_ => writer)
   }
 
   private def noClose(jsonGenerator: JsonGenerator): JsonGenerator = {

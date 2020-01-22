@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.json.JsonWriteFeature
 import com.rallyhealth.weejson.v1.BaseRenderer.configurePrettyPrinting
 import com.rallyhealth.weejson.v1.jackson.DefaultJsonFactory._
-import com.rallyhealth.weejson.v1.jackson.{CustomPrettyPrinter, WeeJackson}
+import com.rallyhealth.weejson.v1.jackson.{CustomPrettyPrinter, JsonRenderer}
 import com.rallyhealth.weepickle.v1.core.Visitor
 
 object BytesRenderer {
@@ -24,8 +24,7 @@ object BytesRenderer {
     // The java.io.Writer is the return value, so the caller can do with it as they please.
     val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
 
-    WeeJackson
-      .toJsonSingle(BaseRenderer.configurePrettyPrinting(generator, indent, escapeUnicode))
+    JsonRenderer(BaseRenderer.configurePrettyPrinting(generator, indent, escapeUnicode))
       .map(_ => out)
   }
 
@@ -67,7 +66,7 @@ object BaseRenderer {
     // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
     // The java.io.Writer is the return value, so the caller can do with it as they please.
     val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
-    WeeJackson.toJsonSingle(generator).map(_ => out)
+    JsonRenderer(generator).map(_ => out)
   }
 
   def configurePrettyPrinting(
@@ -84,7 +83,5 @@ object BaseRenderer {
     }
     generator
   }
-
-
 
 }

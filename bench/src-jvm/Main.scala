@@ -8,9 +8,9 @@ import com.fasterxml.jackson.databind.util.TokenBuffer
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.rallyhealth.weejson.v1.StringRenderer
-import com.rallyhealth.weejson.v1.WeeJson
-import com.rallyhealth.weepack.v1.WeePack
+import com.rallyhealth.weejson.v1.{StringRenderer, Value}
+import com.rallyhealth.weejson.v1.jackson.FromJson
+import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack}
 
 object Main{
   import ADTs.ADT0
@@ -55,14 +55,14 @@ object Main{
   }
   def weejsonAst(duration: Int) = {
     Common.bench0[String, com.rallyhealth.weejson.v1.Value](duration, Common.benchmarkSampleJson)(
-      WeeJson.read(_),
+      FromJson(_).transform(Value),
       _.render()
     )
   }
   def weepackAst(duration: Int) = {
     Common.bench0[Array[Byte], com.rallyhealth.weepack.v1.Msg](duration, Common.benchmarkSampleMsgPack)(
-      WeePack.read(_),
-      WeePack.write(_)
+      FromMsgPack(_).transform(Msg),
+      _.transform(ToMsgPack.bytes)
     )
   }
   def playJsonAst(duration: Int) = {

@@ -1,13 +1,12 @@
 package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v1.core.Visitor
-import com.rallyhealth.weepickle.v1.geny.WritableAsBytes
+import com.rallyhealth.weepickle.v1.core.{Transformable, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-sealed trait Value extends Readable with WritableAsBytes{
+sealed trait Value extends Transformable {
   def value: Any
 
   /**

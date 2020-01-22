@@ -1,8 +1,9 @@
 package com.rallyhealth.weepickle.v1
 import acyclic.file
+import com.rallyhealth.weejson.v1.jackson.FromJson
 import utest._
 import com.rallyhealth.weepickle.v1.TestUtil._
-import com.rallyhealth.weepickle.v1.WeePickle.read
+import com.rallyhealth.weepickle.v1.WeePickle.ToScala
 import com.rallyhealth.weepickle.v1.core.MutableCharSequenceVisitor
 
 object Custom {
@@ -213,9 +214,9 @@ object MacroTests extends TestSuite {
       }
       test("ignoreExtraFieldsWhenDeserializing"){
         import ADTs._
-        val r1 = read[ADTa]( """{"i":123, "j":false, "k":"haha"}""")
+        val r1 = FromJson( """{"i":123, "j":false, "k":"haha"}""").transform(ToScala[ADTa])
         assert(r1 == ADTa(123))
-        val r2 = read[ADTb]( """{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""")
+        val r2 = FromJson( """{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""").transform(ToScala[ADTb])
         assert(r2 == ADTb(123, "kk"))
       }
     }

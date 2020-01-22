@@ -197,25 +197,6 @@ object weejson extends Module{
     def ivyDeps = Agg(ivy"io.argonaut::argonaut:6.2.3")
   }
 
-  /**
-    * A pure scala parser forked from jawn.
-    * Sidelined in favor of jackson based on bench.JmhBench perf results.
-    */
-  object parser extends Cross[ParserModule](scalaVersions: _*)
-  class ParserModule(val crossScalaVersion: String) extends CommonModule with CrossScalaModule {
-    def artifactName = shade("weejson-parser")
-    def platformSegment = "jvm"
-    def moduleDeps = Seq(weejson.jvm())
-
-    object test extends Tests with ScalaTestModule {
-      def platformSegment = "jvm"
-    }
-  }
-
-  /**
-    * A pure scala parser forked from jawn.
-    * Sidelined in favor of jackson based on bench.JmhBench perf results.
-    */
   object yaml extends Cross[YamlModule](scalaVersions: _*)
   class YamlModule(val crossScalaVersion: String) extends CommonModule with CrossScalaModule {
     def artifactName = shade("weeyaml")
@@ -283,7 +264,7 @@ object weejson extends Module{
     val jacksonVersion = "2.10.2"
     object test extends Tests with ScalaTestModule {
       def platformSegment = "jvm"
-      def moduleDeps = Seq(weejson.jvm().test, parser())
+      def moduleDeps = Seq(weejson.jvm().test)
     }
 
     def artifactName = shade("weejson-jackson")
@@ -323,6 +304,7 @@ object weepickle extends Module{
           weejson.argonaut(),
           weejson.circe(),
           weejson.json4s(),
+          weepack.jvm().test,
           weejson.play(),
           core.jvm().test
         )
@@ -349,7 +331,7 @@ object bench extends Module {
 
   object jvm extends BenchModule with Jmh{
     def platformSegment = "jvm"
-    def moduleDeps = Seq(weepickle.jvm("2.12.8").test, weejson.parser("2.12.8"))
+    def moduleDeps = Seq(weepickle.jvm("2.12.8").test)
     def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",

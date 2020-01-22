@@ -4,33 +4,32 @@ import java.io.StringWriter
 
 import acyclic.file
 import com.rallyhealth.weejson.v1.json4s.Json4sJson
-import com.rallyhealth.weepickle.v1.TestUtil
+import com.rallyhealth.weepickle.v1._
 import utest._
 import com.rallyhealth.weejson.v1.StringRenderer
-
 import Simple._
+import com.rallyhealth.weejson.v1.jackson.FromJson
+import com.rallyhealth.weepickle.v1.WeePickle._
 
 object JvmExampleTests extends TestSuite {
 
   import TestUtil._
   val tests = Tests {
     test("sources"){
-      import com.rallyhealth.weepickle.v1.WeePickle._
       val original = """{"myFieldA":1,"myFieldB":"gg"}"""
 
       import java.nio.file.Files
       val f = Files.createTempFile("", "")
       Files.write(f, original.getBytes)
 
-      read[Thing](f) ==> Thing(1, "gg")
-      read[Thing](f.toFile) ==> Thing(1, "gg")
+
+      FromJson(f).transform(ToScala[Thing]) ==> Thing(1, "gg")
+      FromJson(f.toFile).transform(ToScala[Thing]) ==> Thing(1, "gg")
     }
     test("other"){
       test("argonaut"){
         import com.rallyhealth.weejson.v1.argonaut.ArgonautJson
-        val argJson: argonaut.Json = ArgonautJson(
-          """["hello", "world"]"""
-        )
+        val argJson: argonaut.Json = FromJson("""["hello", "world"]""").transform(ArgonautJson)
 
         val updatedArgJson = argJson.withArray(_.map(_.withString(_.toUpperCase)))
 
@@ -41,7 +40,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v1.WeePickle.transform(items).to(ArgonautJson)
+        val rewritten = FromScala(items).transform(ArgonautJson)
 
         val stringified = ArgonautJson.transform(rewritten, StringRenderer()).toString
 
@@ -49,9 +48,7 @@ object JvmExampleTests extends TestSuite {
       }
       test("circe"){
         import com.rallyhealth.weejson.v1.circe.CirceJson
-        val circeJson: io.circe.Json = CirceJson(
-          """["hello", "world"]"""
-        )
+        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
 
         val updatedCirceJson =
           circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
@@ -63,7 +60,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v1.WeePickle.transform(items).to(CirceJson)
+        val rewritten = FromScala(items).transform(CirceJson)
 
         val stringified = CirceJson.transform(rewritten, StringRenderer()).toString
 
@@ -71,9 +68,7 @@ object JvmExampleTests extends TestSuite {
       }
       test("json4s"){
         import org.json4s.JsonAST
-        val json4sJson: JsonAST.JValue = Json4sJson(
-          """["hello", "world"]"""
-        )
+        val json4sJson: JsonAST.JValue = FromJson("""["hello", "world"]""").transform(Json4sJson)
 
         val updatedJson4sJson = JsonAST.JArray(
           for(v <- json4sJson.children)
@@ -87,7 +82,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v1.WeePickle.transform(items).to(Json4sJson)
+        val rewritten = FromScala(items).transform(Json4sJson)
 
         val stringified = Json4sJson.transform(rewritten, StringRenderer()).toString
 
@@ -96,9 +91,7 @@ object JvmExampleTests extends TestSuite {
       test("playJson"){
         import com.rallyhealth.weejson.v1.play.PlayJson
         import play.api.libs.json._
-        val playJson: play.api.libs.json.JsValue = PlayJson(
-          """["hello", "world"]"""
-        )
+        val playJson: play.api.libs.json.JsValue = FromJson("""["hello", "world"]""").transform(PlayJson)
 
         val updatedPlayJson = JsArray(
           for(v <- playJson.as[JsArray].value)
@@ -112,7 +105,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = com.rallyhealth.weepickle.v1.WeePickle.transform(items).to(PlayJson)
+        val rewritten = FromScala(items).transform(PlayJson)
 
         val stringified = PlayJson.transform(rewritten, StringRenderer()).toString
 
@@ -120,9 +113,7 @@ object JvmExampleTests extends TestSuite {
       }
       test("crossAst"){
         import com.rallyhealth.weejson.v1.circe.CirceJson
-        val circeJson: io.circe.Json = CirceJson(
-          """["hello", "world"]"""
-        )
+        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
 
         val updatedCirceJson =
           circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))

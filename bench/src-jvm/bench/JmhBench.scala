@@ -3,12 +3,12 @@ package bench
 import java.io.{ByteArrayOutputStream, StringWriter}
 import java.util.concurrent.TimeUnit
 
-import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, WeeJackson}
+import com.rallyhealth.weejson.v1.jackson.{DefaultJsonFactory, FromJson, JsonRenderer, WeeJackson}
+import com.rallyhealth.weepack.v1.ToMsgPack
+import com.rallyhealth.weepickle.v1.Common
 import com.rallyhealth.weepickle.v1.WeePickle._
-import com.rallyhealth.weepickle.v1.{Common, WeePickle}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import com.rallyhealth.weejson.v1.parser
 
 /**
   * ==Run with==
@@ -58,54 +58,58 @@ class JmhBench {
     bh.consume(WeeJackson.parseSingle(Common.benchmarkSampleJsonBytes, reader[Seq[Common.Data]]))
   }
 
-  @Benchmark
-  def bytesToCcWeeJson(bh: Blackhole): Unit = {
-    bh.consume(parser.ByteArrayParser.transform(Common.benchmarkSampleJsonBytes, reader[Seq[Common.Data]]))
-  }
+//  @Benchmark
+//  def bytesToCcWeeJson(bh: Blackhole): Unit = {
+//    // TODO replace with upstream uJson parser
+////    bh.consume(parser.ByteArrayParser.transform(Common.benchmarkSampleJsonBytes, reader[Seq[Common.Data]]))
+//  }
 
   @Benchmark
   def bytesToCcWeePack(bh: Blackhole): Unit = {
-    bh.consume(WeePickle.readMsgPack[Seq[Common.Data]](Common.benchmarkSampleMsgPack))
+    bh.consume(FromJson(Common.benchmarkSampleMsgPack).transform(ToScala[Seq[Common.Data]]))
   }
 
   @Benchmark
   def ccToBytesWeeJackson(bh: Blackhole): Unit = {
     val out = new ByteArrayOutputStream()
-    val visitor = WeeJackson.toJsonSingle(DefaultJsonFactory.Instance.createGenerator(out))
-    WeePickle.transform(Common.benchmarkSampleData).transform(visitor).close()
+    val visitor = JsonRenderer(DefaultJsonFactory.Instance.createGenerator(out))
+    FromScala(Common.benchmarkSampleData).transform(visitor).close()
     bh.consume(out.toByteArray)
   }
 
-  @Benchmark
-  def ccToBytesWeeJson(bh: Blackhole): Unit = {
-    bh.consume(WeePickle.transform(Common.benchmarkSampleData).to(parser.BytesRenderer()).toBytes)
-  }
+//  @Benchmark
+//  def ccToBytesWeeJson(bh: Blackhole): Unit = {
+//    // TODO replace with upstream uJson parser
+//    bh.consume(FromScala(Common.benchmarkSampleData).transform(parser.BytesRenderer()).toBytes)
+//  }
 
   @Benchmark
   def ccToStringWeeJackson(bh: Blackhole): Unit = {
     val writer = new StringWriter()
-    val visitor = WeeJackson.toJsonSingle(DefaultJsonFactory.Instance.createGenerator(writer))
-    WeePickle.transform(Common.benchmarkSampleData).to(visitor).close()
+    val visitor = JsonRenderer(DefaultJsonFactory.Instance.createGenerator(writer))
+    FromScala(Common.benchmarkSampleData).transform(visitor).close()
     bh.consume(writer.toString)
   }
 
-  @Benchmark
-  def ccToStringWeeJson(bh: Blackhole): Unit = {
-    bh.consume(WeePickle.transform(Common.benchmarkSampleData).transform(parser.StringRenderer()).toString)
-  }
+//  @Benchmark
+//  def ccToStringWeeJson(bh: Blackhole): Unit = {
+//    // TODO replace with upstream uJson parser
+//    bh.consume(FromScala(Common.benchmarkSampleData).transform(parser.StringRenderer()).toString)
+//  }
 
   @Benchmark
   def ccToBytesWeePack(bh: Blackhole): Unit = {
-    bh.consume(WeePickle.writeMsgPack(Common.benchmarkSampleData))
+    bh.consume(FromScala(Common.benchmarkSampleData).transform(ToMsgPack.bytes))
   }
 
   @Benchmark
   def stringToCcWeeJackson(bh: Blackhole): Unit = {
-    bh.consume(WeePickle.read[Seq[Common.Data]](Common.benchmarkSampleJson))
+    bh.consume(FromJson(Common.benchmarkSampleJson).transform(ToScala[Seq[Common.Data]]))
   }
 
-  @Benchmark
-  def stringToCcWeeJson(bh: Blackhole): Unit = {
-    bh.consume(parser.StringParser.transform(Common.benchmarkSampleJson, WeePickle.reader[Seq[Common.Data]]))
-  }
+//  @Benchmark
+//  def stringToCcWeeJson(bh: Blackhole): Unit = {
+//    // TODO replace with upstream uJson parser
+//    bh.consume(parser.StringParser.transform(Common.benchmarkSampleJson, WeePickle.reader[Seq[Common.Data]]))
+//  }
 }

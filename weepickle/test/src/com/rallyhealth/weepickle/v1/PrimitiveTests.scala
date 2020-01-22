@@ -3,7 +3,9 @@ package com.rallyhealth.weepickle.v1
 import java.math.MathContext
 import java.net.URI
 
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.TestUtil._
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import utest._
 
 object PrimitiveTests extends TestSuite {
@@ -21,10 +23,11 @@ object PrimitiveTests extends TestSuite {
       test("quotes") - rw("i am a \"cow\"", """ "i am a \"cow\"" """)
       test("unicode"){
         rw("叉烧包")
-        com.rallyhealth.weepickle.v1.WeePickle.write("叉烧包") ==> "\"叉烧包\""
-        com.rallyhealth.weepickle.v1.WeePickle.write("叉烧包", escapeUnicode = true).toLowerCase ==> "\"\\u53c9\\u70e7\\u5305\""
-        com.rallyhealth.weepickle.v1.WeePickle.read[String]("\"\\u53c9\\u70e7\\u5305\"") ==> "叉烧包"
-        com.rallyhealth.weepickle.v1.WeePickle.read[String]("\"叉烧包\"") ==> "叉烧包"
+        FromScala("叉烧包").transform(ToJson.string) ==> "\"叉烧包\""
+        // TODO moved to low level API.
+//        FromScala("叉烧包", escapeUnicode = true).transform(ToJson.string).toLowerCase ==> "\"\\u53c9\\u70e7\\u5305\""
+        FromJson("\"\\u53c9\\u70e7\\u5305\"").transform(ToScala[String]) ==> "叉烧包"
+        FromJson("\"叉烧包\"").transform(ToScala[String]) ==> "叉烧包"
       }
       test("null") - rw(null: String, "null")
       test("chars"){
@@ -69,10 +72,10 @@ object PrimitiveTests extends TestSuite {
           """ "234207440984302304980238412.15423127402740234" """)
       test("null") - rw(null: BigDecimal, "null")
       test("json integer") - {
-        WeePickle.read[BigDecimal]("123") ==> BigDecimal(123)
+        FromJson("123").transform(ToScala[BigDecimal]) ==> BigDecimal(123)
       }
       test("json float") - {
-        WeePickle.read[BigDecimal]("123.4") ==> BigDecimal(123.4)
+        FromJson("123.4").transform(ToScala[BigDecimal]) ==> BigDecimal(123.4)
       }
       test("abuse cases") {
         /*
@@ -110,7 +113,7 @@ object PrimitiveTests extends TestSuite {
       test("fractional") - rw(125123.1542312, """125123.1542312""")
       test("negative") - rw(-125123.1542312, """-125123.1542312""")
       test("nan") - assert(
-        com.rallyhealth.weepickle.v1.WeePickle.write(Double.NaN) == "\"NaN\""
+        FromScala(Double.NaN).transform(ToJson.string) == "\"NaN\""
       )
     }
 
@@ -140,7 +143,7 @@ object PrimitiveTests extends TestSuite {
       test("inf") - rw(Float.PositiveInfinity, """ "Infinity" """)
       "neg-inf" - rw(Float.NegativeInfinity, """ "-Infinity" """)
       test("nan") - assert(
-        com.rallyhealth.weepickle.v1.WeePickle.write(Float.NaN) == "\"NaN\""
+        FromScala(Float.NaN).transform(ToJson.string) == "\"NaN\""
       )
     }
 

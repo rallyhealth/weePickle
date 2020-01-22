@@ -3,8 +3,7 @@ package com.rallyhealth.weepack.v1
 import java.io.ByteArrayOutputStream
 import java.time.Instant
 
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
-import com.rallyhealth.weepickle.v1.geny.WritableAsBytes
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Transformable, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -22,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
   * appropriately sized versions are written out when the message is serialized
   * to bytes.
   */
-sealed trait Msg extends Readable with WritableAsBytes{
+sealed trait Msg extends Transformable {
   def transform[T](f: Visitor[_, T]) = Msg.transform(this, f)
 
   /**

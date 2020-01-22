@@ -2,6 +2,10 @@ package com.rallyhealth.weepickle.v1
 
 import java.nio.charset.StandardCharsets.UTF_8
 
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
+import com.rallyhealth.weepack.v1.ToMsgPack
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
+
 object Common{
   import ADTs.ADT0
   import Defaults._
@@ -21,9 +25,9 @@ object Common{
     ADTc(i = 1234567890, s = "i am a strange loop"),
     ADT0()
   ))
-  val benchmarkSampleJson = com.rallyhealth.weepickle.v1.WeePickle.write(benchmarkSampleData)
+  val benchmarkSampleJson = FromScala(benchmarkSampleData).transform(ToJson.string)
   val benchmarkSampleJsonBytes = benchmarkSampleJson.getBytes(UTF_8)
-  val benchmarkSampleMsgPack = com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(benchmarkSampleData)
+  val benchmarkSampleMsgPack = FromScala(benchmarkSampleData).transform(ToMsgPack.bytes)
 
 //  println("benchmarkSampleJson " + benchmarkSampleJson.size + " bytes")
 //  println("benchmarkSampleMsgPack " + benchmarkSampleMsgPack.size + " bytes")
@@ -89,16 +93,16 @@ object Common{
   def weepickleDefault(duration: Int) = {
 
     bench[String](duration)(
-      com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](_),
-      com.rallyhealth.weepickle.v1.WeePickle.write(_)
+      FromJson(_).transform(ToScala[Seq[Data]]),
+      FromScala(_).transform(ToJson.string)
     )
   }
 
   def weepickleBinaryDefault(duration: Int) = {
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Seq[Data]](_),
-      com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(_)
+      FromJson(_).transform(ToScala[Seq[Data]]),
+      FromScala(_).transform(ToMsgPack.bytes)
     )
   }
 
@@ -193,8 +197,8 @@ object Common{
     implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[String](duration)(
-      com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](_),
-      com.rallyhealth.weepickle.v1.WeePickle.write(_)
+      FromJson(_).transform(ToScala[Seq[Data]]),
+      FromScala(_).transform(ToJson.string)
     )
   }
   def weepickleDefaultCachedByteArray(duration: Int) = {
@@ -209,8 +213,8 @@ object Common{
     implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](_),
-      com.rallyhealth.weepickle.v1.WeePickle.write(_).getBytes
+      FromJson(_).transform(ToScala[Seq[Data]]),
+      FromScala(_).transform(ToJson.string).getBytes
     )
   }
   def weepickleDefaultCachedReadable(duration: Int) = {
@@ -224,10 +228,10 @@ object Common{
     implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
     implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
-    bench[String](duration)(
-      x => com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](x: com.rallyhealth.weepickle.v1.geny.ReadableAsBytes),
-      com.rallyhealth.weepickle.v1.WeePickle.write(_)
-    )
+//    bench[String](duration)(
+//      x => FromJson(x: com.rallyhealth.weepickle.v1.geny.ReadableAsBytes).transform(ToScala[Seq[Data]]),
+//      FromScala(_).transform(ToJson.string)
+//    )
   }
 
   def weepickleDefaultCachedReadablePath(duration: Int) = {
@@ -241,14 +245,14 @@ object Common{
     implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
     implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
-    bench[java.nio.file.Path](duration)(
-      file => com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](java.nio.file.Files.newInputStream(file): com.rallyhealth.weepickle.v1.geny.ReadableAsBytes),
-      data => java.nio.file.Files.write(
-        java.nio.file.Files.createTempFile("temp", ".json"),
-        com.rallyhealth.weepickle.v1.WeePickle.write(data).getBytes
-      ),
-      checkEqual = false
-    )
+//    bench[java.nio.file.Path](duration)(
+//      file => com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](java.nio.file.Files.newInputStream(file): com.rallyhealth.weepickle.v1.geny.ReadableAsBytes),
+//      data => java.nio.file.Files.write(
+//        java.nio.file.Files.createTempFile("temp", ".json"),
+//        FromScala(data).transform(ToJson.string).getBytes
+//      ),
+//      checkEqual = false
+//    )
   }
 
   def weepickleDefaultBinaryCached(duration: Int) = {
@@ -263,8 +267,8 @@ object Common{
     implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
 
     bench[Array[Byte]](duration)(
-      com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Seq[Data]](_),
-      com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(_)
+      FromJson(_).transform(ToScala[Seq[Data]]),
+      FromScala(_).transform(ToMsgPack.bytes)
     )
   }
 

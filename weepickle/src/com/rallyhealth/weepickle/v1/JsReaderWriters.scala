@@ -25,6 +25,6 @@ trait JsReaderWriters extends com.rallyhealth.weepickle.v1.core.Types with Macro
   implicit def JsFalseW: Writer[com.rallyhealth.weejson.v1.False.type] = JsValueW.narrow[com.rallyhealth.weejson.v1.False.type]
   implicit def JsNullW: Writer[com.rallyhealth.weejson.v1.Null.type] = JsValueW.narrow[com.rallyhealth.weejson.v1.Null.type]
   implicit val JsValueW: Writer[com.rallyhealth.weejson.v1.Value] = new Writer[com.rallyhealth.weejson.v1.Value] {
-    def write0[R](out: Visitor[_, R], v: com.rallyhealth.weejson.v1.Value): R = com.rallyhealth.weejson.v1.WeeJson.transform(v, out)
+    def write0[R](out: Visitor[_, R], v: com.rallyhealth.weejson.v1.Value): R = v.transform(out)
   }
 }

@@ -3,10 +3,10 @@ package com.rallyhealth.weepickle.v1.example
 import acyclic.file
 import com.rallyhealth.weepickle.v1.TestUtil
 import utest._
-import com.rallyhealth.weepickle.v1.WeePickle.{macroRW, ReaderWriter => RW}
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala, macroRW, ReaderWriter => RW}
 import com.rallyhealth.weejson.v1._
-import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
-import com.rallyhealth.weepack.v1.WeePack
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
+import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack, WeePack}
 import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
 import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
 object Simple {
@@ -113,119 +113,119 @@ object ExampleTests extends TestSuite {
     test("binary"){
       import com.rallyhealth.weepickle.v1.WeePickle._
 
-      writeMsgPack(1)                          ==> Array(1)
+      FromScala(1).transform(ToMsgPack.bytes)  ==> Array(1)
 
-      writeMsgPack(Seq(1, 2, 3))               ==> Array(0x93.toByte, 1, 2, 3)
+      FromScala(Seq(1, 2, 3)).transform(ToMsgPack.bytes)               ==> Array(0x93.toByte, 1, 2, 3)
 
-      readMsgPack[Seq[Int]](Array[Byte](0x93.toByte, 1, 2, 3))  ==> List(1, 2, 3)
+      FromMsgPack(Array[Byte](0x93.toByte, 1, 2, 3)).transform(ToScala[Seq[Int]])  ==> List(1, 2, 3)
 
       val serializedTuple = Array[Byte](0x93.toByte, 1, 0xa3.toByte, 111, 109, 103, 0xc3.toByte)
 
-      writeMsgPack((1, "omg", true))           ==> serializedTuple
+      FromScala((1, "omg", true)).transform(ToMsgPack.bytes)           ==> serializedTuple
 
-      readMsgPack[(Int, String, Boolean)](serializedTuple) ==> (1, "omg", true)
+      FromMsgPack(serializedTuple).transform(ToScala[(Int, String, Boolean)]) ==> (1, "omg", true)
     }
     test("more"){
       import com.rallyhealth.weepickle.v1.WeePickle._
       test("booleans"){
-        write(true: Boolean)              ==> "true"
-        write(false: Boolean)             ==> "false"
+       FromScala(true: Boolean).transform(ToJson.string)              ==> "true"
+       FromScala(false: Boolean).transform(ToJson.string)             ==> "false"
       }
       test("numbers"){
-        write(12: Int)                    ==> "12"
-        write(12: Short)                  ==> "12"
-        write(12: Byte)                   ==> "12"
-        write(Int.MaxValue)               ==> "2147483647"
-        write(Int.MinValue)               ==> "-2147483648"
-        write(12.5f: Float)               ==> "12.5"
-        write(12.5: Double)               ==> "12.5"
+       FromScala(12: Int).transform(ToJson.string)                    ==> "12"
+       FromScala(12: Short).transform(ToJson.string)                  ==> "12"
+       FromScala(12: Byte).transform(ToJson.string)                   ==> "12"
+       FromScala(Int.MaxValue).transform(ToJson.string)               ==> "2147483647"
+       FromScala(Int.MinValue).transform(ToJson.string)               ==> "-2147483648"
+       FromScala(12.5f: Float).transform(ToJson.string)               ==> "12.5"
+       FromScala(12.5: Double).transform(ToJson.string)               ==> "12.5"
       }
       test("longs"){
-        write(12: Long)                   ==> "12"
-        write(4000000000000L: Long)       ==> "4000000000000"
+       FromScala(12: Long).transform(ToJson.string)                   ==> "12"
+       FromScala(4000000000000L: Long).transform(ToJson.string)       ==> "4000000000000"
         // large longs are written as strings, to avoid floating point rounding
-        write(9223372036854775807L: Long) ==> "9223372036854775807"
+       FromScala(9223372036854775807L: Long).transform(ToJson.string) ==> "9223372036854775807"
       }
       test("specialNumbers"){
-        write(1.0/0: Double)              ==> "\"Infinity\""
-        write(Float.PositiveInfinity)     ==> "\"Infinity\""
-        write(Float.NegativeInfinity)     ==> "\"-Infinity\""
+       FromScala(1.0/0: Double).transform(ToJson.string)              ==> "\"Infinity\""
+       FromScala(Float.PositiveInfinity).transform(ToJson.string)     ==> "\"Infinity\""
+       FromScala(Float.NegativeInfinity).transform(ToJson.string)     ==> "\"-Infinity\""
       }
       test("charStrings"){
-        write('o')                        ==> "\"o\""
-        write("omg")                      ==> "\"omg\""
+       FromScala('o').transform(ToJson.string)                        ==> "\"o\""
+       FromScala("omg").transform(ToJson.string)                      ==> "\"omg\""
       }
       test("seqs"){
-        write(Array(1, 2, 3))             ==> "[1,2,3]"
+       FromScala(Array(1, 2, 3)).transform(ToJson.string)             ==> "[1,2,3]"
 
         // You can pass in an `indent` parameter to format it nicely
-        write(Array(1, 2, 3), indent = 4)  ==>
+       FromScala(Array(1, 2, 3)).transform(ToPrettyJson.string)  ==>
           """[
-            |    1,
-            |    2,
-            |    3
+            |  1,
+            |  2,
+            |  3
             |]""".stripMargin
 
-        write(Seq(1, 2, 3))               ==> "[1,2,3]"
-        write(Vector(1, 2, 3))            ==> "[1,2,3]"
-        write(List(1, 2, 3))              ==> "[1,2,3]"
+       FromScala(Seq(1, 2, 3)).transform(ToJson.string)               ==> "[1,2,3]"
+       FromScala(Vector(1, 2, 3)).transform(ToJson.string)            ==> "[1,2,3]"
+       FromScala(List(1, 2, 3)).transform(ToJson.string)              ==> "[1,2,3]"
         import collection.immutable.SortedSet
-        write(SortedSet(1, 2, 3))         ==> "[1,2,3]"
+       FromScala(SortedSet(1, 2, 3)).transform(ToJson.string)         ==> "[1,2,3]"
       }
       test("options"){
-        write(Some(1))                    ==> "1"
-        write(None)                       ==> "null"
+       FromScala(Some(1)).transform(ToJson.string)                    ==> "1"
+       FromScala(None).transform(ToJson.string)                       ==> "null"
       }
       test("tuples"){
-        write((1, "omg"))                 ==> """[1,"omg"]"""
-        write((1, "omg", true))           ==> """[1,"omg",true]"""
+       FromScala((1, "omg")).transform(ToJson.string)                 ==> """[1,"omg"]"""
+       FromScala((1, "omg", true)).transform(ToJson.string)           ==> """[1,"omg",true]"""
       }
 
       test("caseClass"){
         import com.rallyhealth.weepickle.v1._
-        write(Thing(1, "gg"))             ==> """{"myFieldA":1,"myFieldB":"gg"}"""
-        read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==> Thing(1, "gg")
-        write(Big(1, true, "lol", 'Z', Thing(7, ""))) ==>
+       FromScala(Thing(1, "gg")).transform(ToJson.string)             ==> """{"myFieldA":1,"myFieldB":"gg"}"""
+        FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(ToScala[Thing]) ==> Thing(1, "gg")
+       FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToJson.string) ==>
           """{"i":1,"b":true,"str":"lol","c":"Z","t":{"myFieldA":7,"myFieldB":""}}"""
 
-        write(Big(1, true, "lol", 'Z', Thing(7, "")), indent = 4) ==>
+       FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToPrettyJson.string) ==>
           """{
-            |    "i": 1,
-            |    "b": true,
-            |    "str": "lol",
-            |    "c": "Z",
-            |    "t": {
-            |        "myFieldA": 7,
-            |        "myFieldB": ""
-            |    }
+            |  "i": 1,
+            |  "b": true,
+            |  "str": "lol",
+            |  "c": "Z",
+            |  "t": {
+            |    "myFieldA": 7,
+            |    "myFieldB": ""
+            |  }
             |}""".stripMargin
         }
 
 
       test("sealed"){
-        write(IntThing(1)) ==> """{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.IntThing","i":1}"""
+       FromScala(IntThing(1)).transform(ToJson.string) ==> """{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.IntThing","i":1}"""
 
-        write(TupleThing("naeem", (1, 2))) ==>
+       FromScala(TupleThing("naeem", (1, 2))).transform(ToJson.string) ==>
           """{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.TupleThing","name":"naeem","t":[1,2]}"""
 
         // You can read tagged value without knowing its
         // type in advance, just use type of the sealed trait
-        read[IntOrTuple]("""{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.IntThing","i":1}""") ==> IntThing(1)
+        FromJson("""{"$type":"com.rallyhealth.weepickle.v1.example.Sealed.IntThing","i":1}""").transform(ToScala[IntOrTuple]) ==> IntThing(1)
 
       }
       test("recursive"){
-        write((((1, 2), (3, 4)), ((5, 6), (7, 8)))) ==>
+       FromScala((((1, 2), (3, 4)), ((5, 6), (7, 8)))).transform(ToJson.string) ==>
           """[[[1,2],[3,4]],[[5,6],[7,8]]]"""
 
-        write(Seq(Thing(1, "g"), Thing(2, "k"))) ==>
+       FromScala(Seq(Thing(1, "g"), Thing(2, "k"))).transform(ToJson.string) ==>
           """[{"myFieldA":1,"myFieldB":"g"},{"myFieldA":2,"myFieldB":"k"}]"""
 
-        write(Bar("bearrr", Seq(Foo(1), Foo(2), Foo(3)))) ==>
+       FromScala(Bar("bearrr", Seq(Foo(1), Foo(2), Foo(3)))).transform(ToJson.string) ==>
           """{"name":"bearrr","foos":[{"i":1},{"i":2},{"i":3}]}"""
 
       }
       test("null"){
-        write(Bar(null, Seq(Foo(1), null, Foo(3)))) ==>
+       FromScala(Bar(null, Seq(Foo(1), null, Foo(3)))).transform(ToJson.string) ==>
           """{"name":null,"foos":[{"i":1},null,{"i":3}]}"""
       }
     }
@@ -234,25 +234,25 @@ object ExampleTests extends TestSuite {
       test("omit") {
         // lihaoyi/upickle default behavior
         test("reading is tolerant"){
-          read[FooOmitDefault]("{}")                ==> FooOmitDefault(10, "lol")
-          read[FooOmitDefault]("""{"i": 123}""")    ==> FooOmitDefault(123,"lol")
+          FromJson("{}").transform(ToScala[FooOmitDefault])                ==> FooOmitDefault(10, "lol")
+          FromJson("""{"i": 123}""").transform(ToScala[FooOmitDefault])    ==> FooOmitDefault(123,"lol")
         }
         test("writing omits defaults"){
-          write(FooOmitDefault(i = 11, s = "lol"))  ==> """{"i":11}"""
-          write(FooOmitDefault(i = 10, s = "lol"))  ==> """{}"""
-          write(FooOmitDefault())                   ==> """{}"""
+         FromScala(FooOmitDefault(i = 11, s = "lol")).transform(ToJson.string)  ==> """{"i":11}"""
+         FromScala(FooOmitDefault(i = 10, s = "lol")).transform(ToJson.string)  ==> """{}"""
+         FromScala(FooOmitDefault()).transform(ToJson.string)                   ==> """{}"""
         }
       }
       test("include") {
         // rallyhealth/weepickle default behavior
         test("reading is tolerant"){
-          read[FooIncludeDefault]("{}")                ==> FooIncludeDefault(10, "lol")
-          read[FooIncludeDefault]("""{"i": 123}""")    ==> FooIncludeDefault(123,"lol")
+          FromJson("{}").transform(ToScala[FooIncludeDefault])                ==> FooIncludeDefault(10, "lol")
+          FromJson("""{"i": 123}""").transform(ToScala[FooIncludeDefault])    ==> FooIncludeDefault(123,"lol")
         }
         test("writing includes defaults"){
-          write(FooIncludeDefault(i = 11, s = "lol"))  ==> """{"i":11,"s":"lol"}"""
-          write(FooIncludeDefault(i = 10, s = "lol"))  ==> """{"i":10,"s":"lol"}"""
-          write(FooIncludeDefault())                   ==> """{"i":10,"s":"lol"}"""
+         FromScala(FooIncludeDefault(i = 11, s = "lol")).transform(ToJson.string)  ==> """{"i":11,"s":"lol"}"""
+         FromScala(FooIncludeDefault(i = 10, s = "lol")).transform(ToJson.string)  ==> """{"i":10,"s":"lol"}"""
+         FromScala(FooIncludeDefault()).transform(ToJson.string)                   ==> """{"i":10,"s":"lol"}"""
         }
       }
 
@@ -261,8 +261,8 @@ object ExampleTests extends TestSuite {
     test("sources"){
       import com.rallyhealth.weepickle.v1.WeePickle._
       val original = """{"myFieldA":1,"myFieldB":"gg"}"""
-      read[Thing](original) ==> Thing(1, "gg")
-      read[Thing](original.getBytes) ==> Thing(1, "gg")
+      FromJson(original).transform(ToScala[Thing]) ==> Thing(1, "gg")
+      FromJson(original.getBytes).transform(ToScala[Thing]) ==> Thing(1, "gg")
     }
     test("mapped"){
       test("simple"){
@@ -271,8 +271,8 @@ object ExampleTests extends TestSuite {
         implicit val fooReadWrite: ReaderWriter[Wrap] =
           readerWriter[Int].bimap[Wrap](_.i, Wrap(_))
 
-        write(Seq(Wrap(1), Wrap(10), Wrap(100))) ==> "[1,10,100]"
-        read[Seq[Wrap]]("[1,10,100]") ==> Seq(Wrap(1), Wrap(10), Wrap(100))
+       FromScala(Seq(Wrap(1), Wrap(10), Wrap(100))).transform(ToJson.string) ==> "[1,10,100]"
+        FromJson("[1,10,100]").transform(ToScala[Seq[Wrap]]) ==> Seq(Wrap(1), Wrap(10), Wrap(100))
       }
       test("Value"){
         import com.rallyhealth.weepickle.v1.WeePickle._
@@ -283,19 +283,19 @@ object ExampleTests extends TestSuite {
             json => new Bar(json(1).num.toInt, json(0).str)
           )
 
-        write(Bar(123, "abc")) ==> """["abc",123]"""
-        read[Bar]("""["abc",123]""") ==> Bar(123, "abc")
+       FromScala(Bar(123, "abc")).transform(ToJson.string) ==> """["abc",123]"""
+        FromJson("""["abc",123]""").transform(ToScala[Bar]) ==> Bar(123, "abc")
       }
     }
     test("keyed"){
       import com.rallyhealth.weepickle.v1.WeePickle._
       test("attrs"){
-        write(KeyBar(10))                     ==> """{"hehehe":10}"""
-        read[KeyBar]("""{"hehehe": 10}""")    ==> KeyBar(10)
+       FromScala(KeyBar(10)).transform(ToJson.string)                     ==> """{"hehehe":10}"""
+        FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar])    ==> KeyBar(10)
       }
       test("tag"){
-        write(B(10))                          ==> """{"customDiscriminator":"Bee","i":10}"""
-        read[B]("""{"customDiscriminator":"Bee","i":10}""") ==> B(10)
+       FromScala(B(10)).transform(ToJson.string)                          ==> """{"customDiscriminator":"Bee","i":10}"""
+        FromJson("""{"customDiscriminator":"Bee","i":10}""").transform(ToScala[B]) ==> B(10)
       }
       test("snakeCase"){
         object SnakePickle extends com.rallyhealth.weepickle.v1.AttributeTagged{
@@ -319,25 +319,25 @@ object ExampleTests extends TestSuite {
         }
 
         // Default read-writing
-        com.rallyhealth.weepickle.v1.WeePickle.write(Thing(1, "gg")) ==>
+        FromScala(Thing(1, "gg")).transform(ToJson.string) ==>
           """{"myFieldA":1,"myFieldB":"gg"}"""
 
-        com.rallyhealth.weepickle.v1.WeePickle.read[Thing]("""{"myFieldA":1,"myFieldB":"gg"}""") ==>
+        FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(ToScala[Thing]) ==>
           Thing(1, "gg")
 
         implicit def thingRW: SnakePickle.ReaderWriter[Thing] = SnakePickle.macroRW
 
         // snake_case_keys read-writing
-        SnakePickle.write(Thing(1, "gg")) ==>
+        SnakePickle.writer[Thing].transform(Thing(1, "gg"), ToJson.string) ==>
           """{"my_field_a":1,"my_field_b":"gg"}"""
 
-        SnakePickle.read[Thing]("""{"my_field_a":1,"my_field_b":"gg"}""") ==>
+        FromJson("""{"my_field_a":1,"my_field_b":"gg"}""").transform(SnakePickle.reader[Thing]) ==>
           Thing(1, "gg")
       }
 
       test("stringLongs"){
-        com.rallyhealth.weepickle.v1.WeePickle.write(123: Long) ==> "123"
-        com.rallyhealth.weepickle.v1.WeePickle.write(Long.MaxValue) ==> "9223372036854775807"
+        FromScala(123: Long).transform(ToJson.string) ==> "123"
+        FromScala(Long.MaxValue).transform(ToJson.string) ==> "9223372036854775807"
 
         object StringLongs extends com.rallyhealth.weepickle.v1.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {
@@ -345,8 +345,8 @@ object ExampleTests extends TestSuite {
           }
         }
 
-        StringLongs.write(123: Long) ==> "\"123\""
-        StringLongs.write(Long.MaxValue) ==> "\"9223372036854775807\""
+        StringLongs.writer[Long].transform(123: Long, ToJson.string) ==> "\"123\""
+        StringLongs.writer[Long].transform(Long.MaxValue, ToJson.string) ==> "\"9223372036854775807\""
 
         object NumLongs extends com.rallyhealth.weepickle.v1.AttributeTagged{
           override implicit val LongWriter = new Writer[Long] {
@@ -354,16 +354,16 @@ object ExampleTests extends TestSuite {
           }
         }
 
-        NumLongs.write(123: Long) ==> "123"
-        NumLongs.write(Long.MaxValue) ==> "9223372036854775807"
+        NumLongs.writer[Long].transform(123: Long, ToJson.string) ==> "123"
+        NumLongs.writer[Long].transform(Long.MaxValue, ToJson.string) ==> "9223372036854775807"
 
       }
     }
 
     test("transform"){
-      com.rallyhealth.weepickle.v1.WeePickle.transform(Foo(123)).to[Foo] ==> Foo(123)
+      FromScala(Foo(123)).transform(ToScala[Foo]) ==> Foo(123)
       val big = Big(1, true, "lol", 'Z', Thing(7, ""))
-      com.rallyhealth.weepickle.v1.WeePickle.transform(big).to[Big] ==> big
+      FromScala(big).transform(ToScala[Big]) ==> big
     }
     test("msgConstruction"){
       val msg = com.rallyhealth.weepack.v1.Arr(
@@ -379,8 +379,8 @@ object ExampleTests extends TestSuite {
 
     test("msgReadWrite"){
       val big = Big(1, true, "lol", 'Z', Thing(7, ""))
-      val msg: com.rallyhealth.weepack.v1.Msg = com.rallyhealth.weepickle.v1.WeePickle.writeMsgPackAst(big)
-      com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Big](msg) ==> big
+      val msg: com.rallyhealth.weepack.v1.Msg = FromScala(big).transform(Msg)
+      FromMsgPack(msg).transform(ToScala[Big])  ==> big
     }
 
     test("msgInsideValue"){
@@ -389,9 +389,9 @@ object ExampleTests extends TestSuite {
         com.rallyhealth.weepack.v1.Arr(com.rallyhealth.weepack.v1.Int32(1), com.rallyhealth.weepack.v1.Int32(2))
       )
 
-      val binary: Array[Byte] = com.rallyhealth.weepickle.v1.WeePickle.writeMsgPack(msgSeq)
+      val binary: Array[Byte] = FromScala(msgSeq).transform(ToMsgPack.bytes)
 
-      com.rallyhealth.weepickle.v1.WeePickle.readMsgPack[Seq[com.rallyhealth.weepack.v1.Msg]](binary) ==> msgSeq
+      FromMsgPack(binary).transform(ToScala[Seq[com.rallyhealth.weepack.v1.Msg]]) ==> msgSeq
     }
 
     // TODO fix failing case. valid but we don't use msgpack, so we'll never encounter it.
@@ -473,12 +473,12 @@ object ExampleTests extends TestSuite {
       }
       test("intermediate"){
         val data = Seq(Thing(1, "g"), Thing(2, "k"))
-        val json = com.rallyhealth.weepickle.v1.WeePickle.writeJsonAst(data)
+        val json = FromScala(data).transform(Value)
 
         json.arr.remove(1)
         json(0)("myFieldA") = 1337
 
-        com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Thing]](json)   ==> Seq(Thing(1337, "g"))
+        json.transform(ToScala[Seq[Thing]])   ==> Seq(Thing(1337, "g"))
       }
       test("copy"){
         val data = Obj(
@@ -495,16 +495,16 @@ object ExampleTests extends TestSuite {
     test("transforms"){
       test("json"){
         import com.rallyhealth.weepickle.v1.WeePickle._
-        transform(1).to[com.rallyhealth.weejson.v1.Value] ==> com.rallyhealth.weejson.v1.Num(1)
-        transform("hello").to[com.rallyhealth.weejson.v1.Value] ==> com.rallyhealth.weejson.v1.Str("hello")
-        transform(("hello", 9)).to[com.rallyhealth.weejson.v1.Value] ==> com.rallyhealth.weejson.v1.Arr("hello", 9)
-        transform(Thing(3, "3")).to[com.rallyhealth.weejson.v1.Value] ==>
+        FromScala(1).transform(ToScala[com.rallyhealth.weejson.v1.Value]) ==> com.rallyhealth.weejson.v1.Num(1)
+        FromScala("hello").transform(ToScala[com.rallyhealth.weejson.v1.Value]) ==> com.rallyhealth.weejson.v1.Str("hello")
+        FromScala(("hello", 9)).transform(ToScala[com.rallyhealth.weejson.v1.Value]) ==> com.rallyhealth.weejson.v1.Arr("hello", 9)
+        FromScala(Thing(3, "3")).transform(ToScala[com.rallyhealth.weejson.v1.Value]) ==>
           Obj("myFieldA" -> 3, "myFieldB" -> "3")
 
-        transform(com.rallyhealth.weejson.v1.Num(1)).to[Int] ==> 1
-        transform(com.rallyhealth.weejson.v1.Str("hello")).to[String] ==> "hello"
-        transform(com.rallyhealth.weejson.v1.Arr("hello", 9)).to[(String, Int)] ==> ("hello", 9)
-        transform(Obj("myFieldA" -> 3, "myFieldB" -> "3")).to[Thing] ==>
+        FromScala(com.rallyhealth.weejson.v1.Num(1)).transform(ToScala[Int]) ==> 1
+        FromScala(com.rallyhealth.weejson.v1.Str("hello")).transform(ToScala[String]) ==> "hello"
+        FromScala(com.rallyhealth.weejson.v1.Arr("hello", 9)).transform(ToScala[(String, Int)]) ==> ("hello", 9)
+        FromScala(Obj("myFieldA" -> 3, "myFieldB" -> "3")).transform(ToScala[Thing]) ==>
           Thing(3, "3")
       }
 
@@ -512,11 +512,11 @@ object ExampleTests extends TestSuite {
 
         // com.rallyhealth.weepickle.v1.WeePickle.transform can be used to convert between
         // JSON-equivalent data-structures without an intermediate AST
-        com.rallyhealth.weepickle.v1.WeePickle.transform(Seq(1, 2, 3)).to[(Int, Int, Int)] ==> (1, 2, 3)
+        FromScala(Seq(1, 2, 3)).transform(ToScala[(Int, Int, Int)]) ==> (1, 2, 3)
 
         val bar = Bar("omg", Seq(Foo(1), Foo(2)))
 
-        com.rallyhealth.weepickle.v1.WeePickle.transform(bar).to[Map[String, com.rallyhealth.weejson.v1.Value]] ==>
+        FromScala(bar).transform(ToScala[Map[String, com.rallyhealth.weejson.v1.Value]]) ==>
           Map[String, com.rallyhealth.weejson.v1.Value](
             "name" -> "omg",
             "foos" -> com.rallyhealth.weejson.v1.Arr(
@@ -533,10 +533,11 @@ object ExampleTests extends TestSuite {
         WeeJson.transform("[1, 2, 3]", Value) ==> exampleAst
 
         // Rendering the AST to a string
-        WeeJson.transform(exampleAst, StringRenderer()).toString ==> "[1,2,3]"
+
+        exampleAst.transform(StringRenderer()).toString ==> "[1,2,3]"
 
         // Or to a byte array
-        WeeJson.transform(exampleAst, BytesRenderer()).toByteArray ==> "[1,2,3]".getBytes
+        exampleAst.transform(BytesRenderer()).toByteArray ==> "[1,2,3]".getBytes
 
         // Re-formatting JSON, either compacting it
         WeeJson.transform("[1, 2, 3]", StringRenderer()).toString ==> "[1,2,3]"
@@ -563,12 +564,11 @@ object ExampleTests extends TestSuite {
           WeeJson.transform("[1, 2, 3]]", NoOpVisitor)
         )
       }
-      test("com.rallyhealth.weepickle.v1Default"){
+      test("com.rallyhealth.weepickle.v1.Default"){
         WeeJson.transform("[1, 2, 3]", com.rallyhealth.weepickle.v1.WeePickle.reader[Seq[Int]]) ==>
           Seq(1, 2, 3)
 
-        WeeJson.transform(com.rallyhealth.weepickle.v1.WeePickle.transform(Seq(1, 2, 3)), StringRenderer()).toString ==>
-          "[1,2,3]"
+        FromScala(Seq(1, 2, 3)).transform(ToJson.string) ==>  "[1,2,3]"
       }
     }
     test("byteArrays"){
@@ -578,11 +578,11 @@ object ExampleTests extends TestSuite {
         * but base64 is more useful.
         * e.g. https://stackoverflow.com/a/247261
         */
-      write(Array[Byte](1, 2, 3, 4)) ==> """"AQIDBA==""""
-      read[Array[Byte]]("[1,2,3,4]") ==> Array(1, 2, 3, 4)
+     FromScala(Array[Byte](1, 2, 3, 4)).transform(ToJson.string) ==> """"AQIDBA==""""
+      FromJson("[1,2,3,4]").transform(ToScala[Array[Byte]]) ==> Array(1, 2, 3, 4)
 
-      writeMsgPack(Array[Byte](1, 2, 3, 4)) ==> Array(0xc4.toByte, 4, 1, 2, 3, 4)
-      readMsgPack[Array[Byte]](Array[Byte](0xc4.toByte, 4, 1, 2, 3, 4)) ==> Array(1, 2, 3, 4)
+      FromScala(Array[Byte](1, 2, 3, 4)).transform(ToMsgPack.bytes) ==> Array(0xc4.toByte, 4, 1, 2, 3, 4)
+      FromMsgPack(Array[Byte](0xc4.toByte, 4, 1, 2, 3, 4)).transform(ToScala[Array[Byte]]) ==> Array(1, 2, 3, 4)
     }
   }
 }

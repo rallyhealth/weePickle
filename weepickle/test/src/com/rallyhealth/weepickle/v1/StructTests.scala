@@ -9,7 +9,10 @@ import scala.concurrent.duration._
 import java.util.UUID
 
 import acyclic.file
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
+import com.rallyhealth.weepack.v1.ToMsgPack
 import com.rallyhealth.weepickle.v1.TestUtil._
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 
 import scala.reflect.ClassTag
 import language.postfixOps
@@ -137,10 +140,10 @@ object StructTests extends TestSuite {
 
       import AlwaysReturn._
 
-      assert(WeePickle.read[Bar]("""{}""") == Bar())
-      assert(WeePickle.read[Bar]("""null""") == Bar())   //when input is null
-      assert(WeePickle.read[Option[Bar]]("""{}""") == Some(Bar()))
-      assert(WeePickle.read[Option[Bar]]("""null""") == None)
+      assert(FromJson("""{}""").transform(ToScala[Bar]) == Bar())
+      assert(FromJson("""null""").transform(ToScala[Bar]) == Bar()) //when input is null
+      assert(FromJson("""{}""").transform(ToScala[Option[Bar]]) == Some(Bar()))
+      assert(FromJson("""null""").transform(ToScala[Option[Bar]]) == None)
     }
 
     test("assume None as default for Option types") {
@@ -148,7 +151,7 @@ object StructTests extends TestSuite {
         case class Bar(noDefault: Option[Int])
         implicit val r = WeePickle.macroR[Bar]
       }
-      assert(WeePickle.read[NoneAsDefault.Bar]("""{}""") == NoneAsDefault.Bar(None))
+      assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(None))
     }
 
     test("use explicitly-provided default for Option types") {
@@ -156,7 +159,7 @@ object StructTests extends TestSuite {
         case class Bar(noDefault: Option[Int] = Some(1))
         implicit val r = WeePickle.macroR[Bar]
       }
-      assert(WeePickle.read[NoneAsDefault.Bar]("""{}""") == NoneAsDefault.Bar(Some(1)))
+      assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(Some(1)))
     }
 
     test("either"){
@@ -210,21 +213,21 @@ object StructTests extends TestSuite {
         type Thing = Seq[List[Map[Option[String], String]]]
         val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
         val out = new ByteArrayOutputStream()
-        WeePickle.streamJson(thing).writeBytesTo(out)
-        out.toByteArray ==> WeePickle.write(thing).getBytes
+        FromScala(thing).transform(ToJson.outputStream(out))
+        out.toByteArray ==> FromScala(thing).transform(ToJson.string).getBytes
       }
       test("msgpack") {
         type Thing = Seq[List[Map[Option[String], String]]]
         val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
         val out = new ByteArrayOutputStream()
-        WeePickle.streamMsgPack(thing).writeBytesTo(out)
-        out.toByteArray ==> WeePickle.writeMsgPack(thing)
+        FromScala(thing).transform(ToMsgPack.outputStream(out))
+        out.toByteArray ==> FromScala(thing).transform(ToMsgPack.bytes)
       }
     }
 
     test("transmutation"){
       test("vectorToList"){
-        val vectorToList = WeePickle.read[List[Double]](WeePickle.write(Vector(1.1, 2.2, 3.3)))
+        val vectorToList = FromJson(FromScala(Vector(1.1, 2.2, 3.3)).transform(ToJson.string)).transform(ToScala[List[Double]])
         assert(
           vectorToList.isInstanceOf[List[Double]],
           vectorToList == List(1.1, 2.2, 3.3)
@@ -232,7 +235,7 @@ object StructTests extends TestSuite {
 
       }
       test("listToMap"){
-        val listToMap = WeePickle.read[Map[Int, String]](WeePickle.write(List((1, "1"), (2, "2"))))
+        val listToMap = FromJson(FromScala(List((1, "1"), (2, "2"))).transform(ToJson.string)).transform(ToScala[Map[Int, String]])
         assert(
           listToMap.isInstanceOf[Map[Int, String]],
           listToMap == Map(1 -> "1", 2 -> "2")
