@@ -1,3 +1,3 @@
 package com.rallyhealth.weepickle.v1.implicits
 
-trait Readers extends DefaultReaders
+trait Receivers extends DefaultReceivers

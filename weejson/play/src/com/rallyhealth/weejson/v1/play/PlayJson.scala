@@ -31,10 +31,10 @@ object PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
   def visitString(cs: CharSequence): JsValue = JsString(cs.toString)
 
-  implicit val JsValueWriter: Writer[JsValue] = new Writer[JsValue] {
-    def write0[R](out: Visitor[_, R], v: JsValue): R = PlayJson.transform(v, out)
+  implicit val JsValueTransmitter: Transmitter[JsValue] = new Transmitter[JsValue] {
+    def transmit0[Out](in: JsValue, out: Visitor[_, Out]): Out = PlayJson.transform(in, out)
   }
 
-  implicit val JsValueReader: Reader[JsValue] = new Reader.Delegate[JsValue, JsValue](this)
+  implicit val JsValueReceiver: Receiver[JsValue] = new Receiver.Delegate[JsValue, JsValue](this)
 
 }

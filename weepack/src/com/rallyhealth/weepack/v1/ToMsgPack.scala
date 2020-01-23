@@ -17,7 +17,7 @@ object ToMsgPack {
     * Write the given MessagePack struct as a binary to the given OutputStream
     */
   def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[OutputStream, OutputStream] = {
-    new MsgPackWriter(out)
+    new MsgPackTransmitter(out)
   }
 
   def ast: Visitor[Msg, Msg] = Msg

@@ -1,3 +1,3 @@
 package com.rallyhealth.weepickle.v1.implicits
 
-trait Writers extends DefaultWriters
+trait Transmitters extends DefaultTransmitters

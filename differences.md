@@ -143,10 +143,10 @@ with `@discriminator` annotations on the sealed parent type:
 ## WeeJson/WeePack
 `WeeJson` and `WeePack` are accessible via named objects instead of package objects. For example: `WeeJson.read("{}")` instead of `ujson.read("{}")`. This makes them more easily importable and avoids naming collisions.
 
-## ReadWriter => ReaderWriter
-`Reader` + `Writer` = `ReaderWriter` (not `ReadWriter`)
+## ReadTransmitter => Transceiver
+`Receiver` + `Transmitter` = `Transceiver` (not `ReadTransmitter`)
 
-Two people independently asked me why their code wasn't working because they expected a class named `ReaderWriter`, so that's the name now.
+Two people independently asked me why their code wasn't working because they expected a class named `Transceiver`, so that's the name now.
 
 ## weejson.Num(Double) => weejson.Num(BigDecimal) 
 ujson's `case class Num(value: Double)` has been replaced with `case class Num(value: BigDecimal)`. This makes it capable of representing 64-bit whole numbers (particularly from external APIs) without precision loss.

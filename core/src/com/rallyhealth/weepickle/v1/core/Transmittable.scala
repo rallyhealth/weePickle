@@ -3,7 +3,7 @@ package com.rallyhealth.weepickle.v1.core
 /**
   * Input data, ready to push through a Visitor.
   */
-trait Transformable {
+trait Transmittable {
 
-  def transform[T](into: Visitor[_, T]): T
+  def transmit[T](into: Visitor[_, T]): T
 }

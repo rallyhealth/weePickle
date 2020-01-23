@@ -28,10 +28,10 @@ object TestApp extends App {
                 |      - fortran
                 |      - erlang""".stripMargin
 
-  val json = FromYaml(yaml).transform(ToPrettyJson.string)
+  val json = FromYaml(yaml).transmit(ToPrettyJson.string)
   println(json)
 
-  val yamlAgain: String = FromJson(json).transform(ToYaml.string)
+  val yamlAgain: String = FromJson(json).transmit(ToYaml.string)
   println(yamlAgain)
 
 }

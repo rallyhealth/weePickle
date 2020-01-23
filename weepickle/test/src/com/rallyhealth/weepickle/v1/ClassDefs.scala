@@ -1,7 +1,7 @@
 package com.rallyhealth.weepickle.v1
 
 //import com.rallyhealth.weepickle.v1.ADTs.ADT0
-import WeePickle.{ReaderWriter => RW, Reader => R, Writer => W}
+import WeePickle.{Transceiver => RW, Receiver => R, Transmitter => W}
 import com.rallyhealth.weepickle.v1.implicits.key
 /*
  * A whole bunch of test data that can be used by client libraries to try out
@@ -12,32 +12,32 @@ import com.rallyhealth.weepickle.v1.implicits.key
 object ADTs {
   case class ADT0()
   object ADT0{
-    implicit def rw: RW[ADT0] = WeePickle.macroRW
+    implicit def rw: RW[ADT0] = WeePickle.macroX
   }
   case class ADTa(i: Int)
   object ADTa{
-    implicit def rw: RW[ADTa] = WeePickle.macroRW
+    implicit def rw: RW[ADTa] = WeePickle.macroX
   }
 
   case class ADTb(i: Int, s: String)
   object ADTb{
-    implicit def rw: RW[ADTb] = WeePickle.macroRW
+    implicit def rw: RW[ADTb] = WeePickle.macroX
   }
   case class ADTc(i: Int, s: String, t: (Double, Double))
   object ADTc{
-    implicit def rw: RW[ADTc] = WeePickle.macroRW
+    implicit def rw: RW[ADTc] = WeePickle.macroX
   }
   case class ADTd(i: Int, s: String, t: (Double, Double), a: ADTa)
   object ADTd{
-    implicit def rw: RW[ADTd] = WeePickle.macroRW
+    implicit def rw: RW[ADTd] = WeePickle.macroX
   }
   case class ADTe(i: Int, s: String, t: (Double, Double), a: ADTa, q: Seq[Double])
   object ADTe{
-    implicit def rw: RW[ADTe] = WeePickle.macroRW
+    implicit def rw: RW[ADTe] = WeePickle.macroX
   }
   case class ADTf(i: Int, s: String, t: (Double, Double), a: ADTa, q: Seq[Double], o: Option[Option[Boolean]])
   object ADTf{
-    implicit def rw: RW[ADTf] = WeePickle.macroRW
+    implicit def rw: RW[ADTf] = WeePickle.macroX
   }
   case class ADTz(t1: Int, t2: String,
                   t3: Int, t4: String,
@@ -49,26 +49,26 @@ object ADTs {
                   t15: Int, t16: String,
                   t17: Int, t18: String)
   object ADTz{
-    implicit def rw: RW[ADTz] = WeePickle.macroRW
+    implicit def rw: RW[ADTz] = WeePickle.macroX
   }
 }
 object Hierarchy {
   sealed trait A
   object A{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[A] = RW.merge(B.rw, C.rw)
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] = RW.merge(B.rw, C.rw)
   }
   case class B(i: Int) extends A
   object B{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[B] = WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] = WeePickle.macroX
   }
   case class C(s1: String, s2: String) extends A
   object C{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[C] = WeePickle.macroRW
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] = WeePickle.macroX
   }
 
   object Z{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Z] = RW.merge(
-      implicitly[com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[AnZ.type]]
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Z] = RW.merge(
+      implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transceiver[AnZ.type]]
     )
   }
   sealed trait Z //new line
@@ -83,7 +83,7 @@ object DeepHierarchy {
   case class B(i: Int) extends A
 
   object B{
-    implicit def rw: RW[B] = WeePickle.macroRW
+    implicit def rw: RW[B] = WeePickle.macroX
   }
 
   sealed trait C extends A
@@ -94,12 +94,12 @@ object DeepHierarchy {
   case class D(s: String) extends C
 
   object D{
-    implicit def rw: RW[D] = WeePickle.macroRW
+    implicit def rw: RW[D] = WeePickle.macroX
   }
   case class E(b: Boolean) extends C
 
   object E{
-    implicit def rw: RW[E] = WeePickle.macroRW
+    implicit def rw: RW[E] = WeePickle.macroX
   }
 
   sealed trait Q //new line
@@ -110,12 +110,12 @@ object DeepHierarchy {
   case class AnQ(i: Int) extends Q //new line
 
   object AnQ{
-    implicit def rw: RW[AnQ] = WeePickle.macroRW
+    implicit def rw: RW[AnQ] = WeePickle.macroX
   }
   case class F(q: Q) extends C //new line
 
   object F{
-    implicit def rw: RW[F] = WeePickle.macroRW
+    implicit def rw: RW[F] = WeePickle.macroX
   }
 }
 
@@ -124,8 +124,8 @@ object Singletons{
 
   object AA{
     implicit def rw: RW[AA] = RW.merge(
-      WeePickle.macroRW[BB.type],
-      WeePickle.macroRW[CC.type]
+      WeePickle.macroX[BB.type],
+      WeePickle.macroX[CC.type]
    )
   }
   case object BB extends AA
@@ -137,76 +137,76 @@ object Generic{
   case class A[T](t: T)
 
   object A{
-    implicit def rw[T: R: W]: RW[A[T]] = WeePickle.macroRW
+    implicit def rw[T: R: W]: RW[A[T]] = WeePickle.macroX
   }
   case class ADT[A, B, C, D, E, F](a: A, b: B, c: C, d: D, e: E, f: F)
   object ADT{
     implicit def rw[A: R: W, B: R: W, C: R: W, D: R: W, E: R: W, F: R: W]: RW[ADT[A, B, C, D, E, F]] =
-      WeePickle.macroRW
+      WeePickle.macroX
   }
 }
 object Recursive{
   sealed trait LL
   object LL{
-    implicit def rw: RW[LL] = RW.merge(WeePickle.macroRW[End.type], WeePickle.macroRW[Node])
+    implicit def rw: RW[LL] = RW.merge(WeePickle.macroX[End.type], WeePickle.macroX[Node])
   }
   case object End  extends LL
   case class Node(c: Int, next: LL) extends LL
   object Node{
-    implicit def rw: RW[Node] = WeePickle.macroRW
+    implicit def rw: RW[Node] = WeePickle.macroX
   }
   case class IntTree(value: Int, children: List[IntTree])
   object IntTree{
-    implicit def rw: RW[IntTree] = WeePickle.macroRW
+    implicit def rw: RW[IntTree] = WeePickle.macroX
   }
   sealed trait SingleTree
   object SingleTree{
-    implicit def rw: RW[SingleTree] = RW.merge(WeePickle.macroRW[SingleNode])
+    implicit def rw: RW[SingleTree] = RW.merge(WeePickle.macroX[SingleNode])
   }
   case class SingleNode(value: Int, children: List[SingleTree]) extends SingleTree
   object SingleNode{
-    implicit def rw: RW[SingleNode] = WeePickle.macroRW
+    implicit def rw: RW[SingleNode] = WeePickle.macroX
   }
 }
 object Annotated {
   sealed trait A
   object A{
-    implicit def rw: RW[A] = RW.merge(WeePickle.macroRW[B], WeePickle.macroRW[C])
+    implicit def rw: RW[A] = RW.merge(WeePickle.macroX[B], WeePickle.macroX[C])
   }
   @key("0") case class B(@key("omg") i: Int) extends A
   object B{
-    implicit def rw: RW[B] = WeePickle.macroRW
+    implicit def rw: RW[B] = WeePickle.macroX
   }
   @key("1") case class C(@key("lol") s1: String, @key("wtf") s2: String) extends A
   object C{
-    implicit def rw: RW[C] = WeePickle.macroRW
+    implicit def rw: RW[C] = WeePickle.macroX
   }
 }
 object Defaults {
   case class ADTa(i: Int = 0)
   object ADTa{
-    implicit def rw: RW[ADTa] = WeePickle.macroRW
+    implicit def rw: RW[ADTa] = WeePickle.macroX
   }
   case class ADTb(i: Int = 1, s: String)
   object ADTb{
-    implicit def rw: RW[ADTb] = WeePickle.macroRW
+    implicit def rw: RW[ADTb] = WeePickle.macroX
   }
   case class ADTc(i: Int = 2, s: String, t: (Double, Double) = (1, 2))
   object ADTc{
-    implicit def rw: RW[ADTc] = WeePickle.macroRW
+    implicit def rw: RW[ADTc] = WeePickle.macroX
   }
 }
 trait MixedIn{
   trait Trt1{
     case class ClsA(s: String)
     object ClsA{
-      implicit def rw: RW[ClsA] = WeePickle.macroRW
+      implicit def rw: RW[ClsA] = WeePickle.macroX
     }
   }
   trait Trt2 extends Trt1{
     case class ClsB(i: Int)
     object ClsB{
-      implicit def rw: RW[ClsB] = WeePickle.macroRW
+      implicit def rw: RW[ClsB] = WeePickle.macroX
     }
   }
   object Obj extends Trt2
@@ -218,88 +218,88 @@ object MixedIn extends MixedIn
 object Varargs{
   case class Sentence(a: String, bs: String*)
   object Sentence{
-    implicit def rw: RW[Sentence] = WeePickle.macroRW
+    implicit def rw: RW[Sentence] = WeePickle.macroX
   }
 }
 //object Covariant{
 //  case class Tree[+T](value: T)
 //  object Tree{
-//    implicit def rw[T: R: W]: RW[Tree[T]] = WeePickle.macroRW
+//    implicit def rw[T: R: W]: RW[Tree[T]] = WeePickle.macroX
 //  }
 //}
 //
 object Exponential{
   case class A1 (x: A2, y: A2)
   object A1{
-    implicit def rw: RW[A1] = WeePickle.macroRW
+    implicit def rw: RW[A1] = WeePickle.macroX
   }
   case class A2 (x: A3, y: A3)
   object A2{
-    implicit def rw: RW[A2] = WeePickle.macroRW
+    implicit def rw: RW[A2] = WeePickle.macroX
   }
   case class A3 (x: A4, y: A4)
   object A3{
-    implicit def rw: RW[A3] = WeePickle.macroRW
+    implicit def rw: RW[A3] = WeePickle.macroX
   }
   case class A4 (x: A5, y: A5)
   object A4{
-    implicit def rw: RW[A4] = WeePickle.macroRW
+    implicit def rw: RW[A4] = WeePickle.macroX
   }
   case class A5 (x: A6, y: A6)
   object A5{
-    implicit def rw: RW[A5] = WeePickle.macroRW
+    implicit def rw: RW[A5] = WeePickle.macroX
   }
   case class A6 (x: A7, y: A7)
   object A6{
-    implicit def rw: RW[A6] = WeePickle.macroRW
+    implicit def rw: RW[A6] = WeePickle.macroX
   }
   case class A7 (x: A8, y: A8)
   object A7{
-    implicit def rw: RW[A7] = WeePickle.macroRW
+    implicit def rw: RW[A7] = WeePickle.macroX
   }
   case class A8 (x: A9, y: A9)
   object A8{
-    implicit def rw: RW[A8] = WeePickle.macroRW
+    implicit def rw: RW[A8] = WeePickle.macroX
   }
   case class A9 (x: A10, y: A10)
   object A9{
-    implicit def rw: RW[A9] = WeePickle.macroRW
+    implicit def rw: RW[A9] = WeePickle.macroX
   }
   case class A10(x: A11, y: A11)
   object A10{
-    implicit def rw: RW[A10] = WeePickle.macroRW
+    implicit def rw: RW[A10] = WeePickle.macroX
   }
   case class A11(x: A12, y: A12)
   object A11{
-    implicit def rw: RW[A11] = WeePickle.macroRW
+    implicit def rw: RW[A11] = WeePickle.macroX
   }
   case class A12(x: A13, y: A13)
   object A12{
-    implicit def rw: RW[A12] = WeePickle.macroRW
+    implicit def rw: RW[A12] = WeePickle.macroX
   }
   case class A13(x: A14, y: A14)
   object A13{
-    implicit def rw: RW[A13] = WeePickle.macroRW
+    implicit def rw: RW[A13] = WeePickle.macroX
   }
   case class A14(x: A15, y: A15)
   object A14{
-    implicit def rw: RW[A14] = WeePickle.macroRW
+    implicit def rw: RW[A14] = WeePickle.macroX
   }
   case class A15(x: A16, y: A16)
   object A15{
-    implicit def rw: RW[A15] = WeePickle.macroRW
+    implicit def rw: RW[A15] = WeePickle.macroX
   }
   case class A16(x: A17, y: A17)
   object A16{
-    implicit def rw: RW[A16] = WeePickle.macroRW
+    implicit def rw: RW[A16] = WeePickle.macroX
   }
   case class A17(x: A18, y: A18)
   object A17{
-    implicit def rw: RW[A17] = WeePickle.macroRW
+    implicit def rw: RW[A17] = WeePickle.macroX
   }
   case class A18()
   object A18{
-    implicit def rw: RW[A18] = WeePickle.macroRW
+    implicit def rw: RW[A18] = WeePickle.macroX
   }
 }
 
@@ -310,7 +310,7 @@ object GenericADTs{
   }
   case class Small1[A](key: A) extends Small[A]
   object Small1{
-    implicit def rw[A: R: W]: RW[Small1[A]] = WeePickle.macroRW
+    implicit def rw[A: R: W]: RW[Small1[A]] = WeePickle.macroX
   }
 
   sealed trait Delta[+A, +B]
@@ -321,15 +321,15 @@ object GenericADTs{
 
     case class Insert[A, B](key: A, value: B) extends Delta[A, B]
     object Insert{
-      implicit def rw[A: R: W, B: R: W]: RW[Insert[A, B]] = WeePickle.macroRW
+      implicit def rw[A: R: W, B: R: W]: RW[Insert[A, B]] = WeePickle.macroX
     }
     case class Remove[A](key: A) extends Delta[A, Nothing]
     object Remove{
-      implicit def rw[A: R: W]: RW[Remove[A]] = WeePickle.macroRW
+      implicit def rw[A: R: W]: RW[Remove[A]] = WeePickle.macroX
     }
     case class Clear() extends Delta[Nothing, Nothing]
     object Clear{
-      implicit def rw: RW[Clear] = WeePickle.macroRW
+      implicit def rw: RW[Clear] = WeePickle.macroX
     }
   }
   sealed trait DeltaInvariant[A, B]
@@ -339,33 +339,33 @@ object GenericADTs{
    )
     case class Insert[A, B](key: A, value: B) extends DeltaInvariant[A, B]
     object Insert{
-      implicit def rw[A: R: W, B: R: W]: RW[Insert[A, B]] = WeePickle.macroRW
+      implicit def rw[A: R: W, B: R: W]: RW[Insert[A, B]] = WeePickle.macroX
     }
     case class Remove[A, B](key: A) extends DeltaInvariant[A, B]
     object Remove{
-      implicit def rw[A: R: W, B]: RW[Remove[A, B]] = WeePickle.macroRW
+      implicit def rw[A: R: W, B]: RW[Remove[A, B]] = WeePickle.macroX
     }
     case class Clear[A, B]() extends DeltaInvariant[A, B]
     object Clear{
-      implicit def rw[A, B]: RW[Clear[A, B]] = WeePickle.macroRW
+      implicit def rw[A, B]: RW[Clear[A, B]] = WeePickle.macroX
     }
   }
 ////  Not sure how to make these work...
 ////
 ////  sealed trait DeltaHardcoded[A, B]
 ////  object DeltaHardcoded {
-////    implicit def rw[A: R: W, B: R: W]: RW[DeltaHardcoded[A, B]] = WeePickle.macroRW
+////    implicit def rw[A: R: W, B: R: W]: RW[DeltaHardcoded[A, B]] = WeePickle.macroX
 ////    case class Insert[A, B](key: A, value: B) extends DeltaHardcoded[A, B]
 ////    object Insert{
-////      implicit def rw[A: R: W, B: R: W]: RW[Insert[A, B]] = WeePickle.macroRW
+////      implicit def rw[A: R: W, B: R: W]: RW[Insert[A, B]] = WeePickle.macroX
 ////    }
 ////    case class Remove[A](key: A) extends DeltaHardcoded[A, String]
 ////    object Remove{
-////      implicit def rw[A: R: W]: RW[Remove[A]] = WeePickle.macroRW
+////      implicit def rw[A: R: W]: RW[Remove[A]] = WeePickle.macroX
 ////    }
 ////    case class Clear() extends DeltaHardcoded[Seq[Int], String]
 ////    object Clear{
-////      implicit def rw: RW[Clear] = WeePickle.macroRW
+////      implicit def rw: RW[Clear] = WeePickle.macroX
 ////    }
 ////  }
 }
@@ -381,22 +381,22 @@ object GenericADTs{
 //// when the fix is backed out
 case class C1(name : String, types : List[String])
 object C1{
-  implicit def rw: RW[C1] = WeePickle.macroRW
+  implicit def rw: RW[C1] = WeePickle.macroX
 }
 case class C2(results : List[C1])
 object C2{
-  implicit def rw: RW[C2] = WeePickle.macroRW
+  implicit def rw: RW[C2] = WeePickle.macroX
 }
 case class Result2(name : String,
                    whatever : String,
                    types : List[String])
 object Result2{
-  implicit def rw: RW[Result2] = WeePickle.macroRW
+  implicit def rw: RW[Result2] = WeePickle.macroX
 }
 
 case class GeoCoding2(results : List[Result2], status: String)
 object GeoCoding2{
-  implicit def rw: RW[GeoCoding2] = WeePickle.macroRW
+  implicit def rw: RW[GeoCoding2] = WeePickle.macroX
 }
 
 
@@ -421,27 +421,27 @@ object Ast{
    */
   case class Block(offset: Int, parts: Seq[Block.Sub]) extends Chain.Sub with Block.Sub
   object Block{
-    implicit def rw: RW[Block] = WeePickle.macroRW
+    implicit def rw: RW[Block] = WeePickle.macroX
     sealed trait Sub extends Ast
     object Sub{
       implicit def rw: RW[Sub] = RW.merge(Text.rw, For.rw, IfElse.rw, Block.rw, Header.rw)
     }
     case class Text(offset: Int, txt: String) extends Block.Sub
     object Text{
-      implicit def rw: RW[Text] = WeePickle.macroRW
+      implicit def rw: RW[Text] = WeePickle.macroX
     }
     case class For(offset: Int, generators: String, block: Block) extends Block.Sub
     object For{
-      implicit def rw: RW[For] = WeePickle.macroRW
+      implicit def rw: RW[For] = WeePickle.macroX
     }
     case class IfElse(offset: Int, condition: String, block: Block, elseBlock: Option[Block]) extends Block.Sub
     object IfElse{
-      implicit def rw: RW[IfElse] = WeePickle.macroRW
+      implicit def rw: RW[IfElse] = WeePickle.macroX
     }
   }
   case class Header(offset: Int, front: String, block: Block) extends Block.Sub with Chain.Sub
   object Header{
-    implicit def rw: RW[Header] = WeePickle.macroRW
+    implicit def rw: RW[Header] = WeePickle.macroX
   }
 
   /**
@@ -451,22 +451,22 @@ object Ast{
    */
   case class Chain(offset: Int, lhs: String, parts: Seq[Chain.Sub]) extends Block.Sub
   object Chain{
-    implicit def rw: RW[Chain] = WeePickle.macroRW
+    implicit def rw: RW[Chain] = WeePickle.macroX
     sealed trait Sub extends Ast
     object Sub{
       implicit def rw: RW[Sub] = RW.merge(Prop.rw, TypeArgs.rw, Args.rw, Block.rw, Header.rw)
     }
     case class Prop(offset: Int, str: String) extends Sub
     object Prop{
-      implicit def rw: RW[Prop] = WeePickle.macroRW
+      implicit def rw: RW[Prop] = WeePickle.macroX
     }
     case class TypeArgs(offset: Int, str: String) extends Sub
     object TypeArgs{
-      implicit def rw: RW[TypeArgs] = WeePickle.macroRW
+      implicit def rw: RW[TypeArgs] = WeePickle.macroX
     }
     case class Args(offset: Int, str: String) extends Sub
     object Args{
-      implicit def rw: RW[Args] = WeePickle.macroRW
+      implicit def rw: RW[Args] = WeePickle.macroX
     }
   }
 }

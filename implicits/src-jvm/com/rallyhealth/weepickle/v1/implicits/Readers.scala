@@ -7,13 +7,13 @@ import com.rallyhealth.weepickle.v1.core.Abort
 
 import scala.util.{Failure, Success, Try}
 
-trait Readers extends DefaultReaders {
+trait Receivers extends DefaultReceivers {
 
-  implicit val LocalDateReader: Reader[LocalDate] = new MapStringReader(s => LocalDate.parse(s.toString))
-  implicit val LocalTimeReader: Reader[LocalTime] = new MapStringReader(s => LocalTime.parse(s.toString))
-  implicit val LocalDateTimeReader: Reader[LocalDateTime] = new MapStringReader(s => LocalDateTime.parse(s.toString))
-  implicit val OffsetDateTimeReader: Reader[OffsetDateTime] = new MapStringReader(s => OffsetDateTime.parse(s.toString))
-  implicit val InstantReader: Reader[Instant] = new SimpleReader[Instant] {
+  implicit val LocalDateReceiver: Receiver[LocalDate] = new MapStringReceiver(s => LocalDate.parse(s.toString))
+  implicit val LocalTimeReceiver: Receiver[LocalTime] = new MapStringReceiver(s => LocalTime.parse(s.toString))
+  implicit val LocalDateTimeReceiver: Receiver[LocalDateTime] = new MapStringReceiver(s => LocalDateTime.parse(s.toString))
+  implicit val OffsetDateTimeReceiver: Receiver[OffsetDateTime] = new MapStringReceiver(s => OffsetDateTime.parse(s.toString))
+  implicit val InstantReceiver: Receiver[Instant] = new SimpleReceiver[Instant] {
     override def expectedMsg: String = "expected timestamp"
     override def visitTimestamp(instant: Instant): Instant = instant
     override def visitString(cs: CharSequence): Instant = Instant.parse(cs.toString)
@@ -30,5 +30,5 @@ trait Readers extends DefaultReaders {
       else visitFloat64String(s.toString) // likely invalid path
     }
   }
-  implicit val DateReader: Reader[Date] = InstantReader.map(i => new Date(i.toEpochMilli))
+  implicit val DateReceiver: Receiver[Date] = InstantReceiver.map(i => new Date(i.toEpochMilli))
 }

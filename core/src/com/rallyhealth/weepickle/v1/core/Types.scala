@@ -11,54 +11,54 @@ import scala.reflect.ClassTag
 trait Types{ types =>
 
   /**
-    * A combined [[Reader]] and [[Writer]], along with some utility methods.
+    * A combined [[Receiver]] and [[Transmitter]], along with some utility methods.
     */
-  trait ReaderWriter[T] extends Reader[T] with Writer[T]{
-    override def narrow[K]: ReaderWriter[K] = this.asInstanceOf[ReaderWriter[K]]
-    def bimap[V](f: V => T, g: T => V): ReaderWriter[V] = {
-      new Visitor.MapReader[Any, T, V](ReaderWriter.this) with ReaderWriter[V]{
-        def write0[Z](out: Visitor[_, Z], v: V): Z = {
-          ReaderWriter.this.write(out, f(v.asInstanceOf[V]))
+  trait Transceiver[T] extends Receiver[T] with Transmitter[T]{
+    override def narrow[K]: Transceiver[K] = this.asInstanceOf[Transceiver[K]]
+    def bimap[In](f: In => T, g: T => In): Transceiver[In] = {
+      new Visitor.MapReceiver[Any, T, In](Transceiver.this) with Transceiver[In]{
+        def transmit0[Out](in: In, out: Visitor[_, Out]): Out = {
+          Transceiver.this.transmit(f(in.asInstanceOf[In]), out)
         }
 
-        override def mapNonNullsFunction(t: T): V = g(t)
+        override def mapNonNullsFunction(t: T): In = g(t)
       }
     }
   }
 
-  object ReaderWriter{
+  object Transceiver{
 
-    def merge[T](rws: ReaderWriter[_ <: T]*): TaggedReaderWriter[T] = {
-      new TaggedReaderWriter.Node(rws.asInstanceOf[Seq[TaggedReaderWriter[T]]]:_*)
+    def merge[T](rws: Transceiver[_ <: T]*): TaggedTransceiver[T] = {
+      new TaggedTransceiver.Node(rws.asInstanceOf[Seq[TaggedTransceiver[T]]]:_*)
     }
 
-    implicit def join[T](implicit r0: Reader[T], w0: Writer[T]): ReaderWriter[T] = (r0, w0) match{
-      // Make sure we preserve the tagged-ness of the Readers/Writers being
+    implicit def join[T](implicit r0: Receiver[T], w0: Transmitter[T]): Transceiver[T] = (r0, w0) match{
+      // Make sure we preserve the tagged-ness of the Receivers/Transmitters being
       // pulled in; we need to do this because the macros that generate tagged
-      // Readers/Writers do not know until post-typechecking whether or not the
-      // Reader/Writer needs to be tagged, and thus cannot communicate that
+      // Receivers/Transmitters do not know until post-typechecking whether or not the
+      // Receiver/Transmitter needs to be tagged, and thus cannot communicate that
       // fact in the returned type of the macro call. Thus we are forced to
       // wait until runtime before inspecting it and seeing if the tags exist
 
-      case (r1: TaggedReader[T], w1: TaggedWriter[T]) =>
-        new TaggedReaderWriter[T] {
+      case (r1: TaggedReceiver[T], w1: TaggedTransmitter[T]) =>
+        new TaggedTransceiver[T] {
           override val tagName: String = findTagName(Seq(r1, w1))
-          def findReader(s: String): Reader[T] = r1.findReader(s)
-          def findWriter(v: Any): (String, CaseW[T]) = w1.findWriter(v)
+          def findReceiver(s: String): Receiver[T] = r1.findReceiver(s)
+          def findTransmitter(v: Any): (String, CaseW[T]) = w1.findTransmitter(v)
         }
 
       case _ =>
-        new Visitor.Delegate[Any, T](r0) with ReaderWriter[T]{
-          def write0[V](out: Visitor[_, V], v: T): V = w0.write(out, v)
+        new Visitor.Delegate[Any, T](r0) with Transceiver[T]{
+          def transmit0[V](v: T, out: Visitor[_, V]): V = w0.transmit(v, out)
         }
     }
   }
 
   /**
-    * A Reader that throws an error for all the visit methods which it does not define,
+    * A Receiver that throws an error for all the visit methods which it does not define,
     * letting you only define the handlers you care about.
     */
-  trait SimpleReader[T] extends Reader[T] with com.rallyhealth.weepickle.v1.core.SimpleVisitor[Any, T]
+  trait SimpleReceiver[T] extends Receiver[T] with com.rallyhealth.weepickle.v1.core.SimpleVisitor[Any, T]
 
   /**
     * Represents the ability to read a value of type [[T]].
@@ -66,67 +66,66 @@ trait Types{ types =>
     * A thin wrapper around [[Visitor]], but needs to be it's own class in order
     * to make type inference automatically pick up it's implicit values.
     */
-  trait Reader[T] extends com.rallyhealth.weepickle.v1.core.Visitor[Any, T]{
+  trait Receiver[T] extends com.rallyhealth.weepickle.v1.core.Visitor[Any, T]{
 
-    override def map[Z](f: T => Z): Reader[Z] = new Reader.MapReader[T, T, Z](Reader.this){
+    override def map[Z](f: T => Z): Receiver[Z] = new Receiver.MapReceiver[T, T, Z](Receiver.this){
       def mapNonNullsFunction(v: T): Z = f(v)
     }
-    override def mapNulls[Z](f: T => Z): Reader[Z] = new Reader.MapReader[T, T, Z](Reader.this){
+    override def mapNulls[Z](f: T => Z): Receiver[Z] = new Receiver.MapReceiver[T, T, Z](Receiver.this){
       override def mapFunction(v: T): Z = f(v)
       def mapNonNullsFunction(v: T): Z = f(v)
     }
 
-    def narrow[K <: T]: Reader[K] = this.asInstanceOf[Reader[K]]
+    def narrow[K <: T]: Receiver[K] = this.asInstanceOf[Receiver[K]]
   }
 
-  object Reader{
-    class Delegate[T, J](delegatedReader: Visitor[T, J])
-      extends Visitor.Delegate[T, J](delegatedReader) with Reader[J]{
+  object Receiver{
+    class Delegate[T, J](delegatedReceiver: Visitor[T, J])
+      extends Visitor.Delegate[T, J](delegatedReceiver) with Receiver[J]{
       override def visitObject(length: Int): ObjVisitor[Any, J] = super.visitObject(length).asInstanceOf[ObjVisitor[Any, J]]
       override def visitArray(length: Int): ArrVisitor[Any, J] = super.visitArray(length).asInstanceOf[ArrVisitor[Any, J]]
     }
 
-    abstract class MapReader[-T, V, Z](delegatedReader: Visitor[T, V])
-      extends Visitor.MapReader[T, V, Z](delegatedReader) with Reader[Z] {
+    abstract class MapReceiver[-T, V, Z](delegatedReceiver: Visitor[T, V])
+      extends Visitor.MapReceiver[T, V, Z](delegatedReceiver) with Receiver[Z] {
 
       def mapNonNullsFunction(t: V): Z
 
       override def visitObject(length: Int): ObjVisitor[Any, Z] = super.visitObject(length).asInstanceOf[ObjVisitor[Any, Z]]
       override def visitArray(length: Int): ArrVisitor[Any, Z] = super.visitArray(length).asInstanceOf[ArrVisitor[Any, Z]]
     }
-    def merge[T](readers0: Reader[_ <: T]*) = {
-      new TaggedReader.Node(readers0.asInstanceOf[Seq[TaggedReader[T]]]:_*)
+    def merge[T](readers0: Receiver[_ <: T]*) = {
+      new TaggedReceiver.Node(readers0.asInstanceOf[Seq[TaggedReceiver[T]]]:_*)
     }
   }
 
   /**
-    * Represents the ability to write a value of type [[T]].
+    * Represents the ability to write a value of type [[In]].
     *
-    * Generally nothing more than a way of applying the [[T]] to
+    * Generally nothing more than a way of applying the [[In]] to
     * a [[Visitor]], along with some utility methods
     */
-  trait Writer[T] {
-    def narrow[K] = this.asInstanceOf[Writer[K]]
-    def transform[V](v: T, out: Visitor[_, V]) = write(out, v)
-    def write0[V](out: Visitor[_, V], v: T): V
-    def write[V](out: Visitor[_, V], v: T): V = {
-      if (v == null) out.visitNull()
-      else write0(out, v)
+  trait Transmitter[In] {
+    def narrow[K] = this.asInstanceOf[Transmitter[K]]
+    def transmit[Out](in: In, out: Visitor[_, Out]): Out = {
+      if (in == null) out.visitNull()
+      else transmit0(in, out)
     }
-    def comapNulls[U](f: U => T) = new Writer.MapWriterNulls[U, T](this, f)
-    def comap[U](f: U => T) = new Writer.MapWriter[U, T](this, f)
+    def transmit0[Out](in: In, out: Visitor[_, Out]): Out
+    def comapNulls[U](f: U => In) = new Transmitter.MapTransmitterNulls[U, In](this, f)
+    def comap[U](f: U => In) = new Transmitter.MapTransmitter[U, In](this, f)
   }
-  object Writer {
+  object Transmitter {
 
-    class MapWriterNulls[U, T](src: Writer[T], f: U => T) extends Writer[U] {
-      override def write[R](out: Visitor[_, R], v: U): R = src.write(out, f(v))
-      def write0[R](out: Visitor[_, R], v: U): R = src.write(out, f(v))
+    class MapTransmitterNulls[U, T](src: Transmitter[T], f: U => T) extends Transmitter[U] {
+      override def transmit[R](u: U, out: Visitor[_, R]): R = src.transmit(f(u), out)
+      def transmit0[R](v: U, out: Visitor[_, R]): R = src.transmit(f(v), out)
     }
-    class MapWriter[U, T](src: Writer[T], f: U => T) extends Writer[U] {
-      def write0[R](out: Visitor[_, R], v: U): R = src.write(out, f(v))
+    class MapTransmitter[U, T](src: Transmitter[T], f: U => T) extends Transmitter[U] {
+      def transmit0[R](v: U, out: Visitor[_, R]): R = src.transmit(f(v), out)
     }
-    def merge[T](writers: Writer[_ <: T]*) = {
-      new TaggedWriter.Node(writers.asInstanceOf[Seq[TaggedWriter[T]]]:_*)
+    def merge[T](writers: Transmitter[_ <: T]*) = {
+      new TaggedTransmitter.Node(writers.asInstanceOf[Seq[TaggedTransmitter[T]]]:_*)
     }
   }
 
@@ -139,18 +138,15 @@ trait Types{ types =>
     tagName
   }
 
-  class TupleNWriter[V](val writers: Array[Writer[_]], val f: V => Array[Any]) extends Writer[V]{
-    def write0[R](out: Visitor[_, R], v: V): R = {
-      if (v == null) out.visitNull()
+  class TupleNTransmitter[In](val writers: Array[Transmitter[_]], val f: In => Array[Any]) extends Transmitter[In]{
+    def transmit0[Out](in: In, out: Visitor[_, Out]): Out = {
+      if (in == null) out.visitNull()
       else{
         val ctx = out.visitArray(writers.length)
-        val vs = f(v)
+        val vs = f(in)
         var i = 0
         while(i < writers.length){
-          ctx.visitValue(writers(i).asInstanceOf[Writer[Any]].write(
-                        ctx.subVisitor.asInstanceOf[Visitor[Any, Nothing]],
-                        vs(i)
-                      ))
+          ctx.visitValue(writers(i).asInstanceOf[Transmitter[Any]].transmit(vs(i), ctx.subVisitor.asInstanceOf[Visitor[Any, Nothing]]))
           i += 1
         }
         ctx.visitEnd()
@@ -158,7 +154,7 @@ trait Types{ types =>
     }
   }
 
-  class TupleNReader[V](val readers: Array[Reader[_]], val f: Array[Any] => V) extends SimpleReader[V]{
+  class TupleNReceiver[V](val readers: Array[Receiver[_]], val f: Array[Any] => V) extends SimpleReceiver[V]{
 
     override def expectedMsg = "expected sequence"
     override def visitArray(length: Int): ArrVisitor[Any, V] = new ArrVisitor[Any, V] {
@@ -188,7 +184,7 @@ trait Types{ types =>
     }
   }
 
-  abstract class CaseR[V] extends SimpleReader[V]{
+  abstract class CaseR[V] extends SimpleReceiver[V]{
     override def expectedMsg = "expected dictionary"
     trait CaseObjectContext extends ObjVisitor[Any, V]{
 
@@ -214,14 +210,14 @@ trait Types{ types =>
       }
     }
   }
-  trait CaseW[V] extends Writer[V]{
-    def length(v: V): Int
-    def writeToObject[R](ctx: ObjVisitor[_, R], v: V): Unit
-    def write0[R](out: Visitor[_, R], v: V): R = {
-      if (v == null) out.visitNull()
+  trait CaseW[In] extends Transmitter[In]{
+    def length(v: In): Int
+    def writeToObject[R](ctx: ObjVisitor[_, R], v: In): Unit
+    def transmit0[Out](in: In, out: Visitor[_, Out]): Out = {
+      if (in == null) out.visitNull()
       else{
-        val ctx = out.visitObject(length(v))
-        writeToObject(ctx, v)
+        val ctx = out.visitObject(length(in))
+        writeToObject(ctx, in)
         ctx.visitEnd()
       }
     }
@@ -246,8 +242,8 @@ trait Types{ types =>
 
 
   def taggedExpectedMsg: String
-  def taggedArrayContext[T](taggedReader: TaggedReader[T]): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
-  def taggedObjectContext[T](taggedReader: TaggedReader[T]): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
+  def taggedArrayContext[T](taggedReceiver: TaggedReceiver[T]): ArrVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
+  def taggedObjectContext[T](taggedReceiver: TaggedReceiver[T]): ObjVisitor[Any, T] = throw new Abort(taggedExpectedMsg)
   def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_, R], v: T): R
 
   private[this] def scanChildren[T, V](xs: Seq[T])(f: T => V) = {
@@ -263,68 +259,68 @@ trait Types{ types =>
 
     /**
       * Name of the object key used to identify the subclass tag.
-      * Readers will fast path if this is the first field of the object.
-      * Otherwise, Readers will have to buffer the content and find the tag later.
+      * Receivers will fast path if this is the first field of the object.
+      * Otherwise, Receivers will have to buffer the content and find the tag later.
       * While naming, consider that some implementations (e.g. vpack) may sort object keys,
       * so symbol prefixes work well for ensuring the tag is the first property.
       */
     def tagName: String
   }
-  trait TaggedReader[T] extends SimpleReader[T] with Tagged {
-    def findReader(s: String): Reader[T]
+  trait TaggedReceiver[T] extends SimpleReceiver[T] with Tagged {
+    def findReceiver(s: String): Receiver[T]
 
     override def expectedMsg = taggedExpectedMsg
     override def visitArray(length: Int) = taggedArrayContext(this)
     override def visitObject(length: Int) = taggedObjectContext(this)
   }
-  object TaggedReader{
-    class Leaf[T](override val tagName: String, tag: String, r: Reader[T]) extends TaggedReader[T]{
-      def findReader(s: String) = if (s == tag) r else null
+  object TaggedReceiver{
+    class Leaf[T](override val tagName: String, tag: String, r: Receiver[T]) extends TaggedReceiver[T]{
+      def findReceiver(s: String) = if (s == tag) r else null
     }
-    class Node[T](rs: TaggedReader[_ <: T]*) extends TaggedReader[T]{
+    class Node[T](rs: TaggedReceiver[_ <: T]*) extends TaggedReceiver[T]{
       override val tagName: String = findTagName(rs)
-      def findReader(s: String) = scanChildren(rs)(_.findReader(s)).asInstanceOf[Reader[T]]
+      def findReceiver(s: String) = scanChildren(rs)(_.findReceiver(s)).asInstanceOf[Receiver[T]]
     }
   }
 
-  trait TaggedWriter[T] extends Writer[T] with Tagged {
-    def findWriter(v: Any): (String, CaseW[T])
-    def write0[R](out: Visitor[_, R], v: T): R = {
-      val (tag, w) = findWriter(v)
-      taggedWrite(w, tagName, tag, out, v)
+  trait TaggedTransmitter[In] extends Transmitter[In] with Tagged {
+    def findTransmitter(v: Any): (String, CaseW[In])
+    override def transmit0[Out](in: In, out: Visitor[_, Out]): Out = {
+      val (tag, w) = findTransmitter(in)
+      taggedWrite(w, tagName, tag, out, in)
 
     }
   }
-  object TaggedWriter{
-    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T]) extends TaggedWriter[T]{
-      def findWriter(v: Any) = {
+  object TaggedTransmitter{
+    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T]) extends TaggedTransmitter[T]{
+      def findTransmitter(v: Any) = {
         if (c.runtimeClass.isInstance(v)) tag -> r
         else null
       }
     }
-    class Node[T](rs: TaggedWriter[_ <: T]*) extends TaggedWriter[T]{
+    class Node[T](rs: TaggedTransmitter[_ <: T]*) extends TaggedTransmitter[T]{
       override val tagName: String = findTagName(rs)
-      def findWriter(v: Any) = scanChildren(rs)(_.findWriter(v)).asInstanceOf[(String, CaseW[T])]
+      def findTransmitter(v: Any) = scanChildren(rs)(_.findTransmitter(v)).asInstanceOf[(String, CaseW[T])]
     }
   }
 
-  trait TaggedReaderWriter[T] extends ReaderWriter[T] with TaggedReader[T] with TaggedWriter[T] with SimpleReader[T]{
+  trait TaggedTransceiver[T] extends Transceiver[T] with TaggedReceiver[T] with TaggedTransmitter[T] with SimpleReceiver[T]{
     override def visitArray(length: Int) = taggedArrayContext(this)
     override def visitObject(length: Int) = taggedObjectContext(this)
 
   }
-  object TaggedReaderWriter{
-    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T] with Reader[T]) extends TaggedReaderWriter[T]{
-      def findReader(s: String) = if (s == tag) r else null
-      def findWriter(v: Any) = {
+  object TaggedTransceiver{
+    class Leaf[T](c: ClassTag[_], override val tagName: String, tag: String, r: CaseW[T] with Receiver[T]) extends TaggedTransceiver[T]{
+      def findReceiver(s: String) = if (s == tag) r else null
+      def findTransmitter(v: Any) = {
         if (c.runtimeClass.isInstance(v)) (tag -> r)
         else null
       }
     }
-    class Node[T](rs: TaggedReaderWriter[_ <: T]*) extends TaggedReaderWriter[T]{
+    class Node[T](rs: TaggedTransceiver[_ <: T]*) extends TaggedTransceiver[T]{
       override val tagName: String = findTagName(rs)
-      def findReader(s: String) = scanChildren(rs)(_.findReader(s)).asInstanceOf[Reader[T]]
-      def findWriter(v: Any) = scanChildren(rs)(_.findWriter(v)).asInstanceOf[(String, CaseW[T])]
+      def findReceiver(s: String) = scanChildren(rs)(_.findReceiver(s)).asInstanceOf[Receiver[T]]
+      def findTransmitter(v: Any) = scanChildren(rs)(_.findTransmitter(v)).asInstanceOf[(String, CaseW[T])]
     }
   }
 

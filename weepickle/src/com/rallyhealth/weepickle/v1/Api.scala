@@ -15,31 +15,31 @@ import scala.reflect.ClassTag
  */
 trait Api
     extends com.rallyhealth.weepickle.v1.core.Types
-    with implicits.Readers
-    with implicits.Writers
+    with implicits.Receivers
+    with implicits.Transmitters
     with WebJson
     with Api.NoOpMappers
-    with JsReaderWriters
-    with MsgReaderWriters{
+    with JsTransceivers
+    with MsgTransceivers{
 
   /**
     * Somewhat internal version of [[WeePickle.ToScala]] for use by custom API bundles.
     */
-  def toScala[Out](implicit pickleOut: Reader[Out]): Visitor[_, Out] = pickleOut
+  def toScala[Out](implicit receiver: Receiver[Out]): Visitor[_, Out] = receiver
 
   /**
     * Somewhat internal version of [[WeePickle.FromScala]] for use by custom API bundles.
     */
-  def fromScala[In](scala: In)(implicit pickleIn: Writer[In]): Transformable = new Transformable {
-    override def transform[T](into: Visitor[_, T]): T = pickleIn.transform(scala, into)
+  def fromScala[In](scala: In)(implicit transmitter: Transmitter[In]): Transmittable = new Transmittable {
+    override def transmit[T](receiver: Visitor[_, T]): T = transmitter.transmit(scala, receiver)
   }
 
 
-  def reader[T: Reader]: Reader[T] = implicitly[Reader[T]]
+  def reader[T: Receiver]: Receiver[T] = implicitly[Receiver[T]]
 
-  def writer[T: Writer]: Writer[T] = implicitly[Writer[T]]
+  def writer[T: Transmitter]: Transmitter[T] = implicitly[Transmitter[T]]
 
-  def readerWriter[T: ReaderWriter]: ReaderWriter[T] = implicitly[ReaderWriter[T]]
+  def readerTransmitter[T: Transceiver]: Transceiver[T] = implicitly[Transceiver[T]]
 
   // End Api
 }
@@ -84,15 +84,15 @@ trait AttributeTagged extends Api{
   def tagName: String = "$type"
 
   def annotate[V](rw: CaseR[V], tagName: String, tag: String) = {
-    new TaggedReader.Leaf[V](tagName, tag, rw)
+    new TaggedReceiver.Leaf[V](tagName, tag, rw)
   }
 
   def annotate[V](rw: CaseW[V], tagName: String, tag: String)(implicit c: ClassTag[V]) = {
-    new TaggedWriter.Leaf[V](c, tagName, tag, rw)
+    new TaggedTransmitter.Leaf[V](c, tagName, tag, rw)
   }
 
   def taggedExpectedMsg = "expected dictionary"
-  override def taggedObjectContext[T](taggedReader: TaggedReader[T]): ObjVisitor[Any, T] = {
+  override def taggedObjectContext[T](taggedReceiver: TaggedReceiver[T]): ObjVisitor[Any, T] = {
     new ObjVisitor[Any, T]{
       private[this] var fastPath = false
       private[this] var context: ObjVisitor[Any, _] = null
@@ -107,7 +107,7 @@ trait AttributeTagged extends Api{
       def visitKeyValue(s: Any): Unit = {
         if (context != null) context.visitKeyValue(s)
         else {
-          if (s.toString == taggedReader.tagName) () //do nothing
+          if (s.toString == taggedReceiver.tagName) () //do nothing
           else {
             // otherwise, go slow path
             val slowCtx = BufferedValue.Builder.visitObject(-1).narrow
@@ -123,7 +123,7 @@ trait AttributeTagged extends Api{
         if (context != null) context.visitValue(v)
         else {
           val typeName = objectTypeKeyReadMap(v.toString).toString
-          val facade0 = taggedReader.findReader(typeName)
+          val facade0 = taggedReceiver.findReceiver(typeName)
           if (facade0 == null) {
             throw new Abort("invalid tag for tagged object: " + typeName)
           }
@@ -137,10 +137,10 @@ trait AttributeTagged extends Api{
         else if (fastPath) context.visitEnd().asInstanceOf[T]
         else{
           val x = context.visitEnd().asInstanceOf[BufferedValue.Obj]
-          val tagInfo = x.value0.find(_._1.toString == taggedReader.tagName).getOrElse(throw new Abort(s"missing tag key: ${taggedReader.tagName}"))
+          val tagInfo = x.value0.find(_._1.toString == taggedReceiver.tagName).getOrElse(throw new Abort(s"missing tag key: ${taggedReceiver.tagName}"))
           val keyAttr = tagInfo._2
           val key = keyAttr.asInstanceOf[BufferedValue.Str].value0.toString
-          val reader = taggedReader.findReader(key)
+          val reader = taggedReceiver.findReceiver(key)
           if (reader == null){
             throw new Abort("invalid tag for tagged object: " + key)
           }
@@ -150,7 +150,7 @@ trait AttributeTagged extends Api{
           for (p <- x.value0) {
             val (k0, v) = p
             val k = k0.toString
-            if (k != taggedReader.tagName){
+            if (k != taggedReceiver.tagName){
               val keyVisitor = ctx2.visitKey()
 
               ctx2.visitKeyValue(keyVisitor.visitString(k))

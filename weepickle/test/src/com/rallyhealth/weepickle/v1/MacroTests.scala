@@ -22,7 +22,7 @@ object Custom {
   class Thing2(val i: Int, val s: String) extends ThingBase
 
   abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T){
-    implicit val thing2Writer = com.rallyhealth.weepickle.v1.WeePickle.readerWriter[String].bimap[T](
+    implicit val thing2Transmitter = com.rallyhealth.weepickle.v1.WeePickle.readerTransmitter[String].bimap[T](
       t => t.i + " " + t.s,
       str => {
         val Array(i, s) = str.toString.split(" ", 2)
@@ -41,8 +41,8 @@ object Custom {
 sealed trait TypedFoo
 object TypedFoo{
   import com.rallyhealth.weepickle.v1.WeePickle._
-  implicit val readerWriter: ReaderWriter[TypedFoo] = ReaderWriter.merge(
-    macroRW[Bar], macroRW[Baz], macroRW[Quz]
+  implicit val readerTransmitter: Transceiver[TypedFoo] = Transceiver.merge(
+    macroX[Bar], macroX[Baz], macroX[Quz]
   )
 
   case class Bar(i: Int) extends TypedFoo
@@ -57,10 +57,10 @@ object MacroTests extends TestSuite {
   // Doesn't work :(
 //  case class A_(objects: Option[C_]); case class C_(nodes: Option[C_])
 
-//  implicitly[Reader[A_]]
-//  implicitly[com.rallyhealth.weepickle.v1.old.Writer[com.rallyhealth.weepickle.v1.MixedIn.Obj.ClsB]]
+//  implicitly[Receiver[A_]]
+//  implicitly[com.rallyhealth.weepickle.v1.old.Transmitter[com.rallyhealth.weepickle.v1.MixedIn.Obj.ClsB]]
 //  println(write(ADTs.ADTc(1, "lol", (1.1, 1.2))))
-//  implicitly[com.rallyhealth.weepickle.v1.old.Writer[ADTs.ADTc]]
+//  implicitly[com.rallyhealth.weepickle.v1.old.Transmitter[ADTs.ADTc]]
 
   val tests = Tests {
     test("mixedIn"){
@@ -83,7 +83,7 @@ object MacroTests extends TestSuite {
     test("exponential"){
 
       // Doesn't even need to execute, as long as it can compile
-      val ww1 = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Writer[Exponential.A1]]
+      val ww1 = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transmitter[Exponential.A1]]
     }
 
 
@@ -154,7 +154,7 @@ object MacroTests extends TestSuite {
           test - rw(C("a", "b"), """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")
           test("mutable") {
             // Make sure that the buffering done by the macro captures immutable values.
-            val r = new WeePickle.Reader.Delegate(new MutableCharSequenceVisitor(WeePickle.reader[C]))
+            val r = new WeePickle.Receiver.Delegate(new MutableCharSequenceVisitor(WeePickle.reader[C]))
             val w = WeePickle.writer[C]
             rw(C("a", "b"), """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")(r, w)
           }
@@ -215,19 +215,19 @@ object MacroTests extends TestSuite {
       }
       test("ignoreExtraFieldsWhenDeserializing"){
         import ADTs._
-        val r1 = FromJson( """{"i":123, "j":false, "k":"haha"}""").transform(ToScala[ADTa])
+        val r1 = FromJson( """{"i":123, "j":false, "k":"haha"}""").transmit(ToScala[ADTa])
         assert(r1 == ADTa(123))
-        val r2 = FromJson( """{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""").transform(ToScala[ADTb])
+        val r2 = FromJson( """{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""").transmit(ToScala[ADTb])
         assert(r2 == ADTb(123, "kk"))
       }
     }
 
     test("custom"){
-      test("clsReaderWriter"){
+      test("clsTransceiver"){
         rw(new Custom.Thing2(1, "s"), """ "1 s" """)
         rw(new Custom.Thing2(10, "sss"), """ "10 sss" """)
       }
-      test("caseClsReaderWriter"){
+      test("caseClsTransceiver"){
         rw(new Custom.Thing3(1, "s"), """ "1 s" """)
         rw(new Custom.Thing3(10, "sss"), """ "10 sss" """)
       }

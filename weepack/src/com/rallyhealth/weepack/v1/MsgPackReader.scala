@@ -6,21 +6,21 @@ import com.rallyhealth.weepack.v1.{MsgPackKeys => MPK}
 
 import scala.annotation.switch
 
-class MsgPackReader(val startIndex: Int = 0, input0: Array[Byte]) extends BaseMsgPackReader {
+class MsgPackReceiver(val startIndex: Int = 0, input0: Array[Byte]) extends BaseMsgPackReceiver {
   def sliceString(i: Int, k: Int): String = new String(input0, i, k - i)
   def sliceBytes(i: Int, n: Int): (Array[Byte], Int, Int) = (input0, i, n)
   def byte(i: Int): Byte = input0(i)
   def dropBufferUntil(i: Int): Unit = ()//donothing
 }
 
-class InputStreamMsgPackReader(val data: java.io.InputStream,
+class InputStreamMsgPackReceiver(val data: java.io.InputStream,
                                val minStartBufferSize: Int,
                                val maxStartBufferSize: Int)
-extends BaseMsgPackReader with BufferingInputStreamParser{
+extends BaseMsgPackReceiver with BufferingInputStreamParser{
   def startIndex = 0
 }
 
-abstract class BaseMsgPackReader{
+abstract class BaseMsgPackReceiver{
 
   def startIndex: Int
   def byte(i: Int): Byte

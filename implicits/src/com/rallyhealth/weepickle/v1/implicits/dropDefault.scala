@@ -4,7 +4,7 @@ import scala.annotation.StaticAnnotation
 
 /**
   * If the value of the annotated field .equals() the default value at runtime,
-  * then the macro-generated Writer will omit both the key and value from the serialized blob.
+  * then the macro-generated Transmitter will omit both the key and value from the serialized blob.
   *
   * ==Example==
   * {{{

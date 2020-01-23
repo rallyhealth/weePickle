@@ -17,7 +17,7 @@ class ValueSpec
 
   property("roundtrip: Visitor") {
     forAll { value: Value =>
-      value.transform(Value) should ===(value)
+      value.transmit(Value) should ===(value)
     }
   }
 

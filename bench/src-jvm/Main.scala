@@ -55,14 +55,14 @@ object Main{
   }
   def weejsonAst(duration: Int) = {
     Common.bench0[String, com.rallyhealth.weejson.v1.Value](duration, Common.benchmarkSampleJson)(
-      FromJson(_).transform(Value),
+      FromJson(_).transmit(Value),
       _.render()
     )
   }
   def weepackAst(duration: Int) = {
     Common.bench0[Array[Byte], com.rallyhealth.weepack.v1.Msg](duration, Common.benchmarkSampleMsgPack)(
-      FromMsgPack(_).transform(Msg),
-      _.transform(ToMsgPack.bytes)
+      FromMsgPack(_).transmit(Msg),
+      _.transmit(ToMsgPack.bytes)
     )
   }
   def playJsonAst(duration: Int) = {

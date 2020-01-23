@@ -9,7 +9,7 @@ import scala.language.{existentials, higherKinds}
  * Implementation of macros used by weepickle to serialize and deserialize
  * case classes automatically. You probably shouldn't need to use these
  * directly, since they are called implicitly when trying to read/write
- * types you don't have a Reader/Writer in scope for.
+ * types you don't have a Receiver/Transmitter in scope for.
  */
 object Macros {
 
@@ -65,7 +65,7 @@ object Macros {
       assumeDefaultNone: Boolean,
       omitDefault: Boolean,
       default: c.Tree,
-      localReader : TermName,
+      localReceiver : TermName,
       aggregate : TermName
     ) {
       def writingCheckDefault: Boolean = hasDefault && omitDefault
@@ -133,7 +133,7 @@ object Macros {
           assumeDefaultNone = isOptionWithoutDefault,
           omitDefault = shouldDropDefault(argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
-          localReader = TermName("localReader" + index),
+          localReceiver = TermName("localReceiver" + index),
           aggregate = TermName("aggregated" + index)
         )
       }
@@ -297,7 +297,7 @@ object Macros {
       q"""
         ..${
           for (arg <- args)
-          yield q"private[this] lazy val ${arg.localReader} = implicitly[${c.prefix}.Reader[${arg.argType}]]"
+          yield q"private[this] lazy val ${arg.localReceiver} = implicitly[${c.prefix}.Receiver[${arg.argType}]]"
         }
         new ${c.prefix}.CaseR[$targetType]{
           override def visitObject(length: Int) = new CaseObjectContext{
@@ -359,7 +359,7 @@ object Macros {
               case -1 => com.rallyhealth.weepickle.v1.core.NoOpVisitor
               case ..${
                 for (arg <- args)
-                yield cq"${arg.i} => ${arg.localReader} "
+                yield cq"${arg.i} => ${arg.localReceiver} "
               }
             }
           }
@@ -367,7 +367,7 @@ object Macros {
       """
     }
     def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
-      q"${c.prefix}.Reader.merge[$targetType](..$subtrees)"
+      q"${c.prefix}.Receiver.merge[$targetType](..$subtrees)"
     }
   }
 
@@ -401,8 +401,8 @@ object Macros {
               ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped})
             )
           )
-          val w = implicitly[${c.prefix}.Writer[${arg.argType}]]
-          ctx.narrow.visitValue(w.write(ctx.subVisitor, v.${TermName(arg.raw)}))
+          val w = implicitly[${c.prefix}.Transmitter[${arg.argType}]]
+          ctx.narrow.visitValue(w.transmit(v.${TermName(arg.raw)}, ctx.subVisitor))
         """
 
         /**
@@ -433,7 +433,7 @@ object Macros {
        """
     }
     def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
-      q"${c.prefix}.Writer.merge[$targetType](..$subtree)"
+      q"${c.prefix}.Transmitter.merge[$targetType](..$subtree)"
     }
   }
   def macroRImpl[T, R[_]](c0: scala.reflect.macros.blackbox.Context)
@@ -446,7 +446,7 @@ object Macros {
     c0.Expr[R[T]](res)
   }
 
-  def macroWImpl[T, W[_]](c0: scala.reflect.macros.blackbox.Context)
+  def macroTImpl[T, W[_]](c0: scala.reflect.macros.blackbox.Context)
                          (implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[W[_]]): c0.Expr[W[T]] = {
     val res = new Writing[W]{
       val c: c0.type = c0

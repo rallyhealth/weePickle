@@ -115,18 +115,18 @@ object implicits extends Module {
       ammonite.ops.mkdir(dir / "weepickle")
       val tuples = (1 to 22).map{ i =>
         def commaSeparated(s: Int => String) = (1 to i).map(s).mkString(", ")
-        val writerTypes = commaSeparated(j => s"T$j: Writer")
-        val readerTypes = commaSeparated(j => s"T$j: Reader")
+        val writerTypes = commaSeparated(j => s"T$j: Transmitter")
+        val readerTypes = commaSeparated(j => s"T$j: Receiver")
         val typeTuple = commaSeparated(j => s"T$j")
-        val implicitWriterTuple = commaSeparated(j => s"implicitly[Writer[T$j]]")
-        val implicitReaderTuple = commaSeparated(j => s"implicitly[Reader[T$j]]")
+        val implicitTransmitterTuple = commaSeparated(j => s"implicitly[Transmitter[T$j]]")
+        val implicitReceiverTuple = commaSeparated(j => s"implicitly[Receiver[T$j]]")
         val lookupTuple = commaSeparated(j => s"x(${j-1})")
         val fieldTuple = commaSeparated(j => s"x._$j")
         s"""
-        implicit def Tuple${i}Writer[$writerTypes]: TupleNWriter[Tuple$i[$typeTuple]] =
-          new TupleNWriter[Tuple$i[$typeTuple]](Array($implicitWriterTuple), x => if (x == null) null else Array($fieldTuple))
-        implicit def Tuple${i}Reader[$readerTypes]: TupleNReader[Tuple$i[$typeTuple]] =
-          new TupleNReader(Array($implicitReaderTuple), x => Tuple$i($lookupTuple).asInstanceOf[Tuple$i[$typeTuple]])
+        implicit def Tuple${i}Transmitter[$writerTypes]: TupleNTransmitter[Tuple$i[$typeTuple]] =
+          new TupleNTransmitter[Tuple$i[$typeTuple]](Array($implicitTransmitterTuple), x => if (x == null) null else Array($fieldTuple))
+        implicit def Tuple${i}Receiver[$readerTypes]: TupleNReceiver[Tuple$i[$typeTuple]] =
+          new TupleNReceiver(Array($implicitReceiverTuple), x => Tuple$i($lookupTuple).asInstanceOf[Tuple$i[$typeTuple]])
         """
       }
 

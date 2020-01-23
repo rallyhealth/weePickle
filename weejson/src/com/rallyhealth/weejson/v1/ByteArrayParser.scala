@@ -7,6 +7,6 @@ import com.rallyhealth.weepickle.v1.core.Visitor
 object ByteArrayParser extends Transformer[Array[Byte]] {
 
   override def transform[T](j: Array[Byte], f: Visitor[_, T]): T = {
-    FromJson(j).transform(f)
+    FromJson(j).transmit(f)
   }
 }

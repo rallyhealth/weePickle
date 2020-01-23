@@ -7,14 +7,14 @@ import utest._
 case class Fee(i: Int, s: String)
 sealed trait Fi
 object Fi{
-  implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Fi] = com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter.merge(Fo.rw2, Fum.rw2)
+  implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fi] = com.rallyhealth.weepickle.v1.WeePickle.Transceiver.merge(Fo.rw2, Fum.rw2)
   case class Fo(i: Int) extends Fi
   object Fo{
-    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Fo] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fo] = com.rallyhealth.weepickle.v1.WeePickle.macroX
   }
   case class Fum(s: String) extends Fi
   object Fum{
-    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Fum] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
+    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fum] = com.rallyhealth.weepickle.v1.WeePickle.macroX
   }
 }
 /**
@@ -73,7 +73,7 @@ object FailureTests extends TestSuite {
       val res =
         for(failureCase <- failureCases)
         yield try {
-          intercept[Exception] { FromJson(failureCase).transform(ToScala[com.rallyhealth.weejson.v1.Value]) }
+          intercept[Exception] { FromJson(failureCase).transmit(ToScala[com.rallyhealth.weejson.v1.Value]) }
           None
         }catch{
           case _:Throwable =>
@@ -82,13 +82,13 @@ object FailureTests extends TestSuite {
 
       val nonFailures = res.flatten
       assert(nonFailures.isEmpty)
-      intercept[Exception]{FromJson(""" {"Comma instead if closing brace": true, """).transform(ToScala[com.rallyhealth.weejson.v1.Value])}
-      intercept[Exception]{FromJson(""" ["Unclosed array" """).transform(ToScala[com.rallyhealth.weejson.v1.Value])}
+      intercept[Exception]{FromJson(""" {"Comma instead if closing brace": true, """).transmit(ToScala[com.rallyhealth.weejson.v1.Value])}
+      intercept[Exception]{FromJson(""" ["Unclosed array" """).transmit(ToScala[com.rallyhealth.weejson.v1.Value])}
     }
 
     test("facadeFailures"){
-      def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v1.WeePickle.Reader](s: String, msgs: String*) = {
-        val err = intercept[TransformException] { FromJson(s).transform(ToScala[T]) }
+      def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v1.WeePickle.Receiver](s: String, msgs: String*) = {
+        val err = intercept[TransformException] { FromJson(s).transmit(ToScala[T]) }
         val errMsgs = Seq(err.getMessage, err.getCause.getMessage)
         for (msg <- msgs) assert(errMsgs.exists(_.contains(msg)))
         err
@@ -113,26 +113,26 @@ object FailureTests extends TestSuite {
       compileError("""read[Object]("")""")
 //      compileError("""read[Array[Object]]("")""").msg
       // Make sure this doesn't hang the compiler =/
-      compileError("implicitly[com.rallyhealth.weepickle.v1.WeePickle.Reader[Nothing]]")
+      compileError("implicitly[com.rallyhealth.weepickle.v1.WeePickle.Receiver[Nothing]]")
     }
     test("expWholeNumbers"){
-      FromJson("0e0").transform(ToScala[Byte]) ==> 0.toByte
-      FromJson("0e0").transform(ToScala[Short]) ==> 0
-      FromJson("0e0").transform(ToScala[Char]) ==> 0.toChar
-      FromJson("0e0").transform(ToScala[Int]) ==> 0
-      FromJson("0e0").transform(ToScala[Long]) ==> 0
+      FromJson("0e0").transmit(ToScala[Byte]) ==> 0.toByte
+      FromJson("0e0").transmit(ToScala[Short]) ==> 0
+      FromJson("0e0").transmit(ToScala[Char]) ==> 0.toChar
+      FromJson("0e0").transmit(ToScala[Int]) ==> 0
+      FromJson("0e0").transmit(ToScala[Long]) ==> 0
 
-      FromJson("10e1").transform(ToScala[Byte]) ==> 100
-      FromJson("10e1").transform(ToScala[Short]) ==> 100
-      FromJson("10e1").transform(ToScala[Char]) ==> 100
-      FromJson("10e1").transform(ToScala[Int]) ==> 100
-      FromJson("10e1").transform(ToScala[Long]) ==> 100
+      FromJson("10e1").transmit(ToScala[Byte]) ==> 100
+      FromJson("10e1").transmit(ToScala[Short]) ==> 100
+      FromJson("10e1").transmit(ToScala[Char]) ==> 100
+      FromJson("10e1").transmit(ToScala[Int]) ==> 100
+      FromJson("10e1").transmit(ToScala[Long]) ==> 100
 
-      FromJson("10.1e1").transform(ToScala[Byte]) ==> 101
-      FromJson("10.1e1").transform(ToScala[Short]) ==> 101
-      FromJson("10.1e1").transform(ToScala[Char]) ==> 101
-      FromJson("10.1e1").transform(ToScala[Int]) ==> 101
-      FromJson("10.1e1").transform(ToScala[Long]) ==> 101
+      FromJson("10.1e1").transmit(ToScala[Byte]) ==> 101
+      FromJson("10.1e1").transmit(ToScala[Short]) ==> 101
+      FromJson("10.1e1").transmit(ToScala[Char]) ==> 101
+      FromJson("10.1e1").transmit(ToScala[Int]) ==> 101
+      FromJson("10.1e1").transmit(ToScala[Long]) ==> 101
 
       // Not supporting these for now, since AFAIK none of the
       // JSON serializers I know generate numbers of this form
@@ -177,13 +177,13 @@ object FailureTests extends TestSuite {
         57, 58, 59, 60, 61, 62, 63,
         64
       )
-      implicit val b63rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Big63] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
-      implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Big64] = com.rallyhealth.weepickle.v1.WeePickle.macroRW
-      val written63 = FromScala(b63).transform(ToJson.string)
-      assert(FromJson(written63).transform(ToScala[Big63]) == b63)
-      val written64 = FromScala(b64).transform(ToJson.string)
-      assert(FromJson(written64).transform(ToScala[Big64]) == b64)
-      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.ReaderWriter[Big65] = com.rallyhealth.weepickle.v1.WeePickle.macroRW}")
+      implicit val b63rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big63] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+      implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big64] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+      val written63 = FromScala(b63).transmit(ToJson.string)
+      assert(FromJson(written63).transmit(ToScala[Big63]) == b63)
+      val written64 = FromScala(b64).transmit(ToJson.string)
+      assert(FromJson(written64).transmit(ToScala[Big64]) == b64)
+      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big65] = com.rallyhealth.weepickle.v1.WeePickle.macroX}")
       assert(err.msg.contains("weepickle does not support serializing case classes with >64 fields"))
     }
   }

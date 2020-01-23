@@ -23,13 +23,13 @@ object JvmExampleTests extends TestSuite {
       Files.write(f, original.getBytes)
 
 
-      FromJson(f).transform(ToScala[Thing]) ==> Thing(1, "gg")
-      FromJson(f.toFile).transform(ToScala[Thing]) ==> Thing(1, "gg")
+      FromJson(f).transmit(ToScala[Thing]) ==> Thing(1, "gg")
+      FromJson(f.toFile).transmit(ToScala[Thing]) ==> Thing(1, "gg")
     }
     test("other"){
       test("argonaut"){
         import com.rallyhealth.weejson.v1.argonaut.ArgonautJson
-        val argJson: argonaut.Json = FromJson("""["hello", "world"]""").transform(ArgonautJson)
+        val argJson: argonaut.Json = FromJson("""["hello", "world"]""").transmit(ArgonautJson)
 
         val updatedArgJson = argJson.withArray(_.map(_.withString(_.toUpperCase)))
 
@@ -40,7 +40,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = FromScala(items).transform(ArgonautJson)
+        val rewritten = FromScala(items).transmit(ArgonautJson)
 
         val stringified = ArgonautJson.transform(rewritten, StringRenderer()).toString
 
@@ -48,7 +48,7 @@ object JvmExampleTests extends TestSuite {
       }
       test("circe"){
         import com.rallyhealth.weejson.v1.circe.CirceJson
-        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
+        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transmit(CirceJson)
 
         val updatedCirceJson =
           circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
@@ -60,7 +60,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = FromScala(items).transform(CirceJson)
+        val rewritten = FromScala(items).transmit(CirceJson)
 
         val stringified = CirceJson.transform(rewritten, StringRenderer()).toString
 
@@ -68,7 +68,7 @@ object JvmExampleTests extends TestSuite {
       }
       test("json4s"){
         import org.json4s.JsonAST
-        val json4sJson: JsonAST.JValue = FromJson("""["hello", "world"]""").transform(Json4sJson)
+        val json4sJson: JsonAST.JValue = FromJson("""["hello", "world"]""").transmit(Json4sJson)
 
         val updatedJson4sJson = JsonAST.JArray(
           for(v <- json4sJson.children)
@@ -82,7 +82,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = FromScala(items).transform(Json4sJson)
+        val rewritten = FromScala(items).transmit(Json4sJson)
 
         val stringified = Json4sJson.transform(rewritten, StringRenderer()).toString
 
@@ -91,7 +91,7 @@ object JvmExampleTests extends TestSuite {
       test("playJson"){
         import com.rallyhealth.weejson.v1.play.PlayJson
         import play.api.libs.json._
-        val playJson: play.api.libs.json.JsValue = FromJson("""["hello", "world"]""").transform(PlayJson)
+        val playJson: play.api.libs.json.JsValue = FromJson("""["hello", "world"]""").transmit(PlayJson)
 
         val updatedPlayJson = JsArray(
           for(v <- playJson.as[JsArray].value)
@@ -105,7 +105,7 @@ object JvmExampleTests extends TestSuite {
 
         items ==> Seq("HELLO", "WORLD")
 
-        val rewritten = FromScala(items).transform(PlayJson)
+        val rewritten = FromScala(items).transmit(PlayJson)
 
         val stringified = PlayJson.transform(rewritten, StringRenderer()).toString
 
@@ -113,7 +113,7 @@ object JvmExampleTests extends TestSuite {
       }
       test("crossAst"){
         import com.rallyhealth.weejson.v1.circe.CirceJson
-        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
+        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transmit(CirceJson)
 
         val updatedCirceJson =
           circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))

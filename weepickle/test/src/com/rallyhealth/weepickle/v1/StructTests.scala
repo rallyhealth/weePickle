@@ -130,8 +130,8 @@ object StructTests extends TestSuite {
         implicit val r = WeePickle.macroR[Bar]
 
         //the following reader always returns Bar() even when input is null
-        implicit val barDelegateReader = new WeePickle.Reader.Delegate[Any, Bar](
-          implicitly[WeePickle.Reader[Bar]]
+        implicit val barDelegateReceiver = new WeePickle.Receiver.Delegate[Any, Bar](
+          implicitly[WeePickle.Receiver[Bar]]
             .map(identity)
         ) {
           override def visitNull(): AlwaysReturn.Bar = Bar()
@@ -140,10 +140,10 @@ object StructTests extends TestSuite {
 
       import AlwaysReturn._
 
-      assert(FromJson("""{}""").transform(ToScala[Bar]) == Bar())
-      assert(FromJson("""null""").transform(ToScala[Bar]) == Bar()) //when input is null
-      assert(FromJson("""{}""").transform(ToScala[Option[Bar]]) == Some(Bar()))
-      assert(FromJson("""null""").transform(ToScala[Option[Bar]]) == None)
+      assert(FromJson("""{}""").transmit(ToScala[Bar]) == Bar())
+      assert(FromJson("""null""").transmit(ToScala[Bar]) == Bar()) //when input is null
+      assert(FromJson("""{}""").transmit(ToScala[Option[Bar]]) == Some(Bar()))
+      assert(FromJson("""null""").transmit(ToScala[Option[Bar]]) == None)
     }
 
     test("assume None as default for Option types") {
@@ -151,7 +151,7 @@ object StructTests extends TestSuite {
         case class Bar(noDefault: Option[Int])
         implicit val r = WeePickle.macroR[Bar]
       }
-      assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(None))
+      assert(FromJson("""{}""").transmit(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(None))
     }
 
     test("use explicitly-provided default for Option types") {
@@ -159,7 +159,7 @@ object StructTests extends TestSuite {
         case class Bar(noDefault: Option[Int] = Some(1))
         implicit val r = WeePickle.macroR[Bar]
       }
-      assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(Some(1)))
+      assert(FromJson("""{}""").transmit(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(Some(1)))
     }
 
     test("either"){
@@ -213,21 +213,21 @@ object StructTests extends TestSuite {
         type Thing = Seq[List[Map[Option[String], String]]]
         val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
         val out = new ByteArrayOutputStream()
-        FromScala(thing).transform(ToJson.outputStream(out))
-        out.toByteArray ==> FromScala(thing).transform(ToJson.string).getBytes
+        FromScala(thing).transmit(ToJson.outputStream(out))
+        out.toByteArray ==> FromScala(thing).transmit(ToJson.string).getBytes
       }
       test("msgpack") {
         type Thing = Seq[List[Map[Option[String], String]]]
         val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
         val out = new ByteArrayOutputStream()
-        FromScala(thing).transform(ToMsgPack.outputStream(out))
-        out.toByteArray ==> FromScala(thing).transform(ToMsgPack.bytes)
+        FromScala(thing).transmit(ToMsgPack.outputStream(out))
+        out.toByteArray ==> FromScala(thing).transmit(ToMsgPack.bytes)
       }
     }
 
     test("transmutation"){
       test("vectorToList"){
-        val vectorToList = FromJson(FromScala(Vector(1.1, 2.2, 3.3)).transform(ToJson.string)).transform(ToScala[List[Double]])
+        val vectorToList = FromJson(FromScala(Vector(1.1, 2.2, 3.3)).transmit(ToJson.string)).transmit(ToScala[List[Double]])
         assert(
           vectorToList.isInstanceOf[List[Double]],
           vectorToList == List(1.1, 2.2, 3.3)
@@ -235,7 +235,7 @@ object StructTests extends TestSuite {
 
       }
       test("listToMap"){
-        val listToMap = FromJson(FromScala(List((1, "1"), (2, "2"))).transform(ToJson.string)).transform(ToScala[Map[Int, String]])
+        val listToMap = FromJson(FromScala(List((1, "1"), (2, "2"))).transmit(ToJson.string)).transmit(ToScala[Map[Int, String]])
         assert(
           listToMap.isInstanceOf[Map[Int, String]],
           listToMap == Map(1 -> "1", 2 -> "2")
