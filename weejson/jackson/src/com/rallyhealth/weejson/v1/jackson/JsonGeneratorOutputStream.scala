@@ -42,16 +42,11 @@ class JsonGeneratorOutputStream(
   }
 
   private def digest(): Unit = {
-    try {
-      var token = parser.nextToken()
+    var token = parser.nextToken()
 
-      while (token != null && token != JsonToken.NOT_AVAILABLE) {
-        generator.copyCurrentEvent(parser)
-        token = parser.nextToken()
-      }
-    } catch {
-      case NonFatal(t) =>
-        throw JsonParserException("Parser or Visitor failure", parser, t)
+    while (token != null && token != JsonToken.NOT_AVAILABLE) {
+      generator.copyCurrentEvent(parser)
+      token = parser.nextToken()
     }
   }
 
