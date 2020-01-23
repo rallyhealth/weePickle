@@ -12,14 +12,14 @@ import com.rallyhealth.weejson.v1.{StringRenderer, Value}
 import com.rallyhealth.weejson.v1.jackson.FromJson
 import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack}
 
-object Main{
+object Main {
   import ADTs.ADT0
   import Defaults._
   import Generic.ADT
   import Hierarchy._
   import Recursive._
   def main(args: Array[String]): Unit = {
-    for(duration <- Seq(1)){
+    for (duration <- Seq(1)) {
       println("RUN JVM: " + duration)
       println()
 
@@ -153,7 +153,7 @@ object Main{
           objectParser.nextToken()
           if (curNode.has("c")) {
             objectParser.readValueAs[Node](classOf[Node])
-          } else{
+          } else {
             End
           }
         }

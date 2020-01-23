@@ -5,19 +5,19 @@ import com.rallyhealth.weepickle.v1.core.TestUtil
 import utest._
 
 import scala.collection.mutable
-object MsgPackJvmTests extends TestSuite{
+object MsgPackJvmTests extends TestSuite {
   def readBytes(path: String) = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path))
   def readMsgs(path: String) = {
     val bytes = readBytes(path)
     val output = mutable.ArrayBuffer.empty[Msg]
     val p = new MsgPackReceiver(0, bytes)
-    while(p.index < bytes.length){
+    while (p.index < bytes.length) {
       output.append(p.parse(Msg))
     }
     com.rallyhealth.weepack.v1.Arr(output)
   }
-  val tests = Tests{
-    test("hello"){
+  val tests = Tests {
+    test("hello") {
 
       // Taken from:
       // https://github.com/msgpack/msgpack-ruby/tree/a22d8268f82e0f2ae95f038285af43ce5971810e/spec

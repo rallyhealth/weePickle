@@ -59,8 +59,7 @@ class JsonGeneratorOutputStream(
       // flush parser's internal buffer.
       parser.endOfInput()
       digest()
-    }
-    finally {
+    } finally {
       Try(generator.close())
       Try(parser.close())
     }

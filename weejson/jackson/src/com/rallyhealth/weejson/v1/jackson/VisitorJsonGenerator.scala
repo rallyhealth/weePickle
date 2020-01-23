@@ -238,7 +238,8 @@ private final class TextBufferCharSequence(var buf: Array[Char], var off: Int, v
 
   override def charAt(index: Int): Char = buf(off + index)
 
-  override def subSequence(start: Int, end: Int): CharSequence = new TextBufferCharSequence(buf, off + start, end - start)
+  override def subSequence(start: Int, end: Int): CharSequence =
+    new TextBufferCharSequence(buf, off + start, end - start)
 
   override def toString: String = new String(buf, off, length)
 

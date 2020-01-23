@@ -7,16 +7,15 @@ import java.time.format.DateTimeFormatter
 import com.rallyhealth.weepack.v1.Msg.visitString
 import com.rallyhealth.weepack.v1.{MsgPackKeys => MPK}
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
-class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream())
-    extends MsgVisitor[T, T] {
+class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream()) extends MsgVisitor[T, T] {
   override def visitArray(length: Int): ArrVisitor[T, T] = new ArrVisitor[T, T] {
     require(length != -1, "Length of com.rallyhealth.weepack.v1 array must be known up front")
-    if (length <= 15){
+    if (length <= 15) {
       out.write(MPK.FixArrMask | length)
-    }else if (length <= 65535){
+    } else if (length <= 65535) {
       out.write(MPK.Array16)
       writeUInt16(length)
-    }else {
+    } else {
       out.write(MPK.Array32)
       writeUInt32(length)
     }
@@ -27,12 +26,12 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
 
   override def visitObject(length: Int): ObjVisitor[T, T] = new ObjVisitor[T, T] {
     require(length != -1, "Length of com.rallyhealth.weepack.v1 object must be known up front")
-    if (length <= 15){
+    if (length <= 15) {
       out.write(MPK.FixMapMask | length)
-    }else if (length <= 65535){
+    } else if (length <= 65535) {
       out.write(MPK.Map16)
       writeUInt16(length)
-    }else {
+    } else {
       out.write(MPK.Map32)
       writeUInt32(length)
     }
@@ -42,7 +41,6 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
     def visitValue(v: T): Unit = () // do nothing
     def visitEnd(): T = out // do nothing
   }
-
 
   override def visitNull(): T = {
     out.write(MPK.Nil)
@@ -74,30 +72,30 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
     out
   }
   override def visitInt32(i: Int): T = {
-    if (i >= 0){
+    if (i >= 0) {
       if (i <= 127) out.write(i)
-      else if (i <= 255){
+      else if (i <= 255) {
         out.write(MPK.UInt8)
         out.write(i)
-      } else if(i <= Short.MaxValue){
+      } else if (i <= Short.MaxValue) {
         out.write(MPK.Int16)
         writeUInt16(i)
-      } else if (i <= 0xffff){
+      } else if (i <= 0xffff) {
         out.write(MPK.UInt16)
         writeUInt16(i)
-      } else{
+      } else {
         out.write(MPK.Int32)
         writeUInt32(i)
       }
-    }else{
+    } else {
       if (i >= -32) out.write(i | 0xe0)
-      else if(i >= -128){
+      else if (i >= -128) {
         out.write(MPK.Int8)
         out.write(i)
-      }else if (i >= Short.MinValue) {
+      } else if (i >= Short.MinValue) {
         out.write(MPK.Int16)
         writeUInt16(i)
-      } else{
+      } else {
         out.write(MPK.Int32)
         writeUInt32(i)
       }
@@ -107,12 +105,12 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
   }
 
   override def visitInt64(l: Long): T = {
-    if (l >= Int.MinValue && l <= Int.MaxValue){
+    if (l >= Int.MinValue && l <= Int.MaxValue) {
       visitInt32(l.toInt)
-    }else if (l >= 0 && l <= 0xffffffffL){
+    } else if (l >= 0 && l <= 0XFFFFFFFFL) {
       out.write(MPK.UInt32)
       writeUInt32(l.toInt)
-    }else{
+    } else {
       out.write(MPK.Int64)
       writeUInt64(l)
     }
@@ -121,7 +119,7 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
 
   override def visitUInt64(ul: Long): T = {
     if (ul >= 0) visitInt64(ul)
-    else{
+    else {
       out.write(MPK.UInt64)
       writeUInt64(ul)
     }
@@ -131,15 +129,15 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
   override def visitString(cs: CharSequence): T = {
     val bytes = cs.toString.getBytes(StandardCharsets.UTF_8)
     val length = bytes.length
-    if (length <= 31){
+    if (length <= 31) {
       out.write(MPK.FixStrMask | length)
-    } else if (length <= 255){
+    } else if (length <= 255) {
       out.write(MPK.Str8)
       writeUInt8(length)
-    }else if (length <= 65535){
+    } else if (length <= 65535) {
       out.write(MPK.Str16)
       writeUInt16(length)
-    }else {
+    } else {
       out.write(MPK.Str32)
       writeUInt32(length)
     }
@@ -185,20 +183,20 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
   }
 
   def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): T = {
-    len match{
-      case 1 => out.write(MPK.FixExt1)
-      case 2 => out.write(MPK.FixExt2)
-      case 4 => out.write(MPK.FixExt4)
-      case 8 => out.write(MPK.FixExt8)
+    len match {
+      case 1  => out.write(MPK.FixExt1)
+      case 2  => out.write(MPK.FixExt2)
+      case 4  => out.write(MPK.FixExt4)
+      case 8  => out.write(MPK.FixExt8)
       case 16 => out.write(MPK.FixExt16)
       case _ =>
-        if (len <= 255){
+        if (len <= 255) {
           out.write(MPK.Ext8)
           writeUInt8(len)
-        }else if (len <= 65535){
+        } else if (len <= 65535) {
           out.write(MPK.Ext16)
           writeUInt16(len)
-        }else{
+        } else {
           writeUInt32(len)
           out.write(MPK.Ext32)
         }
@@ -217,7 +215,8 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
   override def visitTimestamp(instant: Instant): T = {
     val seconds: Long = instant.getEpochSecond
     val nanos: Int = instant.getNano
-    if (nanos == 0 && (seconds & 0xffffffff00000000L) == 0L) {
+    if (nanos == 0 && (seconds & 0XFFFFFFFF00000000L) == 0L) {
+
       /**
         * timestamp 32 stores the number of seconds that have elapsed since 1970-01-01 00:00:00 UTC
         * in an 32-bit unsigned integer:
@@ -231,6 +230,7 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
     } else {
       val seconds34 = seconds & ((1L << 34) - 1)
       if (seconds34 == seconds) {
+
         /**
           * timestamp 64 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in 32-bit unsigned integers:
@@ -243,6 +243,7 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
         out.write(-1)
         writeUInt64(nano30secs34)
       } else {
+
         /**
           * timestamp 96 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in 64-bit signed integer and 32-bit unsigned integer:

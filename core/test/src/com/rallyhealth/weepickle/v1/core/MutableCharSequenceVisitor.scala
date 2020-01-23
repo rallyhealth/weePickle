@@ -48,7 +48,8 @@ class MutableCharSequenceVisitor[T, J](v: Visitor[T, J]) extends Visitor.Delegat
     super.visitString(mut)
   }
 
-  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = withMutableString(cs) { mut =>
-    super.visitFloat64StringParts(mut, decIndex, expIndex)
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = withMutableString(cs) {
+    mut =>
+      super.visitFloat64StringParts(mut, decIndex, expIndex)
   }
 }

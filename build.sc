@@ -7,6 +7,7 @@ import mill.scalalib.publish._
 import mill.scalajslib._
 import com.typesafe.tools.mima.lib.MiMaLib
 import com.typesafe.tools.mima.core._
+import mill.scalalib.scalafmt.ScalafmtModule
 
 val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
 val scalaPlayVersions = Seq(
@@ -16,7 +17,7 @@ val scalaPlayVersions = Seq(
   ("2.13.0", "2.7.4")
 )
 
-trait CommonModule extends ScalaModule {
+trait CommonModule extends ScalaModule with ScalafmtModule {
 
   protected def shade(name: String) = name + "-v1"
 
@@ -156,6 +157,7 @@ object implicits extends Module {
     }
   }
 }
+
 
 object weepack extends Module {
 

@@ -10,7 +10,7 @@ import org.scalatest.{FreeSpec, LoneElement, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class JsonGeneratorOutputStreamSpec
-  extends FreeSpec
+    extends FreeSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with GenValue

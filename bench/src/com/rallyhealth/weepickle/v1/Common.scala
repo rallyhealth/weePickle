@@ -6,25 +6,27 @@ import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.ToMsgPack
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 
-object Common{
+object Common {
   import ADTs.ADT0
   import Defaults._
   import Generic.ADT
   import Hierarchy._
   import Recursive._
   type Data = ADT[Seq[(Int, Int)], String, A, LL, ADTc, ADT0]
-  val benchmarkSampleData: Seq[Data] = Seq.fill(1000)(ADT(
-    Vector((1, 2), (3, 4), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13)),
-    """
+  val benchmarkSampleData: Seq[Data] = Seq.fill(1000)(
+    ADT(
+      Vector((1, 2), (3, 4), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13)),
+      """
       |I am cow, hear me moo
       |I weigh twice as much as you
       |And I look good on the barbecueeeee
     """.stripMargin,
-    C("lol i am a noob", "haha you are a noob"): A,
-    Node(-11, Node(-22, Node(-33, Node(-44, End)))): LL,
-    ADTc(i = 1234567890, s = "i am a strange loop"),
-    ADT0()
-  ))
+      C("lol i am a noob", "haha you are a noob"): A,
+      Node(-11, Node(-22, Node(-33, Node(-44, End)))): LL,
+      ADTc(i = 1234567890, s = "i am a strange loop"),
+      ADT0()
+    )
+  )
   val benchmarkSampleJson = FromScala(benchmarkSampleData).transmit(ToJson.string)
   val benchmarkSampleJsonBytes = benchmarkSampleJson.getBytes(UTF_8)
   val benchmarkSampleMsgPack = FromScala(benchmarkSampleData).transmit(ToMsgPack.bytes)
@@ -82,7 +84,6 @@ object Common{
 
       def writes(o: ADT0) = JsObject(Nil)
     }
-
 
     bench[String](duration)(
       s => Json.fromJson[Seq[Data]](Json.parse(s)).get,
@@ -176,8 +177,6 @@ object Common{
       def writes(o: ADT0) = JsObject(Nil)
     }
 
-
-
     bench[String](duration)(
       s => Json.fromJson[Seq[Data]](Json.parse(s)).get,
       d => Json.stringify(Json.toJson(d))
@@ -186,15 +185,24 @@ object Common{
   }
 
   def weepickleDefaultCached(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
 
     bench[String](duration)(
       FromJson(_).transmit(ToScala[Seq[Data]]),
@@ -202,15 +210,24 @@ object Common{
     )
   }
   def weepickleDefaultCachedByteArray(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
 
     bench[Array[Byte]](duration)(
       FromJson(_).transmit(ToScala[Seq[Data]]),
@@ -218,15 +235,24 @@ object Common{
     )
   }
   def weepickleDefaultCachedReadable(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
 
 //    bench[String](duration)(
 //      x => FromJson(x: com.rallyhealth.weepickle.v1.geny.ReadableAsBytes).transform(ToScala[Seq[Data]]),
@@ -235,15 +261,24 @@ object Common{
   }
 
   def weepickleDefaultCachedReadablePath(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
 
 //    bench[java.nio.file.Path](duration)(
 //      file => com.rallyhealth.weepickle.v1.WeePickle.read[Seq[Data]](java.nio.file.Files.newInputStream(file): com.rallyhealth.weepickle.v1.geny.ReadableAsBytes),
@@ -256,15 +291,24 @@ object Common{
   }
 
   def weepickleDefaultBinaryCached(duration: Int) = {
-    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw1: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Data] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[A] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw3: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[B] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw4: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[C] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw5: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[LL] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw6: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Node] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw7: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[End.type] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw8: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADTc] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit lazy val rw9: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[ADT0] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
 
     bench[Array[Byte]](duration)(
       FromJson(_).transmit(ToScala[Seq[Data]]),
@@ -291,9 +335,9 @@ object Common{
 //    )
 //  }
 
-  def bench[T](duration: Int)
-              (f1: T => Seq[Data], f2: Seq[Data] => T, checkEqual: Boolean = true)
-              (implicit name: sourcecode.Name) = {
+  def bench[T](
+    duration: Int
+  )(f1: T => Seq[Data], f2: Seq[Data] => T, checkEqual: Boolean = true)(implicit name: sourcecode.Name) = {
     val stringified = f2(benchmarkSampleData)
     val r1 = f1(stringified)
     val equal = benchmarkSampleData == r1
@@ -303,19 +347,17 @@ object Common{
       val rewritten = f2(f1(stringified))
       (stringified, rewritten) match {
         case (lhs: Array[_], rhs: Array[_]) => assert(lhs.toSeq == rhs.toSeq)
-        case _ => assert(stringified == rewritten)
+        case _                              => assert(stringified == rewritten)
       }
     }
 //    bench0[T, Seq[Data]](duration, stringified)(f1, f2)
   }
 
-  def bench0[T, V](duration: Int, stringified: T)
-                  (f1: T => V, f2: V => T)
-                  (implicit name: sourcecode.Name)= {
+  def bench0[T, V](duration: Int, stringified: T)(f1: T => V, f2: V => T)(implicit name: sourcecode.Name) = {
     {
       var n = 0
       val start = System.currentTimeMillis()
-      while(System.currentTimeMillis() < start + duration){
+      while (System.currentTimeMillis() < start + duration) {
         f1(stringified)
         n += 1
       }
@@ -327,7 +369,7 @@ object Common{
     {
       var n = 0
       val start = System.currentTimeMillis()
-      while(System.currentTimeMillis() < start + duration){
+      while (System.currentTimeMillis() < start + duration) {
         f2(parsed)
         n += 1
       }

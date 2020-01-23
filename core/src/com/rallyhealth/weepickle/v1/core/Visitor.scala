@@ -26,6 +26,7 @@ import java.time.Instant
   * @tparam J the result of visiting elements (e.g. a json AST or side-effecting writer)
   */
 trait Visitor[-T, +J] extends AutoCloseable {
+
   /**
     * @return a [[Visitor]] used for visiting the elements of the array
     */
@@ -94,10 +95,10 @@ trait Visitor[-T, +J] extends AutoCloseable {
 
   def visitTimestamp(instant: Instant): J
 
-  def map[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReceiver[T, J, Z](Visitor.this){
+  def map[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReceiver[T, J, Z](Visitor.this) {
     def mapNonNullsFunction(v: J): Z = f(v)
   }
-  def mapNulls[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReceiver[T, J, Z](Visitor.this){
+  def mapNulls[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReceiver[T, J, Z](Visitor.this) {
     override def mapFunction(v: J): Z = f(v)
     def mapNonNullsFunction(v: J): Z = f(v)
   }
@@ -164,8 +165,8 @@ sealed trait ObjArrVisitor[-T, +J] {
     */
   def narrow: ObjArrVisitor[Any, J] = this.asInstanceOf[ObjArrVisitor[Any, J]]
 }
-object Visitor{
-  class Delegate[T, J](delegatedReceiver: Visitor[T, J]) extends Visitor[T, J]{
+object Visitor {
+  class Delegate[T, J](delegatedReceiver: Visitor[T, J]) extends Visitor[T, J] {
 
     override def visitNull(): J = delegatedReceiver.visitNull()
     override def visitTrue(): J = delegatedReceiver.visitTrue()
@@ -188,8 +189,10 @@ object Visitor{
     override def visitUInt64(ul: Long): J = delegatedReceiver.visitUInt64(ul)
     override def visitFloat64String(s: String): J = delegatedReceiver.visitFloat64String(s)
     override def visitChar(c: Char): J = delegatedReceiver.visitChar(c)
-    override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = delegatedReceiver.visitBinary(bytes, offset, len)
-    override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J = delegatedReceiver.visitExt(tag, bytes, offset, len)
+    override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J =
+      delegatedReceiver.visitBinary(bytes, offset, len)
+    override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J =
+      delegatedReceiver.visitExt(tag, bytes, offset, len)
     override def visitTimestamp(instant: Instant): J = delegatedReceiver.visitTimestamp(instant)
 
     override def close(): Unit = delegatedReceiver.close()
@@ -221,12 +224,11 @@ object Visitor{
     override def toString: String = objVisitor.toString
   }
 
-
   abstract class MapReceiver[-T, V, Z](delegatedReceiver: Visitor[T, V]) extends Visitor[T, Z] {
 
-    def mapNonNullsFunction(t: V) : Z
+    def mapNonNullsFunction(t: V): Z
     def mapFunction(v: V): Z =
-      if(v == null) null.asInstanceOf[Z]
+      if (v == null) null.asInstanceOf[Z]
       else mapNonNullsFunction(v)
 
     override def visitFalse(): Z = mapFunction(delegatedReceiver.visitFalse())
@@ -255,15 +257,16 @@ object Visitor{
     override def visitUInt64(ul: Long): Z = mapFunction(delegatedReceiver.visitUInt64(ul))
     override def visitFloat64String(s: String): Z = mapFunction(delegatedReceiver.visitFloat64String(s))
     override def visitChar(c: Char): Z = mapFunction(delegatedReceiver.visitChar(c))
-    override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): Z = mapFunction(delegatedReceiver.visitBinary(bytes, offset, len))
-    override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): Z = mapFunction(delegatedReceiver.visitExt(tag, bytes, offset, len))
+    override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): Z =
+      mapFunction(delegatedReceiver.visitBinary(bytes, offset, len))
+    override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): Z =
+      mapFunction(delegatedReceiver.visitExt(tag, bytes, offset, len))
     override def visitTimestamp(instant: Instant): Z = mapFunction(delegatedReceiver.visitTimestamp(instant))
 
     override def close(): Unit = delegatedReceiver.close()
   }
 
-
-  class MapArrContext[T, V, Z](src: ArrVisitor[T, V], f: V => Z) extends ArrVisitor[T, Z]{
+  class MapArrContext[T, V, Z](src: ArrVisitor[T, V], f: V => Z) extends ArrVisitor[T, Z] {
     def subVisitor: Visitor[_, _] = src.subVisitor
 
     def visitValue(v: T): Unit = src.visitValue(v)
@@ -271,7 +274,7 @@ object Visitor{
     def visitEnd(): Z = f(src.visitEnd())
   }
 
-  class MapObjContext[T, V, Z](src: ObjVisitor[T, V], f: V => Z) extends ObjVisitor[T, Z]{
+  class MapObjContext[T, V, Z](src: ObjVisitor[T, V], f: V => Z) extends ObjVisitor[T, Z] {
     def subVisitor: Visitor[_, _] = src.subVisitor
 
     def visitKey(): Visitor[_, _] = src.visitKey()
@@ -282,6 +285,7 @@ object Visitor{
     def visitEnd(): Z = f(src.visitEnd())
   }
 }
+
 /**
   * Visits the elements of a json object.
   */
@@ -298,7 +302,7 @@ trait ObjVisitor[-T, +J] extends ObjArrVisitor[T, J] {
 /**
   * Visits the elements of a json array.
   */
-trait ArrVisitor[-T, +J] extends ObjArrVisitor[T, J]{
+trait ArrVisitor[-T, +J] extends ObjArrVisitor[T, J] {
   def isObj = false
 
   override def narrow: ArrVisitor[Any, J] = this.asInstanceOf[ArrVisitor[Any, J]]
@@ -323,22 +327,23 @@ class TransformException(
   val token: Option[String],
   cause: Throwable
 ) extends Exception(
-  {
-    val sb = new StringBuilder(shortMsg)
+      {
+        val sb = new StringBuilder(shortMsg)
 
-    @inline def append(k: String, v: String): Unit = sb.append(' ').append(k).append('=').append(v)
+        @inline def append(k: String, v: String): Unit = sb.append(' ').append(k).append('=').append(v)
 
-    @inline def appendOpt(k: String, v: Option[Any]): Unit = v.foreach(v => sb.append(' ').append(k).append('=').append(v))
+        @inline def appendOpt(k: String, v: Option[Any]): Unit =
+          v.foreach(v => sb.append(' ').append(k).append('=').append(v))
 
-    append("jsonPointer", jsonPointer)
-    appendOpt("index", index)
-    appendOpt("line", line)
-    appendOpt("col", col)
-    appendOpt("token", token)
-    sb.result()
-  },
-  cause
-) {
+        append("jsonPointer", jsonPointer)
+        appendOpt("index", index)
+        appendOpt("line", line)
+        appendOpt("col", col)
+        appendOpt("token", token)
+        sb.result()
+      },
+      cause
+    ) {
 
   override def fillInStackTrace(): Throwable = {
     // Only include if adds info not already present in the wrapped exception.

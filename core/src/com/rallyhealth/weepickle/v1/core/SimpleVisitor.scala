@@ -8,7 +8,7 @@ import java.time.Instant
 trait SimpleVisitor[-T, +J] extends Visitor[T, J] {
   def expectedMsg: String
   def visitNull(): J = null.asInstanceOf[J]
-  def visitTrue(): J =  throw new Abort(expectedMsg + " got boolean")
+  def visitTrue(): J = throw new Abort(expectedMsg + " got boolean")
   def visitFalse(): J = throw new Abort(expectedMsg + " got boolean")
 
   def visitString(cs: CharSequence): J = {

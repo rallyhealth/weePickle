@@ -6,11 +6,11 @@ import scala.language.experimental.macros
 import scala.language.{existentials, higherKinds}
 
 /**
- * Implementation of macros used by weepickle to serialize and deserialize
- * case classes automatically. You probably shouldn't need to use these
- * directly, since they are called implicitly when trying to read/write
- * types you don't have a Receiver/Transmitter in scope for.
- */
+  * Implementation of macros used by weepickle to serialize and deserialize
+  * case classes automatically. You probably shouldn't need to use these
+  * directly, since they are called implicitly when trying to read/write
+  * types you don't have a Receiver/Transmitter in scope for.
+  */
 object Macros {
 
   trait DeriveDefaults[M[_]] {
@@ -28,7 +28,7 @@ object Macros {
           "that arises when a case class within a function is com.rallyhealth.weepickle.v1. As a " +
           "workaround, move the declaration to the module-level."
         Left(msg)
-      }else{
+      } else {
         val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
         val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
         Right(c.universe.internal.gen.mkAttributedRef(pre, companionSymbol))
@@ -44,11 +44,13 @@ object Macros {
           case None => Left("Can't find primary constructor of " + tpe)
           case Some(primaryConstructor) =>
             val flattened = primaryConstructor.asMethod.paramLists.flatten
-            Right((
-              companion,
-              tpe.typeSymbol.asClass.typeParams,
-              flattened
-            ))
+            Right(
+              (
+                companion,
+                tpe.typeSymbol.asClass.typeParams,
+                flattened
+              )
+            )
         }
       }
     }
@@ -65,8 +67,8 @@ object Macros {
       assumeDefaultNone: Boolean,
       omitDefault: Boolean,
       default: c.Tree,
-      localReceiver : TermName,
-      aggregate : TermName
+      localReceiver: TermName,
+      aggregate: TermName
     ) {
       def writingCheckDefault: Boolean = hasDefault && omitDefault
       def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
@@ -97,7 +99,12 @@ object Macros {
        * defaults as specified explicitly. To be compatible deserializing JSON serialized with Play Json previously,
        * WeePickle will automatically force a default of None to all Option fields without an explicit default.
        */
-      private def deriveDefault(companion: c.Tree, index: Int, isParamWithDefault: Boolean, assumeDefaultNone: Boolean): c.Tree = {
+      private def deriveDefault(
+        companion: c.Tree,
+        index: Int,
+        isParamWithDefault: Boolean,
+        assumeDefaultNone: Boolean
+      ): c.Tree = {
         val defaultName = TermName("apply$default$" + (index + 1))
         if (!isParamWithDefault) {
           if (assumeDefaultNone) q"${TermName("None")}"
@@ -145,13 +152,13 @@ object Macros {
       * concrete type
       */
     def fleshedOutSubtypes(tpe: Type) = {
-      for{
+      for {
         subtypeSym <- tpe.typeSymbol.asClass.knownDirectSubclasses.filter(!_.toString.contains("<local child>"))
         if subtypeSym.isType
         st = subtypeSym.asType.toType
         baseClsArgs = st.baseType(tpe.typeSymbol).asInstanceOf[TypeRef].args
       } yield {
-        tpe match{
+        tpe match {
           case ExistentialType(_, TypeRef(_, _, args)) =>
             st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
           case ExistentialType(_, _) => st
@@ -176,8 +183,7 @@ object Macros {
       if (tpe.typeSymbol.asClass.isTrait || (tpe.typeSymbol.asClass.isAbstract && !tpe.typeSymbol.isJava)) {
         val derived = deriveTrait(tpe)
         derived
-      }
-      else if (tpe.typeSymbol.isModuleClass) deriveObject(tpe)
+      } else if (tpe.typeSymbol.isModuleClass) deriveObject(tpe)
       else deriveClass(tpe)
     }
     def deriveTrait(tpe: c.Type): c.universe.Tree = {
@@ -185,14 +191,14 @@ object Macros {
 
       if (!clsSymbol.isSealed) {
         fail(tpe, s"[error] The referenced trait [[${clsSymbol.name}]] must be sealed.")
-      }else if (clsSymbol.knownDirectSubclasses.filter(!_.toString.contains("<local child>")).isEmpty) {
+      } else if (clsSymbol.knownDirectSubclasses.filter(!_.toString.contains("<local child>")).isEmpty) {
         val msg =
           s"The referenced trait [[${clsSymbol.name}]] does not have any sub-classes. This may " +
             "happen due to a limitation of scalac (SI-7046). To work around this, " +
             "try manually specifying the sealed trait picklers as described in " +
             "http://www.lihaoyi.com/upickle/#ManualSealedTraitPicklers"
         fail(tpe, msg)
-      }else{
+      } else {
         val subTypes = fleshedOutSubtypes(tpe).toSeq
         //    println("deriveTrait")
         val subDerives = subTypes.map(subCls => q"implicitly[${typeclassFor(subCls)}]")
@@ -209,10 +215,8 @@ object Macros {
 
       weakTypeOf[M[_]](typeclass) match {
         case TypeRef(a, b, _) =>
-
           internal.typeRef(a, b, List(t))
         case ExistentialType(_, TypeRef(a, b, _)) =>
-
           internal.typeRef(a, b, List(t))
         case x =>
           println("Dunno Wad Dis Typeclazz Is " + x)
@@ -233,17 +237,18 @@ object Macros {
           companion.tpe.member(TermName("apply")).info
 
           val derive =
-              // Otherwise, reading and writing are kinda identical
-              wrapCaseN(
-                companion,
-                args,
-                tpe,
-                argSyms.exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
-              )
+            // Otherwise, reading and writing are kinda identical
+            wrapCaseN(
+              companion,
+              args,
+              tpe,
+              argSyms.exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
+            )
 
           annotate(tpe)(derive)
       }
     }
+
     /** If there is a sealed base class, annotate the derived tree in the JSON
       * representation with a class label.
       */
@@ -252,7 +257,7 @@ object Macros {
       sealedParent.fold(derived) { parent =>
         val tagName = customDiscriminator(parent) match {
           case Some(customName) => Literal(Constant(customName))
-          case None => q"${c.prefix}.tagName"
+          case None             => q"${c.prefix}.tagName"
         }
         val tag = customKey(tpe.typeSymbol).getOrElse(tpe.typeSymbol.fullName)
         q"""${c.prefix}.annotate($derived, $tagName, $tag)"""
@@ -260,26 +265,22 @@ object Macros {
     }
 
     def customKey(sym: c.Symbol): Option[String] = {
-        sym.annotations
-          .find(_.tree.tpe == typeOf[key])
-          .flatMap(_.tree.children.tail.headOption)
-          .map{case Literal(Constant(s)) => s.toString}
+      sym.annotations
+        .find(_.tree.tpe == typeOf[key])
+        .flatMap(_.tree.children.tail.headOption)
+        .map { case Literal(Constant(s)) => s.toString }
     }
 
     def customDiscriminator(sym: c.Symbol): Option[String] = {
-        sym.annotations
-          .find(_.tree.tpe == typeOf[discriminator])
-          .flatMap(_.tree.children.tail.headOption)
-          .map{case Literal(Constant(s)) => s.toString}
+      sym.annotations
+        .find(_.tree.tpe == typeOf[discriminator])
+        .flatMap(_.tree.children.tail.headOption)
+        .map { case Literal(Constant(s)) => s.toString }
     }
-
 
     def wrapObject(obj: Tree): Tree
 
-    def wrapCaseN(companion: Tree,
-                  args: Seq[Argument],
-                  targetType: c.Type,
-                  varargs: Boolean): Tree
+    def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean): Tree
   }
 
   abstract class Reading[M[_]] extends DeriveDefaults[M] {
@@ -287,46 +288,33 @@ object Macros {
     import c.universe._
     def wrapObject(t: c.Tree) = q"new ${c.prefix}.SingletonR($t)"
 
-    def wrapCaseN(companion: c.Tree,
-                  args: Seq[Argument],
-                  targetType: c.Type,
-                  varargs: Boolean) = {
+    def wrapCaseN(companion: c.Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean) = {
       if (args.size > 64) {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
       q"""
-        ..${
-          for (arg <- args)
-          yield q"private[this] lazy val ${arg.localReceiver} = implicitly[${c.prefix}.Receiver[${arg.argType}]]"
-        }
+        ..${for (arg <- args)
+        yield q"private[this] lazy val ${arg.localReceiver} = implicitly[${c.prefix}.Receiver[${arg.argType}]]"}
         new ${c.prefix}.CaseR[$targetType]{
           override def visitObject(length: Int) = new CaseObjectContext{
-            ..${
-              for (arg <- args)
-              yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"
-            }
+            ..${for (arg <- args)
+        yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"}
             def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
-              case ..${
-                for (arg <- args)
-                yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"
-              }
+              case ..${for (arg <- args)
+        yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"}
             }
             def visitKey() = com.rallyhealth.weepickle.v1.core.StringVisitor
             def visitKeyValue(s: Any) = {
               currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
-                case ..${
-                  for(arg <- args)
-                  yield cq"${arg.mapped} => ${arg.i}"
-                }
+                case ..${for (arg <- args)
+        yield cq"${arg.mapped} => ${arg.i}"}
                 case _ => -1
               }
             }
 
             def visitEnd() = {
-              ..${
-                for(arg <- args if arg.readingCheckDefault)
-                yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
-              }
+              ..${for (arg <- args if arg.readingCheckDefault)
+        yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"}
 
               // Special-case 64 because java bit shifting ignores any RHS values above 63
               // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
@@ -336,31 +324,25 @@ object Macros {
                   i <- 0 until ${args.length}
                   if (found & (1L << i)) == 0
                 } yield i match{
-                  case ..${
-                    for (arg <- args)
-                    yield cq"${arg.i} => ${arg.mapped}"
-                  }
+                  case ..${for (arg <- args)
+        yield cq"${arg.i} => ${arg.mapped}"}
                 }
                 throw new com.rallyhealth.weepickle.v1.core.Abort(
                   "missing keys in dictionary: " + keys.mkString(", ")
                 )
               }
               $companion.apply(
-                ..${
-                  for(arg <- args)
-                  yield
-                    if (arg.i == args.length - 1 && varargs) q"${arg.aggregate}:_*"
-                    else q"${arg.aggregate}"
-                }
+                ..${for (arg <- args)
+        yield
+          if (arg.i == args.length - 1 && varargs) q"${arg.aggregate}:_*"
+          else q"${arg.aggregate}"}
               )
             }
 
             def subVisitor: com.rallyhealth.weepickle.v1.core.Visitor[_, _] = currentIndex match{
               case -1 => com.rallyhealth.weepickle.v1.core.NoOpVisitor
-              case ..${
-                for (arg <- args)
-                yield cq"${arg.i} => ${arg.localReceiver} "
-              }
+              case ..${for (arg <- args)
+        yield cq"${arg.i} => ${arg.localReceiver} "}
             }
           }
         }
@@ -383,15 +365,17 @@ object Macros {
       Seq("unapply", "unapplySeq")
         .map(TermName(_))
         .find(companion.tpe.member(_) != NoSymbol)
-        .getOrElse(c.abort(c.enclosingPosition, "None of the following methods " +
-        "were defined: unapply, unapplySeq"))
+        .getOrElse(
+          c.abort(
+            c.enclosingPosition,
+            "None of the following methods " +
+              "were defined: unapply, unapplySeq"
+          )
+        )
     }
 
     def internal = q"${c.prefix}.Internal"
-    def wrapCaseN(companion: c.Tree,
-                  args: Seq[Argument],
-                  targetType: c.Type,
-                  varargs: Boolean) = {
+    def wrapCaseN(companion: c.Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean) = {
       def write(arg: Argument) = {
         val snippet = q"""
 
@@ -415,13 +399,11 @@ object Macros {
         new ${c.prefix}.CaseW[$targetType]{
           def length(v: $targetType) = {
             var n = 0
-            ..${
-              for(arg <- args)
-              yield {
-                if (!arg.writingCheckDefault) q"n += 1"
-                else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
-              }
-            }
+            ..${for (arg <- args)
+        yield {
+          if (!arg.writingCheckDefault) q"n += 1"
+          else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
+        }}
             n
           }
           def writeToObject[R](ctx: com.rallyhealth.weepickle.v1.core.ObjVisitor[_, R],
@@ -436,9 +418,10 @@ object Macros {
       q"${c.prefix}.Transmitter.merge[$targetType](..$subtree)"
     }
   }
-  def macroRImpl[T, R[_]](c0: scala.reflect.macros.blackbox.Context)
-                         (implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[R[_]]): c0.Expr[R[T]] = {
-    val res = new Reading[R]{
+  def macroRImpl[T, R[_]](
+    c0: scala.reflect.macros.blackbox.Context
+  )(implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[R[_]]): c0.Expr[R[T]] = {
+    val res = new Reading[R] {
       val c: c0.type = c0
       def typeclass = e2
     }.derive(e1.tpe)
@@ -446,9 +429,10 @@ object Macros {
     c0.Expr[R[T]](res)
   }
 
-  def macroTImpl[T, W[_]](c0: scala.reflect.macros.blackbox.Context)
-                         (implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[W[_]]): c0.Expr[W[T]] = {
-    val res = new Writing[W]{
+  def macroTImpl[T, W[_]](
+    c0: scala.reflect.macros.blackbox.Context
+  )(implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[W[_]]): c0.Expr[W[T]] = {
+    val res = new Writing[W] {
       val c: c0.type = c0
       def typeclass = e2
     }.derive(e1.tpe)
@@ -456,4 +440,3 @@ object Macros {
     c0.Expr[W[T]](res)
   }
 }
-

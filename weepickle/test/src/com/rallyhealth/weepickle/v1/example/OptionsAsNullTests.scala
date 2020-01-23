@@ -6,18 +6,18 @@ import utest._
 import com.rallyhealth.weepickle.v1.example.Simple.Thing
 
 case class Opt(a: Option[String], b: Option[Int])
-object Opt{
+object Opt {
   implicit def rw: OptionPickler.Transceiver[Opt] = OptionPickler.macroX
 }
 object OptionPickler extends com.rallyhealth.weepickle.v1.AttributeTagged {
   override implicit def OptionTransmitter[T: Transmitter]: Transmitter[Option[T]] =
     implicitly[Transmitter[T]].comap[Option[T]] {
-      case None => null.asInstanceOf[T]
+      case None    => null.asInstanceOf[T]
       case Some(x) => x
     }
 
   override implicit def OptionReceiver[T: Receiver]: Receiver[Option[T]] = {
-    new Receiver.Delegate[Any, Option[T]](implicitly[Receiver[T]].map(Some(_))){
+    new Receiver.Delegate[Any, Option[T]](implicitly[Receiver[T]].map(Some(_))) {
       override def visitNull(): Option[T] = None
     }
   }
@@ -29,10 +29,10 @@ object OptionsAsNullTests extends TestSuite {
   import OptionPickler._
   implicit def rw: OptionPickler.Transceiver[Thing] = OptionPickler.macroX
   val tests = TestSuite {
-    test("nullAsNone"){
+    test("nullAsNone") {
 
       // Quick check to ensure we didn't break anything
-      test("primitive"){
+      test("primitive") {
         fromScala("A String").transmit(ToJson.string) ==> "\"A String\""
         FromJson("\"A String\"").transmit(toScala[String]) ==> "A String"
         fromScala(1).transmit(ToJson.string) ==> "1"
@@ -41,12 +41,12 @@ object OptionsAsNullTests extends TestSuite {
         FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transmit(toScala[Thing]) ==> Thing(1, "gg")
       }
 
-      test("none"){
+      test("none") {
         fromScala[None.type](None).transmit(ToJson.string) ==> "null"
         FromJson("null").transmit(toScala[None.type]) ==> None
       }
 
-      test("some"){
+      test("some") {
         fromScala(Some("abc")).transmit(ToJson.string) ==> "\"abc\""
         FromJson("\"abc\"").transmit(toScala[Some[String]]) ==> Some("abc")
         fromScala(Some(1)).transmit(ToJson.string) ==> "1"
@@ -55,19 +55,19 @@ object OptionsAsNullTests extends TestSuite {
         FromJson("3.14159").transmit(toScala[Some[Double]]) ==> Some(3.14159)
       }
 
-      test("option"){
+      test("option") {
         fromScala(Option("abc")).transmit(ToJson.string) ==> "\"abc\""
         FromJson("\"abc\"").transmit(toScala[Option[String]]) ==> Some("abc")
         FromJson("null").transmit(toScala[Option[String]]) ==> None
       }
 
-      test("caseClass"){
+      test("caseClass") {
         fromScala(Opt(None, None)).transmit(ToJson.string) ==> """{"a":null,"b":null}"""
         FromJson("""{"a":null,"b":null}""").transmit(toScala[Opt]) ==> Opt(None, None)
         fromScala(Opt(Some("abc"), Some(1))).transmit(ToJson.string) ==> """{"a":"abc","b":1}"""
       }
 
-      test("optionCaseClass"){
+      test("optionCaseClass") {
         implicit val thingReceiver = implicitly[Receiver[Thing]]
         implicit val thingTransmitter = implicitly[Transmitter[Thing]]
 
@@ -85,13 +85,15 @@ object OptionsAsNullTests extends TestSuite {
         class CustomThing2(val i: Int, val s: String)
 
         object CustomThing2 {
-          implicit val rw = /*weepickle.default*/ OptionPickler.readerTransmitter[String].bimap[CustomThing2](
-            x => x.i + " " + x.s,
-            str => {
-              val Array(i, s) = str.split(" ", 2)
-              new CustomThing2(i.toInt, s)
-            }
-          )
+          implicit val rw = /*weepickle.default*/ OptionPickler
+            .readerTransmitter[String]
+            .bimap[CustomThing2](
+              x => x.i + " " + x.s,
+              str => {
+                val Array(i, s) = str.split(" ", 2)
+                new CustomThing2(i.toInt, s)
+              }
+            )
         }
 
         'customClass {
@@ -114,7 +116,7 @@ object OptionsAsNullTests extends TestSuite {
 
       // Copied from ExampleTests
       'Js {
-        import OptionPickler._   // changed from weepickle.WeePickle._
+        import OptionPickler._ // changed from weepickle.WeePickle._
         case class Bar(i: Int, s: String)
         implicit val fooReadWrite: Transceiver[Bar] =
           readerTransmitter[com.rallyhealth.weejson.v1.Value].bimap[Bar](
@@ -127,9 +129,9 @@ object OptionsAsNullTests extends TestSuite {
 
         // New tests.  Last one fails.  Why?
         'option {
-          'write {fromScala(Some(Bar(123, "abc"))).transmit(ToJson.string) ==> """["abc",123]"""}
-          'readSome {FromJson("""["abc",123]""").transmit(toScala[Option[Bar]]) ==> Some(Bar(123, "abc"))}
-          'readNull {FromJson("""null""").transmit(toScala[Option[Bar]]) ==> None}
+          'write { fromScala(Some(Bar(123, "abc"))).transmit(ToJson.string) ==> """["abc",123]""" }
+          'readSome { FromJson("""["abc",123]""").transmit(toScala[Option[Bar]]) ==> Some(Bar(123, "abc")) }
+          'readNull { FromJson("""null""").transmit(toScala[Option[Bar]]) ==> None }
         }
       }
 

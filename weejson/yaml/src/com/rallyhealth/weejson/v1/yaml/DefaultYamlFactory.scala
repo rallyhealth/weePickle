@@ -6,4 +6,3 @@ object DefaultYamlFactory {
 
   val Instance = new YAMLFactory() // javadoc suggests reusing
 }
-

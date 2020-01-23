@@ -2,7 +2,7 @@ package com.rallyhealth.weepack.v1
 
 object MsgPackKeys {
   final val PositiveFixInt = 0x7f
-  final val FixMapMask= 0x80
+  final val FixMapMask = 0x80
   final val FixMap = 0x8f
   final val FixArrMask = 0x90
   final val FixArray = 0x9f

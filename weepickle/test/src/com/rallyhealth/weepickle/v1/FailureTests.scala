@@ -6,22 +6,26 @@ import com.rallyhealth.weepickle.v1.core.TransformException
 import utest._
 case class Fee(i: Int, s: String)
 sealed trait Fi
-object Fi{
-  implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fi] = com.rallyhealth.weepickle.v1.WeePickle.Transceiver.merge(Fo.rw2, Fum.rw2)
+object Fi {
+  implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fi] =
+    com.rallyhealth.weepickle.v1.WeePickle.Transceiver.merge(Fo.rw2, Fum.rw2)
   case class Fo(i: Int) extends Fi
-  object Fo{
-    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fo] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+  object Fo {
+    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fo] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
   }
   case class Fum(s: String) extends Fi
-  object Fum{
-    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fum] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+  object Fum {
+    implicit def rw2: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Fum] =
+      com.rallyhealth.weepickle.v1.WeePickle.macroX
   }
 }
+
 /**
-* Generally, every failure should be a Invalid.Json or a
-* InvalidData. If any assertion errors, match errors, number
-* format errors or similar leak through, we've failed
-*/
+  * Generally, every failure should be a Invalid.Json or a
+  * InvalidData. If any assertion errors, match errors, number
+  * format errors or similar leak through, we've failed
+  */
 object FailureTests extends TestSuite {
 
   def tests = Tests {
@@ -29,7 +33,7 @@ object FailureTests extends TestSuite {
 //      read[com.rallyhealth.weejson.v1.Value](""" {unquoted_key: "keys must be quoted"} """)
 //    }
 
-    test("jsonFailures"){
+    test("jsonFailures") {
       // Run through the test cases from the json.org validation suite,
       // skipping the ones which we don't support yet (e.g. leading zeroes,
       // extra commas) or will never support (e.g. too deep)
@@ -46,7 +50,6 @@ object FailureTests extends TestSuite {
         """ ["Illegal backslash escape: \017"] """,
 //        """ [[[[[[[[[[[[[[[[[[[["Too deep"]]]]]]]]]]]]]]]]]]]] """,
         """ {"Missing colon" null} """,
-
         """ {"Double colon":: null} """,
         """ {"Comma instead of colon", null} """,
         """ ["Colon instead of comma": false] """,
@@ -61,7 +64,6 @@ object FailureTests extends TestSuite {
         """ [0e] """,
         """ {unquoted_key: "keys must be quoted"} """,
         """ [0e+-1] """,
-
         """ ["mismatch"} """,
         """ ["extra comma",] """,
         """ ["double extra comma",,] """,
@@ -71,51 +73,69 @@ object FailureTests extends TestSuite {
         """ {"Extra comma": true,} """
       ).map(_.trim())
       val res =
-        for(failureCase <- failureCases)
-        yield try {
-          intercept[Exception] { FromJson(failureCase).transmit(ToScala[com.rallyhealth.weejson.v1.Value]) }
-          None
-        }catch{
-          case _:Throwable =>
-          Some(failureCase)
-        }
+        for (failureCase <- failureCases)
+          yield try {
+            intercept[Exception] { FromJson(failureCase).transmit(ToScala[com.rallyhealth.weejson.v1.Value]) }
+            None
+          } catch {
+            case _: Throwable =>
+              Some(failureCase)
+          }
 
       val nonFailures = res.flatten
       assert(nonFailures.isEmpty)
-      intercept[Exception]{FromJson(""" {"Comma instead if closing brace": true, """).transmit(ToScala[com.rallyhealth.weejson.v1.Value])}
-      intercept[Exception]{FromJson(""" ["Unclosed array" """).transmit(ToScala[com.rallyhealth.weejson.v1.Value])}
+      intercept[Exception] {
+        FromJson(""" {"Comma instead if closing brace": true, """).transmit(ToScala[com.rallyhealth.weejson.v1.Value])
+      }
+      intercept[Exception] { FromJson(""" ["Unclosed array" """).transmit(ToScala[com.rallyhealth.weejson.v1.Value]) }
     }
 
-    test("facadeFailures"){
+    test("facadeFailures") {
       def assertErrorMsgDefault[T: com.rallyhealth.weepickle.v1.WeePickle.Receiver](s: String, msgs: String*) = {
         val err = intercept[TransformException] { FromJson(s).transmit(ToScala[T]) }
         val errMsgs = Seq(err.getMessage, err.getCause.getMessage)
         for (msg <- msgs) assert(errMsgs.exists(_.contains(msg)))
         err
       }
-      test("caseClass"){
+      test("caseClass") {
         // Separate this guy out because the read macro and
         // the intercept macro play badly with each other
 
-        test("invalidTag"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "jsonPointer=/$type index=11 line=1 col=12 token=VALUE_STRING")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "omg"}]""", "invalid tag for tagged object: omg", "jsonPointer=/$type index=11 line=1 col=12 token=VALUE_STRING")
+        test("invalidTag") {
+          test - assertErrorMsgDefault[Fi.Fo](
+            """{"$type": "omg"}]""",
+            "invalid tag for tagged object: omg",
+            "jsonPointer=/$type index=11 line=1 col=12 token=VALUE_STRING"
+          )
+          test - assertErrorMsgDefault[Fi](
+            """{"$type": "omg"}]""",
+            "invalid tag for tagged object: omg",
+            "jsonPointer=/$type index=11 line=1 col=12 token=VALUE_STRING"
+          )
         }
 
-        test("taggedInvalidBody"){
-          test - assertErrorMsgDefault[Fi.Fo]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "jsonPointer=/i index=54 line=1 col=55 token=VALUE_TRUE")
-          test - assertErrorMsgDefault[Fi]("""{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""", "expected number got boolean", "jsonPointer=/i index=54 line=1 col=55 token=VALUE_TRUE")
+        test("taggedInvalidBody") {
+          test - assertErrorMsgDefault[Fi.Fo](
+            """{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""",
+            "expected number got boolean",
+            "jsonPointer=/i index=54 line=1 col=55 token=VALUE_TRUE"
+          )
+          test - assertErrorMsgDefault[Fi](
+            """{"$type": "com.rallyhealth.weepickle.v1.Fi.Fo", "i": true, "z": null}""",
+            "expected number got boolean",
+            "jsonPointer=/i index=54 line=1 col=55 token=VALUE_TRUE"
+          )
         }
       }
     }
-    test("compileErrors"){
+    test("compileErrors") {
       compileError("write(new Object)")
       compileError("""read[Object]("")""")
 //      compileError("""read[Array[Object]]("")""").msg
       // Make sure this doesn't hang the compiler =/
       compileError("implicitly[com.rallyhealth.weepickle.v1.WeePickle.Receiver[Nothing]]")
     }
-    test("expWholeNumbers"){
+    test("expWholeNumbers") {
       FromJson("0e0").transmit(ToScala[Byte]) ==> 0.toByte
       FromJson("0e0").transmit(ToScala[Short]) ==> 0
       FromJson("0e0").transmit(ToScala[Char]) ==> 0.toChar
@@ -142,6 +162,7 @@ object FailureTests extends TestSuite {
       //      FromJson("10e-1").transform(ToScala[Int]) ==> 1
       //      FromJson("10e-1").transform(ToScala[Long]) ==> 1
     }
+    // format: off
     test("tooManyFields"){
       val b63 = Big63(
         0, 1, 2, 3, 4, 5, 6, 7,
@@ -177,18 +198,24 @@ object FailureTests extends TestSuite {
         57, 58, 59, 60, 61, 62, 63,
         64
       )
-      implicit val b63rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big63] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-      implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big64] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+      // format: on
+      implicit val b63rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big63] =
+        com.rallyhealth.weepickle.v1.WeePickle.macroX
+      implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big64] =
+        com.rallyhealth.weepickle.v1.WeePickle.macroX
       val written63 = FromScala(b63).transmit(ToJson.string)
       assert(FromJson(written63).transmit(ToScala[Big63]) == b63)
       val written64 = FromScala(b64).transmit(ToJson.string)
       assert(FromJson(written64).transmit(ToScala[Big64]) == b64)
-      val err = compileError("{implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big65] = com.rallyhealth.weepickle.v1.WeePickle.macroX}")
+      val err = compileError(
+        "{implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Big65] = com.rallyhealth.weepickle.v1.WeePickle.macroX}"
+      )
       assert(err.msg.contains("weepickle does not support serializing case classes with >64 fields"))
     }
   }
 }
 
+// format: off
 case class Big63(_0: Byte, _1: Byte, _2: Byte, _3: Byte, _4: Byte, _5: Byte, _6: Byte, _7: Byte,
   _8: Byte, _9: Byte, _10: Byte, _11: Byte, _12: Byte, _13: Byte, _14: Byte,
   _15: Byte, _16: Byte, _17: Byte, _18: Byte, _19: Byte, _20: Byte, _21: Byte,
@@ -217,3 +244,4 @@ case class Big65(_0: Byte, _1: Byte, _2: Byte, _3: Byte, _4: Byte, _5: Byte, _6:
   _50: Byte, _51: Byte, _52: Byte, _53: Byte, _54: Byte, _55: Byte, _56: Byte,
   _57: Byte, _58: Byte, _59: Byte, _60: Byte, _61: Byte, _62: Byte, _63: Byte,
   _64: Byte)
+// format: on

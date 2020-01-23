@@ -7,7 +7,11 @@ import com.rallyhealth.weepickle.v1.core.Visitor
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-trait DefaultTransmitters extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits with LowPriTransmitters{
+trait DefaultTransmitters
+    extends com.rallyhealth.weepickle.v1.core.Types
+    with Generated
+    with MacroImplicits
+    with LowPriTransmitters {
   implicit val StringWriter: Transmitter[String] = new Transmitter[String] {
     def transmit0[R](v: String, out: Visitor[_, R]): R = out.visitString(v)
   }
@@ -36,7 +40,7 @@ trait DefaultTransmitters extends com.rallyhealth.weepickle.v1.core.Types with G
 
   implicit val BooleanTransmitter: Transmitter[Boolean] = new Transmitter[Boolean] {
     def transmit0[R](v: Boolean, out: Visitor[_, R]): R = {
-      if(v) out.visitTrue() else out.visitFalse()
+      if (v) out.visitTrue() else out.visitFalse()
     }
   }
   implicit val CharTransmitter: Transmitter[Char] = new Transmitter[Char] {
@@ -52,7 +56,7 @@ trait DefaultTransmitters extends com.rallyhealth.weepickle.v1.core.Types with G
   implicit val UriTransmitter: Transmitter[URI] = StringWriter.comap[URI](_.toString)
 
   implicit def OptionTransmitter[T: Transmitter]: Transmitter[Option[T]] = implicitly[Transmitter[T]].comap[Option[T]] {
-    case None => null.asInstanceOf[T]
+    case None    => null.asInstanceOf[T]
     case Some(x) => x
   }
   implicit def SomeTransmitter[T: Transmitter]: Transmitter[Some[T]] = OptionTransmitter[T].narrow[Some[T]]
@@ -63,26 +67,28 @@ trait DefaultTransmitters extends com.rallyhealth.weepickle.v1.core.Types with G
       def transmit0[R](v: Array[T], out: Visitor[_, R]): R = {
         out.visitBinary(v.asInstanceOf[Array[Byte]], 0, v.length)
       }
-    }
-    else new Transmitter[Array[T]] {
-      def transmit0[R](v: Array[T], out: Visitor[_, R]): R = {
-        val ctx = out.visitArray(v.length).narrow
-        var i = 0
-        while (i < v.length) {
-          ctx.visitValue(r.transmit(v(i), ctx.subVisitor))
-          i += 1
-        }
+    } else
+      new Transmitter[Array[T]] {
+        def transmit0[R](v: Array[T], out: Visitor[_, R]): R = {
+          val ctx = out.visitArray(v.length).narrow
+          var i = 0
+          while (i < v.length) {
+            ctx.visitValue(r.transmit(v(i), ctx.subVisitor))
+            i += 1
+          }
 
-        ctx.visitEnd()
+          ctx.visitEnd()
+        }
       }
-    }
   }
-  def MapTransmitter0[M[A, B] <: collection.Map[A, B], K, V]
-                (implicit kw: Transmitter[K], vw: Transmitter[V]): Transmitter[M[K, V]] = {
-    if (kw eq StringWriter) new Transmitter[M[String, V]]{
+  def MapTransmitter0[M[A, B] <: collection.Map[A, B], K, V](
+    implicit kw: Transmitter[K],
+    vw: Transmitter[V]
+  ): Transmitter[M[K, V]] = {
+    if (kw eq StringWriter) new Transmitter[M[String, V]] {
       def transmit0[R](v: M[String, V], out: Visitor[_, R]): R = {
         val ctx = out.visitObject(v.size).narrow
-        for(pair <- v){
+        for (pair <- v) {
           val (k1, v1) = pair
           val keyVisitor = ctx.visitKey()
           ctx.visitKeyValue(keyVisitor.visitString(k1))
@@ -94,46 +100,57 @@ trait DefaultTransmitters extends com.rallyhealth.weepickle.v1.core.Types with G
     }.asInstanceOf[Transmitter[M[K, V]]]
     else SeqLikeTransmitter[Seq, (K, V)].comap[M[K, V]](_.toSeq)
   }
-  implicit def MapTransmitter1[K, V](implicit kw: Transmitter[K], vw: Transmitter[V]): Transmitter[collection.Map[K, V]] = {
+  implicit def MapTransmitter1[K, V](
+    implicit kw: Transmitter[K],
+    vw: Transmitter[V]
+  ): Transmitter[collection.Map[K, V]] = {
     MapTransmitter0[collection.Map, K, V]
   }
-  implicit def MapTransmitter2[K, V](implicit kw: Transmitter[K], vw: Transmitter[V]): Transmitter[collection.immutable.Map[K, V]] = {
+  implicit def MapTransmitter2[K, V](
+    implicit kw: Transmitter[K],
+    vw: Transmitter[V]
+  ): Transmitter[collection.immutable.Map[K, V]] = {
     MapTransmitter0[collection.immutable.Map, K, V]
   }
-  implicit def MapTransmitter3[K, V](implicit kw: Transmitter[K], vw: Transmitter[V]): Transmitter[collection.mutable.Map[K, V]] = {
+  implicit def MapTransmitter3[K, V](
+    implicit kw: Transmitter[K],
+    vw: Transmitter[V]
+  ): Transmitter[collection.mutable.Map[K, V]] = {
     MapTransmitter0[collection.mutable.Map, K, V]
   }
 
-  implicit val DurationTransmitter: Transmitter[Duration] = new Transmitter[Duration]{
-    def transmit0[R](v: Duration, out: Visitor[_, R]): R = v match{
-      case Duration.Inf => out.visitString("inf")
-      case Duration.MinusInf => out.visitString("-inf")
+  implicit val DurationTransmitter: Transmitter[Duration] = new Transmitter[Duration] {
+    def transmit0[R](v: Duration, out: Visitor[_, R]): R = v match {
+      case Duration.Inf                 => out.visitString("inf")
+      case Duration.MinusInf            => out.visitString("-inf")
       case x if x eq Duration.Undefined => out.visitString("undef")
-      case _ => out.visitString(v.toNanos.toString)
+      case _                            => out.visitString(v.toNanos.toString)
     }
   }
 
-  implicit val InfiniteDurationTransmitter: Transmitter[Duration.Infinite] = DurationTransmitter.narrow[Duration.Infinite]
+  implicit val InfiniteDurationTransmitter: Transmitter[Duration.Infinite] =
+    DurationTransmitter.narrow[Duration.Infinite]
   implicit val FiniteDurationTransmitter: Transmitter[FiniteDuration] = DurationTransmitter.narrow[FiniteDuration]
 
-  implicit def EitherTransmitter[T1: Transmitter, T2: Transmitter]: Transmitter[Either[T1, T2]] = new Transmitter[Either[T1, T2]]{
-    def transmit0[R](v: Either[T1, T2], out: Visitor[_, R]): R = v match{
-      case Left(t1) =>
-        val ctx = out.visitArray(2).narrow
-        ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("0", -1, -1))
+  implicit def EitherTransmitter[T1: Transmitter, T2: Transmitter]: Transmitter[Either[T1, T2]] =
+    new Transmitter[Either[T1, T2]] {
+      def transmit0[R](v: Either[T1, T2], out: Visitor[_, R]): R = v match {
+        case Left(t1) =>
+          val ctx = out.visitArray(2).narrow
+          ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("0", -1, -1))
 
-        ctx.visitValue(implicitly[Transmitter[T1]].transmit(t1, ctx.subVisitor))
+          ctx.visitValue(implicitly[Transmitter[T1]].transmit(t1, ctx.subVisitor))
 
-        ctx.visitEnd()
-      case Right(t2) =>
-        val ctx = out.visitArray(2).narrow
-        ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("1", -1, -1))
+          ctx.visitEnd()
+        case Right(t2) =>
+          val ctx = out.visitArray(2).narrow
+          ctx.visitValue(ctx.subVisitor.visitFloat64StringParts("1", -1, -1))
 
-        ctx.visitValue(implicitly[Transmitter[T2]].transmit(t2, ctx.subVisitor))
+          ctx.visitValue(implicitly[Transmitter[T2]].transmit(t2, ctx.subVisitor))
 
-        ctx.visitEnd()
+          ctx.visitEnd()
+      }
     }
-  }
   implicit def RightTransmitter[T1: Transmitter, T2: Transmitter]: Transmitter[Right[T1, T2]] =
     EitherTransmitter[T1, T2].narrow[Right[T1, T2]]
   implicit def LeftTransmitter[T1: Transmitter, T2: Transmitter]: Transmitter[Left[T1, T2]] =
@@ -143,18 +160,19 @@ trait DefaultTransmitters extends com.rallyhealth.weepickle.v1.core.Types with G
 /**
   * This needs to be split into a separate trait due to https://github.com/scala/bug/issues/11768
   */
-trait LowPriTransmitters extends com.rallyhealth.weepickle.v1.core.Types{
-  implicit def SeqLikeTransmitter[C[_] <: Iterable[_], T](implicit r: Transmitter[T]): Transmitter[C[T]] = new Transmitter[C[T]] {
-    def transmit0[R](v: C[T], out: Visitor[_, R]): R = {
-      val ctx = out.visitArray(v.size).narrow
-      val x = v.iterator
-      while(x.nonEmpty){
-        val next = x.next().asInstanceOf[T]
-        val written = r.transmit(next, ctx.subVisitor)
-        ctx.visitValue(written)
-      }
+trait LowPriTransmitters extends com.rallyhealth.weepickle.v1.core.Types {
+  implicit def SeqLikeTransmitter[C[_] <: Iterable[_], T](implicit r: Transmitter[T]): Transmitter[C[T]] =
+    new Transmitter[C[T]] {
+      def transmit0[R](v: C[T], out: Visitor[_, R]): R = {
+        val ctx = out.visitArray(v.size).narrow
+        val x = v.iterator
+        while (x.nonEmpty) {
+          val next = x.next().asInstanceOf[T]
+          val written = r.transmit(next, ctx.subVisitor)
+          ctx.visitValue(written)
+        }
 
-      ctx.visitEnd()
+        ctx.visitEnd()
+      }
     }
-  }
 }

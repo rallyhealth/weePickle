@@ -21,7 +21,9 @@ object JvmPrimitiveTests extends TestSuite {
         test("Millis") {
           WeePickle.InstantReceiver.visitInt64(1579664660824L) ==> Instant.parse("2020-01-22T03:44:20.824Z")
           WeePickle.InstantReceiver.visitFloat64String("1579664660824") ==> Instant.parse("2020-01-22T03:44:20.824Z")
-          WeePickle.InstantReceiver.visitFloat64StringParts("1579664660824", -1, -1) ==> Instant.parse("2020-01-22T03:44:20.824Z")
+          WeePickle.InstantReceiver.visitFloat64StringParts("1579664660824", -1, -1) ==> Instant.parse(
+            "2020-01-22T03:44:20.824Z"
+          )
         }
       }
       test("Date") {

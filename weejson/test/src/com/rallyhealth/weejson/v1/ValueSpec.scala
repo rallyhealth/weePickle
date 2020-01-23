@@ -5,7 +5,7 @@ import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ValueSpec
-  extends PropSpec
+    extends PropSpec
     with Matchers
     with ScalaCheckPropertyChecks
     with GenValue

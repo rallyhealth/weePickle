@@ -8,19 +8,18 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**
- * An instance of the com.rallyhealth.weepickle.v1 API. There's a default instance at
- * `com.rallyhealth.weepickle.v1.WeePickle`, but you can also implement it yourself to customize
- * its behavior. Override the `annotate` methods to control how a sealed
- * trait instance is tagged during reading and writing.
- */
+  * An instance of the com.rallyhealth.weepickle.v1 API. There's a default instance at
+  * `com.rallyhealth.weepickle.v1.WeePickle`, but you can also implement it yourself to customize
+  * its behavior. Override the `annotate` methods to control how a sealed
+  * trait instance is tagged during reading and writing.
+  */
 trait Api
     extends com.rallyhealth.weepickle.v1.core.Types
     with implicits.Receivers
     with implicits.Transmitters
-    with WebJson
     with Api.NoOpMappers
     with JsTransceivers
-    with MsgTransceivers{
+    with MsgTransceivers {
 
   /**
     * Somewhat internal version of [[WeePickle.ToScala]] for use by custom API bundles.
@@ -34,7 +33,6 @@ trait Api
     override def transmit[T](receiver: Visitor[_, T]): T = transmitter.transmit(scala, receiver)
   }
 
-
   def reader[T: Receiver]: Receiver[T] = implicitly[Receiver[T]]
 
   def writer[T: Transmitter]: Transmitter[T] = implicitly[Transmitter[T]]
@@ -43,8 +41,8 @@ trait Api
 
   // End Api
 }
-object Api{
-  trait NoOpMappers{
+object Api {
+  trait NoOpMappers {
 
     /**
       * Transforms object keys.
@@ -70,11 +68,11 @@ object Api{
 }
 
 /**
- * A `com.rallyhealth.weepickle.v1.Api` that follows the default sealed-trait-instance-tagging
- * behavior of using an attribute, but allow you to control what the name
- * of the attribute is.
- */
-trait AttributeTagged extends Api{
+  * A `com.rallyhealth.weepickle.v1.Api` that follows the default sealed-trait-instance-tagging
+  * behavior of using an attribute, but allow you to control what the name
+  * of the attribute is.
+  */
+trait AttributeTagged extends Api {
 
   /**
     * Default discriminator field name.
@@ -93,7 +91,7 @@ trait AttributeTagged extends Api{
 
   def taggedExpectedMsg = "expected dictionary"
   override def taggedObjectContext[T](taggedReceiver: TaggedReceiver[T]): ObjVisitor[Any, T] = {
-    new ObjVisitor[Any, T]{
+    new ObjVisitor[Any, T] {
       private[this] var fastPath = false
       private[this] var context: ObjVisitor[Any, _] = null
       def subVisitor: Visitor[_, _] =
@@ -135,13 +133,15 @@ trait AttributeTagged extends Api{
       def visitEnd(): T = {
         if (context == null) throw new Abort("expected tagged dictionary")
         else if (fastPath) context.visitEnd().asInstanceOf[T]
-        else{
+        else {
           val x = context.visitEnd().asInstanceOf[BufferedValue.Obj]
-          val tagInfo = x.value0.find(_._1.toString == taggedReceiver.tagName).getOrElse(throw new Abort(s"missing tag key: ${taggedReceiver.tagName}"))
+          val tagInfo = x.value0
+            .find(_._1.toString == taggedReceiver.tagName)
+            .getOrElse(throw new Abort(s"missing tag key: ${taggedReceiver.tagName}"))
           val keyAttr = tagInfo._2
           val key = keyAttr.asInstanceOf[BufferedValue.Str].value0.toString
           val reader = taggedReceiver.findReceiver(key)
-          if (reader == null){
+          if (reader == null) {
             throw new Abort("invalid tag for tagged object: " + key)
           }
           // Replaying buffered content requires new path tracking for exceptions thrown by the reader.
@@ -150,7 +150,7 @@ trait AttributeTagged extends Api{
           for (p <- x.value0) {
             val (k0, v) = p
             val k = k0.toString
-            if (k != taggedReceiver.tagName){
+            if (k != taggedReceiver.tagName) {
               val keyVisitor = ctx2.visitKey()
 
               ctx2.visitKeyValue(keyVisitor.visitString(k))
@@ -163,7 +163,7 @@ trait AttributeTagged extends Api{
 
     }
   }
-  def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_,  R], v: T): R = {
+  def taggedWrite[T, R](w: CaseW[T], tagName: String, tag: String, out: Visitor[_, R], v: T): R = {
     val ctx = out.asInstanceOf[Visitor[Any, R]].visitObject(w.length(v) + 1)
     val keyVisitor = ctx.visitKey()
 

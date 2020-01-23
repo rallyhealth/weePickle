@@ -28,68 +28,75 @@ sealed trait Msg extends Transmittable {
     * Returns the `String` value of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Str]]
     */
-  def binary = this match{
+  def binary = this match {
     case Binary(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Str")
+    case _             => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Str")
   }
+
   /**
     * Returns the `String` value of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Str]]
     */
-  def str = this match{
+  def str = this match {
     case Str(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Str")
+    case _          => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Str")
   }
+
   /**
     * Returns the key/value map of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Obj]]
     */
-  def obj = this match{
+  def obj = this match {
     case Obj(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Obj")
+    case _          => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Obj")
   }
+
   /**
     * Returns the elements of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Arr]]
     */
-  def arr = this match{
+  def arr = this match {
     case Arr(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Arr")
+    case _          => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Arr")
   }
+
   /**
     * Returns the `Double` value of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Int32]], [[com.rallyhealth.weepack.v1.Int64]] or [[com.rallyhealth.weepack.v1.UInt64]]
     */
-  def int32 = this match{
-    case Int32(value) => value
-    case Int64(value) => value.toInt
+  def int32 = this match {
+    case Int32(value)  => value
+    case Int64(value)  => value.toInt
     case UInt64(value) => value.toInt
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Num")
+    case _             => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Num")
   }
+
   /**
     * Returns the `Double` value of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Int32]], [[com.rallyhealth.weepack.v1.Int64]] or [[com.rallyhealth.weepack.v1.UInt64]]
     */
-  def int64 = this match{
-    case Int32(value) => value.toLong
-    case Int64(value) => value
+  def int64 = this match {
+    case Int32(value)  => value.toLong
+    case Int64(value)  => value
     case UInt64(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Num")
+    case _             => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Num")
   }
+
   /**
     * Returns the `Boolean` value of this [[Msg]], fails if it is not
     * a [[com.rallyhealth.weepack.v1.Bool]]
     */
-  def bool = this match{
+  def bool = this match {
     case Bool(value) => value
-    case _ => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Bool")
+    case _           => throw Msg.InvalidData(this, "Expected com.rallyhealth.weejson.v1.Bool")
   }
+
   /**
     * Returns true if the value of this [[Msg]] is com.rallyhealth.weejson.v1.Null, false otherwise
     */
   def isNull = this match {
     case Null => true
-    case _ => false
+    case _    => false
   }
 
   def writeBytesTo(out: java.io.OutputStream): Unit = {
@@ -97,10 +104,10 @@ sealed trait Msg extends Transmittable {
   }
 }
 case object Null extends Msg
-case object True extends Bool{
+case object True extends Bool {
   def value = true
 }
-case object False extends Bool{
+case object False extends Bool {
   def value = false
 }
 case class Int32(value: Int) extends Msg
@@ -111,13 +118,12 @@ case class Float64(value: Double) extends Msg
 case class Str(value: String) extends Msg
 case class Binary(value: Array[Byte]) extends Msg
 case class Arr(value: mutable.ArrayBuffer[Msg]) extends Msg
-object Arr{
+object Arr {
   def apply(items: Msg*): Arr = Arr(items.to(mutable.ArrayBuffer))
 }
 case class Obj(value: mutable.LinkedHashMap[Msg, Msg]) extends Msg
-object Obj{
-  def apply(item: (Msg, Msg),
-            items: (Msg, Msg)*): Obj = {
+object Obj {
+  def apply(item: (Msg, Msg), items: (Msg, Msg)*): Obj = {
     val map = new mutable.LinkedHashMap[Msg, Msg]()
     map.put(item._1, item._2)
     for (i <- items) map.put(i._1, i._2)
@@ -128,15 +134,16 @@ object Obj{
 }
 case class Ext(tag: Byte, data: Array[Byte]) extends Msg
 
-sealed abstract class Bool extends Msg{
+sealed abstract class Bool extends Msg {
   def value: Boolean
 }
-object Bool{
+object Bool {
   def apply(value: Boolean): Bool = if (value) True else False
   def unapply(bool: Bool): Option[Boolean] = Some(bool.value)
 }
 
-object Msg extends MsgVisitor[Msg, Msg]{
+object Msg extends MsgVisitor[Msg, Msg] {
+
   /**
     * Thrown when weepickle tries to convert a JSON blob into a given data
     * structure but fails because part the blob is invalid
@@ -145,31 +152,30 @@ object Msg extends MsgVisitor[Msg, Msg]{
     *             This could be the entire blob, or it could be some subtree.
     * @param msg Human-readable text saying what went wrong
     */
-  case class InvalidData(data: Msg, msg: String)
-    extends Exception(s"$msg (data: $data)")
+  case class InvalidData(data: Msg, msg: String) extends Exception(s"$msg (data: $data)")
 
-  sealed trait Selector{
+  sealed trait Selector {
     def apply(x: Msg): Msg
     def update(x: Msg, y: Msg): Unit
   }
-  object Selector{
-    implicit class IntSelector(i: Int) extends Selector{
+  object Selector {
+    implicit class IntSelector(i: Int) extends Selector {
       def apply(x: Msg): Msg = x.arr(i)
       def update(x: Msg, y: Msg) = x.arr(i) = y
     }
-    implicit class StringSelector(i: String) extends Selector{
+    implicit class StringSelector(i: String) extends Selector {
       def apply(x: Msg): Msg = x.obj(Str(i))
       def update(x: Msg, y: Msg) = x.obj(Str(i)) = y
     }
-    implicit class MsgSelector(i: Msg) extends Selector{
+    implicit class MsgSelector(i: Msg) extends Selector {
       def apply(x: Msg): Msg = x.obj(i)
       def update(x: Msg, y: Msg) = x.obj(i) = y
     }
   }
   def transmit[T](j: Msg, f: Visitor[_, T]): T = {
-    j match{
-      case Null => f.visitNull()
-      case True => f.visitTrue()
+    j match {
+      case Null  => f.visitNull()
+      case True  => f.visitTrue()
       case False => f.visitFalse()
 
       case Int32(value) => f.visitInt32(value)
@@ -180,19 +186,19 @@ object Msg extends MsgVisitor[Msg, Msg]{
       case Float32(value) => f.visitFloat32(value)
       case Float64(value) => f.visitFloat64(value)
 
-      case Str(value) => f.visitString(value)
+      case Str(value)    => f.visitString(value)
       case Binary(value) => f.visitBinary(value, 0, value.length)
 
       case Arr(items) =>
         val arr = f.visitArray(items.length)
-        for(i <- items){
+        for (i <- items) {
           arr.narrow.visitValue(transmit(i, arr.subVisitor))
         }
         arr.visitEnd()
 
       case Obj(items) =>
         val obj = f.visitObject(items.size)
-        for((k, v) <- items){
+        for ((k, v) <- items) {
           val keyVisitor = obj.visitKey()
           obj.visitKeyValue(k.transmit(keyVisitor))
           obj.narrow.visitValue(transmit(v, obj.subVisitor))

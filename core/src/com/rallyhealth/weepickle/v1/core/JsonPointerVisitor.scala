@@ -26,7 +26,9 @@ object JsonPointerVisitor {
     * @param jsonPointer e.g. "/hits/hits/3/_source/foo/bar"
     * @see https://tools.ietf.org/html/rfc6901
     */
-  class JsonPointerException(val jsonPointer: String, cause: Throwable) extends Exception(jsonPointer, cause) with NoStackTrace {
+  class JsonPointerException(val jsonPointer: String, cause: Throwable)
+      extends Exception(jsonPointer, cause)
+      with NoStackTrace {
 
     override def toString: String = jsonPointer
   }
@@ -56,7 +58,7 @@ object JsonPointerVisitor {
       @tailrec def listPath(o: Option[HasPath], list: List[HasPath]): List[HasPath] = {
         o match {
           case Some(p) => listPath(p.parent, p :: list)
-          case None => list
+          case None    => list
         }
       }
       listPath(parent, List(this))
@@ -74,7 +76,6 @@ object JsonPointerVisitor {
         f
       } catch {
         case NonFatal(cause) =>
-
           /**
             * Can't chain them normally here without upsetting Parser.reject
             * and failing a bunch of the unit tests.
@@ -129,7 +130,8 @@ private class JsonPointerVisitor[T, J](
         wrap(objVisitor.visitEnd())
       }
 
-      override def pathComponent: Option[String] = Option(key).map(_.replaceAllLiterally("~", "~0").replaceAllLiterally("/", "~1"))
+      override def pathComponent: Option[String] =
+        Option(key).map(_.replaceAllLiterally("~", "~0").replaceAllLiterally("/", "~1"))
 
       override def parent: Option[HasPath] = Some(JsonPointerVisitor.this.parentPath)
     }
@@ -168,7 +170,8 @@ private class JsonPointerVisitor[T, J](
 
   override def visitString(cs: CharSequence): J = parentPath.wrap(super.visitString(cs))
 
-  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = parentPath.wrap(super.visitFloat64StringParts(cs, decIndex, expIndex))
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J =
+    parentPath.wrap(super.visitFloat64StringParts(cs, decIndex, expIndex))
 
   override def visitFloat64(d: Double): J = parentPath.wrap(super.visitFloat64(d))
 
@@ -184,9 +187,11 @@ private class JsonPointerVisitor[T, J](
 
   override def visitChar(c: Char): J = parentPath.wrap(super.visitChar(c))
 
-  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = parentPath.wrap(super.visitBinary(bytes, offset, len))
+  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J =
+    parentPath.wrap(super.visitBinary(bytes, offset, len))
 
-  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J = parentPath.wrap(super.visitExt(tag, bytes, offset, len))
+  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J =
+    parentPath.wrap(super.visitExt(tag, bytes, offset, len))
 
   override def toString: String = parentPath.toString
 }

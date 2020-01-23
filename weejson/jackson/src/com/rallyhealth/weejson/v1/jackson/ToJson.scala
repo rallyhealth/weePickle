@@ -11,7 +11,8 @@ object ToJson extends JsonGeneratorOps {
 
   override def bytes: Visitor[Any, Array[Byte]] = super.bytes
 
-  override def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[Any, OutputStream] = super.outputStream(out)
+  override def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[Any, OutputStream] =
+    super.outputStream(out)
 
   override def writer[Writer <: java.io.Writer](writer: Writer): Visitor[Any, Writer] = super.writer(writer)
 }
@@ -24,7 +25,8 @@ object ToPrettyJson extends JsonGeneratorOps {
 
   override def bytes: Visitor[Any, Array[Byte]] = super.bytes
 
-  override def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[Any, OutputStream] = super.outputStream(out)
+  override def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[Any, OutputStream] =
+    super.outputStream(out)
 
   override def writer[Writer <: java.io.Writer](writer: Writer): Visitor[Any, Writer] = super.writer(writer)
 }

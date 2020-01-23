@@ -6,6 +6,7 @@ import play.api.libs.json._
 
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
+
 /**
   * Convenience shims back to inefficient play-json formats.
   *
@@ -21,7 +22,7 @@ object PlayJsonImplicits {
     def asReads: Reads[T] = Reads { jsValue =>
       Try(PlayJson.transform(jsValue, reader)) match {
         case Success(obj) => JsSuccess(obj)
-        case Failure(t) => JsError(t.toString)
+        case Failure(t)   => JsError(t.toString)
       }
     }
   }

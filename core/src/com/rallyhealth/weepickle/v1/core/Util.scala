@@ -5,11 +5,11 @@ object Util {
   def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int): Long = {
     val expMul =
       if (expIndex == -1) 1
-      else{
+      else {
         var mult = 1
         val e = parseLong(s, expIndex + 1, s.length())
         var i = 0
-        while(i < e){
+        while (i < e) {
           if (mult >= Long.MaxValue / 10) throw new Abort("expected integer")
           mult = mult * 10
           i += 1
@@ -19,7 +19,7 @@ object Util {
 
     val intPortion = {
       val end =
-        if(decIndex != -1) decIndex
+        if (decIndex != -1) decIndex
         else if (expIndex != -1) expIndex
         else s.length
 
@@ -28,11 +28,11 @@ object Util {
 
     val decPortion =
       if (decIndex == -1) 0
-      else{
-        val end = if(expIndex != -1) expIndex else s.length
+      else {
+        val end = if (expIndex != -1) expIndex else s.length
         var value = parseLong(s, decIndex + 1, end) * expMul
         var i = end - (decIndex + 1)
-        while(i > 0) {
+        while (i > 0) {
           value = value / 10
           i -= 1
         }

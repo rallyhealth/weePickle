@@ -70,16 +70,15 @@ class JsonTransmittable(parser: JsonParser) extends Transmittable {
       }
 
       builder.result() match {
-        case Nil => throw JsonParserException("Reached end of input, but Visitor produced no result.", parser)
+        case Nil         => throw JsonParserException("Reached end of input, but Visitor produced no result.", parser)
         case head :: Nil => head
-        case many => throw JsonParserException("Expected 1 result. Visitor produced many.", parser)
+        case many        => throw JsonParserException("Expected 1 result. Visitor produced many.", parser)
       }
     } catch {
       case ve: TransformException => throw ve
       case NonFatal(t) =>
         throw JsonParserException("Parser or Visitor failure", parser, t)
-    }
-    finally {
+    } finally {
       Try(parser.close()) // completely consumed.
       Try(generator.close()) // we created it, so we close it.
     }

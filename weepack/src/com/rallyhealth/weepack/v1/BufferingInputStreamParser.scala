@@ -18,7 +18,7 @@ package com.rallyhealth.weepack.v1
   *   the old size) and copy the data over, again shifted left
   * .
   */
-trait BufferingInputStreamParser{
+trait BufferingInputStreamParser {
   def maxStartBufferSize: Int
   def minStartBufferSize: Int
   def data: java.io.InputStream
@@ -60,7 +60,7 @@ trait BufferingInputStreamParser{
 
   protected def requestUntil(until: Int): Boolean = {
     val untilBufferOffset = bumpBufferSize(until - firstIdx)
-    if (untilBufferOffset >= buffer.length){
+    if (untilBufferOffset >= buffer.length) {
       var newSize = buffer.length
 
       // Bump growGoalSiz by 50%. This helps ensure the utilization of the buffer
@@ -84,9 +84,9 @@ trait BufferingInputStreamParser{
   def readDataIntoBuffer(): Boolean = {
     var done = false
     val bufferOffset = lastIdx - firstIdx
-    data.read(buffer, bufferOffset, buffer.length - bufferOffset)  match{
+    data.read(buffer, bufferOffset, buffer.length - bufferOffset) match {
       case -1 => done = true
-      case n => lastIdx += n
+      case n  => lastIdx += n
     }
     done
   }
@@ -95,7 +95,7 @@ trait BufferingInputStreamParser{
     dropped = i
   }
 }
-object BufferingInputStreamParser{
+object BufferingInputStreamParser {
   val defaultMaxBufferStartSize: Int = 64 * 1024
   val defaultMinBufferStartSize: Int = 64
 }

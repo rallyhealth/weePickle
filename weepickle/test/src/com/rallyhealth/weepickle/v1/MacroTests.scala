@@ -7,7 +7,7 @@ import com.rallyhealth.weepickle.v1.WeePickle.ToScala
 import com.rallyhealth.weepickle.v1.core.MutableCharSequenceVisitor
 
 object Custom {
-  trait ThingBase{
+  trait ThingBase {
     val i: Int
     val s: String
     override def equals(o: Any) = {
@@ -21,14 +21,16 @@ object Custom {
 
   class Thing2(val i: Int, val s: String) extends ThingBase
 
-  abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T){
-    implicit val thing2Transmitter = com.rallyhealth.weepickle.v1.WeePickle.readerTransmitter[String].bimap[T](
-      t => t.i + " " + t.s,
-      str => {
-        val Array(i, s) = str.toString.split(" ", 2)
-        f(i.toInt, s)
-      }
-    )
+  abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T) {
+    implicit val thing2Transmitter = com.rallyhealth.weepickle.v1.WeePickle
+      .readerTransmitter[String]
+      .bimap[T](
+        t => t.i + " " + t.s,
+        str => {
+          val Array(i, s) = str.toString.split(" ", 2)
+          f(i.toInt, s)
+        }
+      )
   }
   object Thing2 extends ThingBaseCompanion[Thing2](new Thing2(_, _))
 
@@ -39,10 +41,12 @@ object Custom {
 
 //// this can be un-sealed as long as `derivedSubclasses` is defined in the companion
 sealed trait TypedFoo
-object TypedFoo{
+object TypedFoo {
   import com.rallyhealth.weepickle.v1.WeePickle._
   implicit val readerTransmitter: Transceiver[TypedFoo] = Transceiver.merge(
-    macroX[Bar], macroX[Baz], macroX[Quz]
+    macroX[Bar],
+    macroX[Baz],
+    macroX[Quz]
   )
 
   case class Bar(i: Int) extends TypedFoo
@@ -53,7 +57,6 @@ object TypedFoo{
 
 object MacroTests extends TestSuite {
 
-
   // Doesn't work :(
 //  case class A_(objects: Option[C_]); case class C_(nodes: Option[C_])
 
@@ -63,11 +66,11 @@ object MacroTests extends TestSuite {
 //  implicitly[com.rallyhealth.weepickle.v1.old.Transmitter[ADTs.ADTc]]
 
   val tests = Tests {
-    test("mixedIn"){
+    test("mixedIn") {
       import MixedIn._
       test - rw(Obj.ClsB(1), """{"i":1}""")
       test - rw(Obj.ClsA("omg"), """{"s":"omg"}""")
-     }
+    }
 //
 //    /*
 //    // TODO Currently not supported
@@ -80,15 +83,14 @@ object MacroTests extends TestSuite {
 //
 
 //    */
-    test("exponential"){
+    test("exponential") {
 
       // Doesn't even need to execute, as long as it can compile
       val ww1 = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transmitter[Exponential.A1]]
     }
 
-
-    test("commonCustomStructures"){
-      test("simpleAdt"){
+    test("commonCustomStructures") {
+      test("simpleAdt") {
 
         test - rw(ADTs.ADT0(), """{}""")
         test - rw(ADTs.ADTa(1), """{"i":1}""")
@@ -130,14 +132,14 @@ object MacroTests extends TestSuite {
         )
       }
 
-      test("sealedHierarchy"){
+      test("sealedHierarchy") {
         // objects in sealed case class hierarchies should always read and write
         // the same way (with a tag) regardless of what their static type is when
         // written. This is feasible because sealed hierarchies can only have a
         // finite number of cases, so we can just check them all and decide which
         // class the instance belongs to.
         import Hierarchy._
-        test("shallow"){
+        test("shallow") {
           test - rw(B(1), """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.B", "i":1}""")
           test - rw(C("a", "b"), """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.C", "s1":"a","s2":"b"}""")
           test - rw(AnZ: Z, """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.AnZ"}""")
@@ -146,7 +148,7 @@ object MacroTests extends TestSuite {
           test - rw(C("a", "b"): A, """{"$type": "com.rallyhealth.weepickle.v1.Hierarchy.C", "s1":"a","s2":"b"}""")
 
         }
-        test("tagLast"){
+        test("tagLast") {
           // Make sure the tagged dictionary parser is able to parse cases where
           // the $type-tag appears later in the dict. It does this by a totally
           // different code-path than for tag-first dicts, using an intermediate
@@ -162,7 +164,7 @@ object MacroTests extends TestSuite {
           test - rw(B(1), """{"i":1, "$type": "com.rallyhealth.weepickle.v1.Hierarchy.B"}""")
           test - rw(C("a", "b"): A, """{"s1":"a","s2":"b", "$type": "com.rallyhealth.weepickle.v1.Hierarchy.C"}""")
         }
-        test("deep"){
+        test("deep") {
           import DeepHierarchy._
 
           test - rw(B(1), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.B", "i":1}""")
@@ -170,9 +172,18 @@ object MacroTests extends TestSuite {
           test - rw(AnQ(1): Q, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":1}""")
           test - rw(AnQ(1), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ","i":1}""")
 
-          test - rw(F(AnQ(1)), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":1}}""")
-          test - rw(F(AnQ(2)): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":2}}""")
-          test - rw(F(AnQ(3)): C, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":3}}""")
+          test - rw(
+            F(AnQ(1)),
+            """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":1}}"""
+          )
+          test - rw(
+            F(AnQ(2)): A,
+            """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":2}}"""
+          )
+          test - rw(
+            F(AnQ(3)): C,
+            """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.F","q":{"$type":"com.rallyhealth.weepickle.v1.DeepHierarchy.AnQ", "i":3}}"""
+          )
           test - rw(D("1"), """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.D", "s":"1"}""")
           test - rw(D("1"): C, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.D", "s":"1"}""")
           test - rw(D("1"): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.D", "s":"1"}""")
@@ -181,7 +192,7 @@ object MacroTests extends TestSuite {
           test - rw(E(true): A, """{"$type": "com.rallyhealth.weepickle.v1.DeepHierarchy.E", "b":true}""")
         }
       }
-      test("singleton"){
+      test("singleton") {
         import Singletons._
 
         rw(BB, """{"$type":"com.rallyhealth.weepickle.v1.Singletons.BB"}""")
@@ -190,8 +201,8 @@ object MacroTests extends TestSuite {
         rw(CC: AA, """{"$type":"com.rallyhealth.weepickle.v1.Singletons.CC"}""")
       }
     }
-    test("robustnessAgainstVaryingSchemas"){
-      test("renameKeysViaAnnotations"){
+    test("robustnessAgainstVaryingSchemas") {
+      test("renameKeysViaAnnotations") {
         import Annotated._
 
         test - rw(B(1), """{"$type": "0", "omg":1}""")
@@ -200,7 +211,7 @@ object MacroTests extends TestSuite {
         test - rw(B(1): A, """{"$type": "0", "omg":1}""")
         test - rw(C("a", "b"): A, """{"$type": "1", "lol":"a","wtf":"b"}""")
       }
-      test("useDefaults"){
+      test("useDefaults") {
         // Ignore the values which match the default when writing and
         // substitute in defaults when reading if the key is missing
         import Defaults._
@@ -213,26 +224,27 @@ object MacroTests extends TestSuite {
         test - rw(ADTc(t = (12.3, 45.6), s = "789"), """{"s":"789","t":[12.3,45.6]}""")
         test - rw(ADTc(t = (12.3, 45.6), s = "789", i = 31337), """{"i":31337,"s":"789","t":[12.3,45.6]}""")
       }
-      test("ignoreExtraFieldsWhenDeserializing"){
+      test("ignoreExtraFieldsWhenDeserializing") {
         import ADTs._
-        val r1 = FromJson( """{"i":123, "j":false, "k":"haha"}""").transmit(ToScala[ADTa])
+        val r1 = FromJson("""{"i":123, "j":false, "k":"haha"}""").transmit(ToScala[ADTa])
         assert(r1 == ADTa(123))
-        val r2 = FromJson( """{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""").transmit(ToScala[ADTb])
+        val r2 =
+          FromJson("""{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""").transmit(ToScala[ADTb])
         assert(r2 == ADTb(123, "kk"))
       }
     }
 
-    test("custom"){
-      test("clsTransceiver"){
+    test("custom") {
+      test("clsTransceiver") {
         rw(new Custom.Thing2(1, "s"), """ "1 s" """)
         rw(new Custom.Thing2(10, "sss"), """ "10 sss" """)
       }
-      test("caseClsTransceiver"){
+      test("caseClsTransceiver") {
         rw(new Custom.Thing3(1, "s"), """ "1 s" """)
         rw(new Custom.Thing3(10, "sss"), """ "10 sss" """)
       }
     }
-    test("varargs"){
+    test("varargs") {
       rw(Varargs.Sentence("a", "b", "c"), """{"a":"a","bs":["b","c"]}""")
       rw(Varargs.Sentence("a"), """{"a":"a","bs":[]}""")
     }

@@ -9,7 +9,7 @@ import org.scalatest.{FreeSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class WeeJacksonSpec
-  extends FreeSpec
+    extends FreeSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with GenValue

@@ -11,8 +11,12 @@ trait Receivers extends DefaultReceivers {
 
   implicit val LocalDateReceiver: Receiver[LocalDate] = new MapStringReceiver(s => LocalDate.parse(s.toString))
   implicit val LocalTimeReceiver: Receiver[LocalTime] = new MapStringReceiver(s => LocalTime.parse(s.toString))
-  implicit val LocalDateTimeReceiver: Receiver[LocalDateTime] = new MapStringReceiver(s => LocalDateTime.parse(s.toString))
-  implicit val OffsetDateTimeReceiver: Receiver[OffsetDateTime] = new MapStringReceiver(s => OffsetDateTime.parse(s.toString))
+  implicit val LocalDateTimeReceiver: Receiver[LocalDateTime] = new MapStringReceiver(
+    s => LocalDateTime.parse(s.toString)
+  )
+  implicit val OffsetDateTimeReceiver: Receiver[OffsetDateTime] = new MapStringReceiver(
+    s => OffsetDateTime.parse(s.toString)
+  )
   implicit val InstantReceiver: Receiver[Instant] = new SimpleReceiver[Instant] {
     override def expectedMsg: String = "expected timestamp"
     override def visitTimestamp(instant: Instant): Instant = instant
@@ -21,8 +25,8 @@ trait Receivers extends DefaultReceivers {
     override def visitFloat64String(s: String): Instant = {
       Try(s.toDouble) match {
         case Success(d: Double) if d == d.toLong => visitInt64(d.toLong)
-        case Success(d: Double) => throw new Abort(s"$expectedMsg got float")
-        case Failure(_) => throw new Abort(s"$expectedMsg got strange number")
+        case Success(d: Double)                  => throw new Abort(s"$expectedMsg got float")
+        case Failure(_)                          => throw new Abort(s"$expectedMsg got strange number")
       }
     }
     override def visitFloat64StringParts(s: CharSequence, decIndex: Int, expIndex: Int): Instant = {

@@ -68,10 +68,10 @@ object JsonTests extends TestSuite {
       """.stripMargin
     val parsed = WeeJson.read(ugly)
 
-    test("correctness"){
+    test("correctness") {
       val unparsed = WeeJson.write(parsed)
       val reparsed = WeeJson.read(unparsed)
-      for (json <- Seq(parsed, reparsed)){
+      for (json <- Seq(parsed, reparsed)) {
         assert(
           json(0).value == "JSON Test Pattern pass1",
           json(8)("real").value == -9876.54321,
@@ -82,7 +82,7 @@ object JsonTests extends TestSuite {
       }
       (parsed(19), reparsed(19))
     }
-    test("inputs"){
+    test("inputs") {
       val unparsed = WeeJson.write(parsed)
       val fromString = WeeJson.read(unparsed)
       val fromBytes = WeeJson.read(unparsed.getBytes)
@@ -91,17 +91,17 @@ object JsonTests extends TestSuite {
       assert(fromString == fromBytes)
       assert(fromBytes == fromInputStream)
     }
-    test("shortcuts"){
-      test("positive"){
-        WeeJson.read("[1]").arr        ==> Seq(Num(1))
-        WeeJson.read("1").num          ==> 1
-        WeeJson.read("\"1\"").str      ==> "1"
+    test("shortcuts") {
+      test("positive") {
+        WeeJson.read("[1]").arr ==> Seq(Num(1))
+        WeeJson.read("1").num ==> 1
+        WeeJson.read("\"1\"").str ==> "1"
         WeeJson.read("{\"1\": 1}").obj ==> Map("1" -> Num(1))
       }
-      test("negative"){
-        intercept[com.rallyhealth.weejson.v1.Value.InvalidData]{WeeJson.read("[1]").obj}
-        intercept[com.rallyhealth.weejson.v1.Value.InvalidData]{WeeJson.read("1").obj}
-        intercept[com.rallyhealth.weejson.v1.Value.InvalidData]{WeeJson.read("\"1\"").obj}
+      test("negative") {
+        intercept[com.rallyhealth.weejson.v1.Value.InvalidData] { WeeJson.read("[1]").obj }
+        intercept[com.rallyhealth.weejson.v1.Value.InvalidData] { WeeJson.read("1").obj }
+        intercept[com.rallyhealth.weejson.v1.Value.InvalidData] { WeeJson.read("\"1\"").obj }
 
       }
     }

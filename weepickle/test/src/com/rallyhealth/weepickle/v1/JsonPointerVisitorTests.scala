@@ -41,6 +41,7 @@ object JsonPointerVisitorTests extends TestSuite {
     }
 
     test("JSON Pointer rfc6901") {
+
       /**
         * {{{
         *    {

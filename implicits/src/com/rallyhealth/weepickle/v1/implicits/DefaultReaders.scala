@@ -11,7 +11,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits{
+trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits {
   implicit val UnitReceiver: Receiver[Unit] = new SimpleReceiver[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {
@@ -106,9 +106,9 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
   private trait NumericReceiver[J] extends SimpleReceiver[J] {
     override def visitFloat64String(s: String) = {
       visitFloat64StringParts(s, s.indexOf('.'), s.indexOf('E') match {
-                      case -1 => s.indexOf('e')
-                      case n => n
-                    })
+        case -1 => s.indexOf('e')
+        case n  => n
+      })
     }
   }
 
@@ -140,7 +140,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
   implicit val BigIntReceiver: Receiver[BigInt] = new SimpleReceiver[BigInt] {
     override def expectedMsg = "expected number or numeric string"
     override def visitString(cs: CharSequence): BigInt = {
-      if(cs.length() > digitLimit) {
+      if (cs.length() > digitLimit) {
         // Don't put the number in the exception otherwise trying to render it to a string could also cause problems
         throw new NumberFormatException(s"Number too large with ${cs.length} digits")
       } else {
@@ -156,7 +156,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
   implicit val BigDecimalReceiver: Receiver[BigDecimal] = new SimpleReceiver[BigDecimal] {
     override def expectedMsg = "expected number or numeric string"
     override def visitString(cs: CharSequence): BigDecimal = {
-      if(cs.length() > digitLimit) {
+      if (cs.length() > digitLimit) {
         // Don't put the number in the exception otherwise trying to render it to a string could also cause problems
         throw new NumberFormatException(s"Number too large with ${cs.length} digits")
       } else {
@@ -164,7 +164,8 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
         BigDecimal(str)
       }
     }
-    override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): BigDecimal = BigDecimal(cs.toString)
+    override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): BigDecimal =
+      BigDecimal(cs.toString)
     override def visitFloat64String(s: String): BigDecimal = BigDecimal(s.toString)
     override def visitInt32(d: Int): BigDecimal = BigDecimal(d)
     override def visitInt64(d: Long): BigDecimal = BigDecimal(d)
@@ -174,43 +175,44 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
   implicit val SymbolReceiver: Receiver[Symbol] = new MapStringReceiver(s => Symbol(s.toString))
   implicit val UriReceiver: Receiver[URI] = new MapStringReceiver(s => URI.create(s.toString))
 
-  def MapReceiver0[M[A, B] <: collection.Map[A, B], K, V]
-                (make: Iterable[(K, V)] => M[K, V])
-                (implicit k: Receiver[K], v: Receiver[V]): Receiver[M[K, V]] = {
+  def MapReceiver0[M[A, B] <: collection.Map[A, B], K, V](
+    make: Iterable[(K, V)] => M[K, V]
+  )(implicit k: Receiver[K], v: Receiver[V]): Receiver[M[K, V]] = {
     if (k ne StringReceiver) SeqLikeReceiver[Array, (K, V)].map(x => make(x))
-    else new SimpleReceiver[M[K, V]]{
-      override def visitObject(length: Int): ObjVisitor[Any, M[K, V]] = new ObjVisitor[Any, M[K, V]] {
-        val strings = mutable.Buffer.empty[K]
-        val values = mutable.Buffer.empty[V]
-        def subVisitor = v
+    else
+      new SimpleReceiver[M[K, V]] {
+        override def visitObject(length: Int): ObjVisitor[Any, M[K, V]] = new ObjVisitor[Any, M[K, V]] {
+          val strings = mutable.Buffer.empty[K]
+          val values = mutable.Buffer.empty[V]
+          def subVisitor = v
 
-        def visitKey(): Visitor[_, _] = StringReceiver
+          def visitKey(): Visitor[_, _] = StringReceiver
 
-        def visitKeyValue(s: Any): Unit = {
-          strings.append(s.toString.asInstanceOf[K])
+          def visitKeyValue(s: Any): Unit = {
+            strings.append(s.toString.asInstanceOf[K])
+          }
+
+          def visitValue(v: Any): Unit = values.append(v.asInstanceOf[V])
+
+          def visitEnd(): M[K, V] = make(strings.zip(values))
+
         }
 
-        def visitValue(v: Any): Unit = values.append(v.asInstanceOf[V])
-
-        def visitEnd(): M[K, V] = make(strings.zip(values))
-
+        def expectedMsg = "expected map"
       }
-
-      def expectedMsg = "expected map"
-    }
   }
   implicit def MapReceiver1[K, V](implicit k: Receiver[K], v: Receiver[V]): Receiver[collection.Map[K, V]] = {
     MapReceiver0[collection.Map, K, V](_.toMap)
   }
   implicit def MapReceiver2[K, V](implicit k: Receiver[K], v: Receiver[V]): Receiver[collection.immutable.Map[K, V]] = {
-    MapReceiver0[collection.immutable.Map, K, V]{seq =>
+    MapReceiver0[collection.immutable.Map, K, V] { seq =>
       val b = collection.immutable.Map.newBuilder[K, V]
       seq.foreach(b += _)
       b.result()
     }
   }
   implicit def MapReceiver3[K, V](implicit k: Receiver[K], v: Receiver[V]): Receiver[collection.mutable.Map[K, V]] = {
-    MapReceiver0[collection.mutable.Map, K, V]{seq =>
+    MapReceiver0[collection.mutable.Map, K, V] { seq =>
       val b = collection.mutable.Map.newBuilder[K, V]
       seq.foreach(b += _)
       b.result()
@@ -251,86 +253,88 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
 
         def subVisitor = implicitly[Receiver[T]]
       }
-    }
-    else new SimpleReceiver[Array[T]] {
+    } else
+      new SimpleReceiver[Array[T]] {
+        override def expectedMsg = "expected sequence"
+        override def visitArray(length: Int): ArrVisitor[Any, Array[T]] = new ArrVisitor[Any, Array[T]] {
+          val b = mutable.ArrayBuilder.make[T]
+
+          def visitValue(v: Any): Unit = {
+            b += v.asInstanceOf[T]
+          }
+
+          def visitEnd(): Array[T] = b.result()
+
+          def subVisitor = implicitly[Receiver[T]]
+        }
+      }
+  implicit def SeqLikeReceiver[C[_], T](implicit r: Receiver[T], factory: Factory[T, C[T]]): Receiver[C[T]] =
+    new SimpleReceiver[C[T]] {
       override def expectedMsg = "expected sequence"
-      override def visitArray(length: Int): ArrVisitor[Any, Array[T]] = new ArrVisitor[Any, Array[T]] {
-        val b = mutable.ArrayBuilder.make[T]
+      override def visitArray(length: Int): ArrVisitor[Any, C[T]] = new ArrVisitor[Any, C[T]] {
+        val b = factory.newBuilder
 
         def visitValue(v: Any): Unit = {
           b += v.asInstanceOf[T]
         }
 
-        def visitEnd(): Array[T] = b.result()
+        def visitEnd(): C[T] = b.result()
 
-        def subVisitor = implicitly[Receiver[T]]
+        def subVisitor = r
       }
     }
-  implicit def SeqLikeReceiver[C[_], T](implicit r: Receiver[T],
-                                      factory: Factory[T, C[T]]): Receiver[C[T]] = new SimpleReceiver[C[T]] {
-    override def expectedMsg = "expected sequence"
-    override def visitArray(length: Int): ArrVisitor[Any, C[T]] = new ArrVisitor[Any, C[T]] {
-      val b = factory.newBuilder
 
-      def visitValue(v: Any): Unit = {
-        b += v.asInstanceOf[T]
-      }
-
-      def visitEnd(): C[T] = b.result()
-
-      def subVisitor = r
-    }
-  }
-
-  implicit val DurationReceiver = new MapStringReceiver( s =>
-    if (s.charAt(0) == 'i' &&
-        s.charAt(1) == 'n' &&
-        s.charAt(2) == 'f'
-        && s.length() == 3){
-      Duration.Inf
-    } else if (s.charAt(0) == '-' &&
-               s.charAt(1) == 'i' &&
-               s.charAt(2) == 'n' &&
-               s.charAt(3) == 'f' &&
-               s.length() == 4){
-      Duration.MinusInf
-    } else if (s.charAt(0) == 'u' &&
-               s.charAt(1) == 'n' &&
-               s.charAt(2) == 'd' &&
-               s.charAt(3) == 'e' &&
-               s.charAt(4) == 'f' &&
-               s.length() == 5){
-      Duration.Undefined
-    }else Duration(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length()), TimeUnit.NANOSECONDS)
+  implicit val DurationReceiver = new MapStringReceiver(
+    s =>
+      if (s.charAt(0) == 'i' &&
+          s.charAt(1) == 'n' &&
+          s.charAt(2) == 'f'
+          && s.length() == 3) {
+        Duration.Inf
+      } else if (s.charAt(0) == '-' &&
+                 s.charAt(1) == 'i' &&
+                 s.charAt(2) == 'n' &&
+                 s.charAt(3) == 'f' &&
+                 s.length() == 4) {
+        Duration.MinusInf
+      } else if (s.charAt(0) == 'u' &&
+                 s.charAt(1) == 'n' &&
+                 s.charAt(2) == 'd' &&
+                 s.charAt(3) == 'e' &&
+                 s.charAt(4) == 'f' &&
+                 s.length() == 5) {
+        Duration.Undefined
+      } else Duration(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length()), TimeUnit.NANOSECONDS)
   )
 
   implicit val InfiniteDurationReceiver = DurationReceiver.narrow[Duration.Infinite]
   implicit val FiniteDurationReceiver = DurationReceiver.narrow[FiniteDuration]
 
-  implicit def EitherReceiver[T1: Receiver, T2: Receiver]: SimpleReceiver[Either[T1, T2]] = new SimpleReceiver[Either[T1, T2]]{
-    override def expectedMsg = "expected sequence"
-    override def visitArray(length: Int): ArrVisitor[Any, Either[T1, T2]] = new ArrVisitor[Any, Either[T1, T2]] {
-      var right: java.lang.Boolean = null
-      var value: Either[T1, T2] = _
-      def visitValue(v: Any): Unit = right match {
-        case null =>
-          v match {
-            case 0 => right = false
-            case 1 => right = true
-          }
-        case java.lang.Boolean.TRUE => value = Right(v.asInstanceOf[T2])
-        case java.lang.Boolean.FALSE => value = Left(v.asInstanceOf[T1])
-      }
+  implicit def EitherReceiver[T1: Receiver, T2: Receiver]: SimpleReceiver[Either[T1, T2]] =
+    new SimpleReceiver[Either[T1, T2]] {
+      override def expectedMsg = "expected sequence"
+      override def visitArray(length: Int): ArrVisitor[Any, Either[T1, T2]] = new ArrVisitor[Any, Either[T1, T2]] {
+        var right: java.lang.Boolean = null
+        var value: Either[T1, T2] = _
+        def visitValue(v: Any): Unit = right match {
+          case null =>
+            v match {
+              case 0 => right = false
+              case 1 => right = true
+            }
+          case java.lang.Boolean.TRUE  => value = Right(v.asInstanceOf[T2])
+          case java.lang.Boolean.FALSE => value = Left(v.asInstanceOf[T1])
+        }
 
-      def visitEnd(): Either[T1, T2] = value
+        def visitEnd(): Either[T1, T2] = value
 
-      def subVisitor: Visitor[_, _] = right match{
-        case null => IntReceiver
-        case java.lang.Boolean.TRUE => implicitly[Receiver[T2]]
-        case java.lang.Boolean.FALSE => implicitly[Receiver[T1]]
+        def subVisitor: Visitor[_, _] = right match {
+          case null                    => IntReceiver
+          case java.lang.Boolean.TRUE  => implicitly[Receiver[T2]]
+          case java.lang.Boolean.FALSE => implicitly[Receiver[T1]]
+        }
       }
     }
-  }
   implicit def RightReceiver[T1: Receiver, T2: Receiver] =
     EitherReceiver[T1, T2].narrow[Right[T1, T2]]
   implicit def LeftReceiver[T1: Receiver, T2: Receiver] =

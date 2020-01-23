@@ -15,19 +15,18 @@ object JvmExampleTests extends TestSuite {
 
   import TestUtil._
   val tests = Tests {
-    test("sources"){
+    test("sources") {
       val original = """{"myFieldA":1,"myFieldB":"gg"}"""
 
       import java.nio.file.Files
       val f = Files.createTempFile("", "")
       Files.write(f, original.getBytes)
 
-
       FromJson(f).transmit(ToScala[Thing]) ==> Thing(1, "gg")
       FromJson(f.toFile).transmit(ToScala[Thing]) ==> Thing(1, "gg")
     }
-    test("other"){
-      test("argonaut"){
+    test("other") {
+      test("argonaut") {
         import com.rallyhealth.weejson.v1.argonaut.ArgonautJson
         val argJson: argonaut.Json = FromJson("""["hello", "world"]""").transmit(ArgonautJson)
 
@@ -46,7 +45,7 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
-      test("circe"){
+      test("circe") {
         import com.rallyhealth.weejson.v1.circe.CirceJson
         val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transmit(CirceJson)
 
@@ -66,12 +65,12 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
-      test("json4s"){
+      test("json4s") {
         import org.json4s.JsonAST
         val json4sJson: JsonAST.JValue = FromJson("""["hello", "world"]""").transmit(Json4sJson)
 
         val updatedJson4sJson = JsonAST.JArray(
-          for(v <- json4sJson.children)
+          for (v <- json4sJson.children)
             yield JsonAST.JString(v.values.toString.toUpperCase())
         )
 
@@ -88,13 +87,13 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
-      test("playJson"){
+      test("playJson") {
         import com.rallyhealth.weejson.v1.play.PlayJson
         import play.api.libs.json._
         val playJson: play.api.libs.json.JsValue = FromJson("""["hello", "world"]""").transmit(PlayJson)
 
         val updatedPlayJson = JsArray(
-          for(v <- playJson.as[JsArray].value)
+          for (v <- playJson.as[JsArray].value)
             yield JsString(v.as[String].toUpperCase())
         )
 
@@ -111,7 +110,7 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
-      test("crossAst"){
+      test("crossAst") {
         import com.rallyhealth.weejson.v1.circe.CirceJson
         val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transmit(CirceJson)
 
@@ -127,7 +126,7 @@ object JvmExampleTests extends TestSuite {
         )
 
         val updatedPlayJson = JsArray(
-          for(v <- playJson.as[JsArray].value)
+          for (v <- playJson.as[JsArray].value)
             yield JsString(v.as[String].reverse)
         )
 
@@ -139,5 +138,3 @@ object JvmExampleTests extends TestSuite {
 
   }
 }
-
-

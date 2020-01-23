@@ -32,7 +32,8 @@ class CallbackVisitor[T, J](delegate: Visitor[T, J])(callback: J => Unit) extend
 
   override def visitString(cs: CharSequence): J = emitFluently(super.visitString(cs))
 
-  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = emitFluently(super.visitFloat64StringParts(cs, decIndex, expIndex))
+  override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J =
+    emitFluently(super.visitFloat64StringParts(cs, decIndex, expIndex))
 
   override def visitFloat64(d: Double): J = emitFluently(super.visitFloat64(d))
 
@@ -48,9 +49,11 @@ class CallbackVisitor[T, J](delegate: Visitor[T, J])(callback: J => Unit) extend
 
   override def visitChar(c: Char): J = emitFluently(super.visitChar(c))
 
-  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = emitFluently(super.visitBinary(bytes, offset, len))
+  override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J =
+    emitFluently(super.visitBinary(bytes, offset, len))
 
-  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J = emitFluently(super.visitExt(tag, bytes, offset, len))
+  override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J =
+    emitFluently(super.visitExt(tag, bytes, offset, len))
 
   override def visitTimestamp(instant: Instant): J = emitFluently(super.visitTimestamp(instant))
 }

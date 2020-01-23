@@ -15,19 +15,14 @@ object WeeJson {
   /**
     * Write the given JSON struct as a JSON String
     */
-  def write(t: Value.Value,
-            indent: Int = -1,
-            escapeUnicode: Boolean = false): String = {
+  def write(t: Value.Value, indent: Int = -1, escapeUnicode: Boolean = false): String = {
     transform(t, StringRenderer(indent, escapeUnicode)).toString
   }
 
   /**
     * Write the given JSON struct as a JSON String to the given Transmitter
     */
-  def writeTo(t: Value.Value,
-              out: java.io.Writer,
-              indent: Int = -1,
-              escapeUnicode: Boolean = false): Unit = {
+  def writeTo(t: Value.Value, out: java.io.Writer, indent: Int = -1, escapeUnicode: Boolean = false): Unit = {
     transform(t, Renderer(out, indent, escapeUnicode))
   }
 
@@ -35,6 +30,7 @@ object WeeJson {
     * Parse the given JSON input, failing if it is invalid
     */
   def validate(s: WeeJsonTransmittable): Unit = transform(s, NoOpVisitor)
+
   /**
     * Parse the given JSON input and write it to a string with
     * the configured formatting
@@ -42,11 +38,17 @@ object WeeJson {
   def reformat(s: WeeJsonTransmittable, indent: Int = -1, escapeUnicode: Boolean = false): String = {
     transform(s, StringRenderer(indent, escapeUnicode)).toString
   }
+
   /**
     * Parse the given JSON input and write it to a string with
     * the configured formatting to the given Transmitter
     */
-  def reformatTo(s: WeeJsonTransmittable, out: java.io.Writer, indent: Int = -1, escapeUnicode: Boolean = false): Unit = {
+  def reformatTo(
+    s: WeeJsonTransmittable,
+    out: java.io.Writer,
+    indent: Int = -1,
+    escapeUnicode: Boolean = false
+  ): Unit = {
     transform(s, Renderer(out, indent, escapeUnicode)).toString
   }
   // End com.rallyhealth.weejson.v1

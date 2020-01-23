@@ -7,10 +7,10 @@ import java.time.format.DateTimeFormatter
   * A [[Visitor]] specialized to work with JSON types. Forwards the
   * not-JSON-related methods to their JSON equivalents.
   */
-trait JsVisitor[-T, +J] extends Visitor[T, J]{
+trait JsVisitor[-T, +J] extends Visitor[T, J] {
   def visitFloat64(d: Double): J = {
     val i = d.toLong
-    if(i == d) visitFloat64StringParts(i.toString, -1, -1)
+    if (i == d) visitFloat64StringParts(i.toString, -1, -1)
     else visitFloat64String(d.toString)
 
   }
@@ -33,7 +33,7 @@ trait JsVisitor[-T, +J] extends Visitor[T, J]{
       decIndex = s.indexOf('.'),
       expIndex = s.indexOf('E') match {
         case -1 => s.indexOf('e')
-        case n => n
+        case n  => n
       }
     )
   }
@@ -41,7 +41,7 @@ trait JsVisitor[-T, +J] extends Visitor[T, J]{
   def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J = {
     val arr = visitArray(len)
     var i = 0
-    while (i < len){
+    while (i < len) {
       arr.visitValue(arr.subVisitor.visitInt32(bytes(offset + i)).asInstanceOf[T])
       i += 1
     }

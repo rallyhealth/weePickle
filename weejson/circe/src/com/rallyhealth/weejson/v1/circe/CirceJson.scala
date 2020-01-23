@@ -4,7 +4,7 @@ import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
 import io.circe.{Json, JsonNumber}
 
 import scala.collection.mutable.ArrayBuffer
-object CirceJson extends com.rallyhealth.weejson.v1.AstTransformer[Json]{
+object CirceJson extends com.rallyhealth.weejson.v1.AstTransformer[Json] {
 
   override def transform[T](j: Json, f: Visitor[_, T]) = j.fold(
     f.visitNull(),
@@ -15,9 +15,10 @@ object CirceJson extends com.rallyhealth.weejson.v1.AstTransformer[Json]{
     obj => transformObject(f, obj.toList)
   )
 
-  def visitArray(length: Int): ArrVisitor[Json, Json] = new AstArrVisitor[Vector](x => Json.arr(x:_*))
+  def visitArray(length: Int): ArrVisitor[Json, Json] = new AstArrVisitor[Vector](x => Json.arr(x: _*))
 
-  def visitObject(length: Int): ObjVisitor[Json, Json] = new AstObjVisitor[ArrayBuffer[(String, Json)]](vs => Json.obj(vs.toSeq:_*))
+  def visitObject(length: Int): ObjVisitor[Json, Json] =
+    new AstObjVisitor[ArrayBuffer[(String, Json)]](vs => Json.obj(vs.toSeq: _*))
 
   def visitNull(): Json = Json.Null
 

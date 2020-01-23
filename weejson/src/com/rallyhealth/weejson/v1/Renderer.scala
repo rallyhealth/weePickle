@@ -22,7 +22,11 @@ object BytesRenderer {
   ): Visitor[Any, Out] = {
     // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
     // The java.io.Writer is the return value, so the caller can do with it as they please.
-    val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
+    val generator = configurePrettyPrinting(
+      Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET),
+      indent,
+      escapeUnicode
+    )
 
     JsonRenderer(BaseRenderer.configurePrettyPrinting(generator, indent, escapeUnicode))
       .map(_ => out)
@@ -65,7 +69,11 @@ object BaseRenderer {
   ): Visitor[Any, T] = {
     // We'll flush the java.io.Writer, but we won't close it, since we didn't create it.
     // The java.io.Writer is the return value, so the caller can do with it as they please.
-    val generator = configurePrettyPrinting(Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET), indent, escapeUnicode)
+    val generator = configurePrettyPrinting(
+      Instance.createGenerator(out).disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET),
+      indent,
+      escapeUnicode
+    )
     JsonRenderer(generator).map(_ => out)
   }
 

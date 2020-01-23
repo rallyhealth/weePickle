@@ -4,15 +4,15 @@ import com.rallyhealth.weejson.v1.Value
 import com.rallyhealth.weepickle.v1.core.{Abort, TestUtil}
 import utest._
 
-object UnitTests extends TestSuite{
+object UnitTests extends TestSuite {
   val tests = Tests {
 
-    test("trivial"){
+    test("trivial") {
       val msg = Arr(Str("a"))
       val written = WeePack.write(msg)
       WeePack.read(written) ==> msg
     }
-    test("compositeKeys"){
+    test("compositeKeys") {
       val msg = Obj(Arr(Int32(1), Int32(2)) -> Int32(1))
       val written = WeePack.write(msg)
       val writtenStr = TestUtil.bytesToString(written)
@@ -20,8 +20,7 @@ object UnitTests extends TestSuite{
 
       WeePack.read(written) ==> msg
 
-
-      intercept[Abort]{
+      intercept[Abort] {
         WeePack.transform(written, Value)
       }
       intercept[Abort] {

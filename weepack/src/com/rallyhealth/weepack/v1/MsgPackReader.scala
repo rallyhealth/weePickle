@@ -10,17 +10,19 @@ class MsgPackReceiver(val startIndex: Int = 0, input0: Array[Byte]) extends Base
   def sliceString(i: Int, k: Int): String = new String(input0, i, k - i)
   def sliceBytes(i: Int, n: Int): (Array[Byte], Int, Int) = (input0, i, n)
   def byte(i: Int): Byte = input0(i)
-  def dropBufferUntil(i: Int): Unit = ()//donothing
+  def dropBufferUntil(i: Int): Unit = () //donothing
 }
 
-class InputStreamMsgPackReceiver(val data: java.io.InputStream,
-                               val minStartBufferSize: Int,
-                               val maxStartBufferSize: Int)
-extends BaseMsgPackReceiver with BufferingInputStreamParser{
+class InputStreamMsgPackReceiver(
+  val data: java.io.InputStream,
+  val minStartBufferSize: Int,
+  val maxStartBufferSize: Int
+) extends BaseMsgPackReceiver
+    with BufferingInputStreamParser {
   def startIndex = 0
 }
 
-abstract class BaseMsgPackReceiver{
+abstract class BaseMsgPackReceiver {
 
   def startIndex: Int
   def byte(i: Int): Byte
@@ -36,41 +38,41 @@ abstract class BaseMsgPackReceiver{
   def parse[T](visitor: Visitor[_, T]): T = {
     dropBufferUntil(index)
     val n = byte(index)
-    (n & 0xFF: @switch) match{
-      case MPK.Nil => incrementIndex(1); visitor.visitNull()
+    (n & 0xFF: @switch) match {
+      case MPK.Nil   => incrementIndex(1); visitor.visitNull()
       case MPK.False => incrementIndex(1); visitor.visitFalse()
-      case MPK.True => incrementIndex(1); visitor.visitTrue()
+      case MPK.True  => incrementIndex(1); visitor.visitTrue()
 
-      case MPK.Bin8 => parseBin(parseUInt8(index + 1), visitor)
+      case MPK.Bin8  => parseBin(parseUInt8(index + 1), visitor)
       case MPK.Bin16 => parseBin(parseUInt16(index + 1), visitor)
       case MPK.Bin32 => parseBin(parseUInt32(index + 1), visitor)
 
-      case MPK.Ext8 => parseExt(parseUInt8(index + 1), visitor)
+      case MPK.Ext8  => parseExt(parseUInt8(index + 1), visitor)
       case MPK.Ext16 => parseExt(parseUInt16(index + 1), visitor)
       case MPK.Ext32 => parseExt(parseUInt32(index + 1), visitor)
 
       case MPK.Float32 => visitor.visitFloat64(java.lang.Float.intBitsToFloat(parseUInt32(index + 1)))
       case MPK.Float64 => visitor.visitFloat64(java.lang.Double.longBitsToDouble(parseUInt64(index + 1)))
 
-      case MPK.UInt8 => visitor.visitInt32(parseUInt8(index + 1))
+      case MPK.UInt8  => visitor.visitInt32(parseUInt8(index + 1))
       case MPK.UInt16 => visitor.visitInt32(parseUInt16(index + 1))
-      case MPK.UInt32 => visitor.visitInt64(parseUInt32(index + 1) & 0xffffffffL)
+      case MPK.UInt32 => visitor.visitInt64(parseUInt32(index + 1) & 0XFFFFFFFFL)
       case MPK.UInt64 => visitor.visitUInt64(parseUInt64(index + 1))
 
-      case MPK.Int8 => visitor.visitInt32(parseUInt8(index + 1).toByte)
+      case MPK.Int8  => visitor.visitInt32(parseUInt8(index + 1).toByte)
       case MPK.Int16 => visitor.visitInt32(parseUInt16(index + 1).toShort)
       case MPK.Int32 => visitor.visitInt32(parseUInt32(index + 1))
       case MPK.Int64 => visitor.visitInt64(parseUInt64(index + 1))
 
-      case MPK.FixExt1 => incrementIndex(1); parseExt(1, visitor)
-      case MPK.FixExt2 => incrementIndex(1); parseExt(2, visitor)
-      case MPK.FixExt4 => incrementIndex(1); parseExt(4, visitor)
-      case MPK.FixExt8 => incrementIndex(1); parseExt(8, visitor)
+      case MPK.FixExt1  => incrementIndex(1); parseExt(1, visitor)
+      case MPK.FixExt2  => incrementIndex(1); parseExt(2, visitor)
+      case MPK.FixExt4  => incrementIndex(1); parseExt(4, visitor)
+      case MPK.FixExt8  => incrementIndex(1); parseExt(8, visitor)
       case MPK.FixExt16 => incrementIndex(1); parseExt(16, visitor)
 
-      case MPK.Str8 => parseStr(parseUInt8(index + 1), visitor)
+      case MPK.Str8  => parseStr(parseUInt8(index + 1), visitor)
       case MPK.Str16 => parseStr(parseUInt16(index + 1), visitor)
-      case MPK.Str32=> parseStr(parseUInt32(index + 1), visitor)
+      case MPK.Str32 => parseStr(parseUInt32(index + 1), visitor)
 
       case MPK.Array16 => parseArray(parseUInt16(index + 1), visitor)
       case MPK.Array32 => parseArray(parseUInt32(index + 1), visitor)
@@ -85,16 +87,15 @@ abstract class BaseMsgPackReceiver{
         } else if (x <= MPK.FixMap) {
           val n = x & 0x0f
           incrementIndex(1)
-          parseMap (n, visitor)
+          parseMap(n, visitor)
         } else if (x <= MPK.FixArray) {
           val n = x & 0x0f
           incrementIndex(1)
-          parseArray (n, visitor)
-        }
-          else if (x <= MPK.FixStr ) {
+          parseArray(n, visitor)
+        } else if (x <= MPK.FixStr) {
           val n = x & 0x1f
           incrementIndex(1)
-          parseStr (n, visitor)
+          parseStr(n, visitor)
         } else if (x >= 0xe0) { // negative fixint
           incrementIndex(1)
           visitor.visitInt32(x | 0xffffffe0)
@@ -107,7 +108,6 @@ abstract class BaseMsgPackReceiver{
     incrementIndex(1)
     extType match {
       case -1 if n == 4 =>
-
         /**
           * timestamp 32 stores the number of seconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in an 32-bit unsigned integer:
@@ -120,7 +120,6 @@ abstract class BaseMsgPackReceiver{
         visitor.visitTimestamp(instant)
 
       case -1 if n == 8 =>
-
         /**
           * timestamp 64 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in 32-bit unsigned integers:
@@ -130,12 +129,11 @@ abstract class BaseMsgPackReceiver{
           */
         val nano30seconds34 = parseUInt64(index)
         val nanos = nano30seconds34 >>> 34
-        val seconds = nano30seconds34 & 0x03ffffffffL
+        val seconds = nano30seconds34 & 0X03FFFFFFFFL
         val instant = Instant.ofEpochSecond(seconds, nanos)
         visitor.visitTimestamp(instant)
 
       case -1 if n == 12 =>
-
         /**
           * timestamp 96 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in 64-bit signed integer and 32-bit unsigned integer:
@@ -172,7 +170,7 @@ abstract class BaseMsgPackReceiver{
     val obj = visitor.visitObject(n)
 
     var i = 0
-    while(i < n){
+    while (i < n) {
       val keyVisitor = obj.visitKey()
       obj.visitKeyValue(parse(keyVisitor.asInstanceOf[Visitor[_, T]]))
       obj.narrow.visitValue(parse(obj.subVisitor.asInstanceOf[Visitor[_, T]]))
@@ -185,7 +183,7 @@ abstract class BaseMsgPackReceiver{
 
     var i = 0
 
-    while(i < n){
+    while (i < n) {
       val v = parse(arr.subVisitor.asInstanceOf[Visitor[_, T]])
       arr.narrow.visitValue(v)
       i += 1
@@ -207,8 +205,8 @@ abstract class BaseMsgPackReceiver{
   def parseUInt64(i: Int) = {
     setIndex(i + 8)
     (byte(i + 0).toLong & 0xff) << 56 | (byte(i + 1).toLong & 0xff) << 48 |
-    (byte(i + 2).toLong & 0xff) << 40 | (byte(i + 3).toLong & 0xff) << 32 |
-    (byte(i + 4).toLong & 0xff) << 24 | (byte(i + 5).toLong & 0xff) << 16 |
-    (byte(i + 6).toLong & 0xff) << 8 | (byte(i + 7).toLong & 0xff) << 0
+      (byte(i + 2).toLong & 0xff) << 40 | (byte(i + 3).toLong & 0xff) << 32 |
+      (byte(i + 4).toLong & 0xff) << 24 | (byte(i + 5).toLong & 0xff) << 16 |
+      (byte(i + 6).toLong & 0xff) << 8 | (byte(i + 7).toLong & 0xff) << 0
   }
 }

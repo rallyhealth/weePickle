@@ -6,24 +6,29 @@ import com.rallyhealth.weejson.v1._
 import com.rallyhealth.weepickle.v1.core.{TestUtil, Util}
 import utest._
 
-object MsgPackTests extends TestSuite{
-  val tests = Tests{
-    test("hello"){
-      for{
+object MsgPackTests extends TestSuite {
+  val tests = Tests {
+    test("hello") {
+      for {
         (k, v) <- unitCases.obj
         testCase <- v.arr
         packed0 <- testCase("msgpack").arr
-      }{
-        val (tag, expectedJson) = testCase.obj.find{_._1 != "msgpack"}.get
+      } {
+        val (tag, expectedJson) = testCase.obj.find { _._1 != "msgpack" }.get
         val packedStr = packed0.str
         println(k + " " + tag + " " + expectedJson + " " + packedStr)
         val packed = TestUtil.stringToBytes(packedStr)
 
         val jsonified0 = WeePack.transform(packed, com.rallyhealth.weejson.v1.Value)
 
-        val jsonified = tag match{
-          case "binary" => com.rallyhealth.weejson.v1.Str(TestUtil.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
-          case "ext" => com.rallyhealth.weejson.v1.Arr(jsonified0(0), com.rallyhealth.weejson.v1.Str(TestUtil.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray)))
+        val jsonified = tag match {
+          case "binary" =>
+            com.rallyhealth.weejson.v1.Str(TestUtil.bytesToString(jsonified0.arr.map(_.num.toByte).toArray))
+          case "ext" =>
+            com.rallyhealth.weejson.v1.Arr(
+              jsonified0(0),
+              com.rallyhealth.weejson.v1.Str(TestUtil.bytesToString(jsonified0(1).arr.map(_.num.toByte).toArray))
+            )
           case "timestamp" =>
             val instant = Instant.parse(jsonified0.str)
             com.rallyhealth.weejson.v1.Arr(instant.getEpochSecond, instant.getNano)
@@ -44,7 +49,8 @@ object MsgPackTests extends TestSuite{
 
   // Taken from:
   // https://github.com/kawanet/msgpack-test-suite/tree/e04f6edeaae589c768d6b70fcce80aa786b7800e
-  val unitCases = WeeJson.read("""
+  val unitCases = WeeJson.read(
+    """
     {
       "10.nil.yaml": [
         {
@@ -767,5 +773,6 @@ object MsgPackTests extends TestSuite{
         }
       ]
     }
-  """)
+  """
+  )
 }

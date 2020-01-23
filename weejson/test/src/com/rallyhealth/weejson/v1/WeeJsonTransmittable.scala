@@ -11,7 +11,7 @@ trait WeeJsonTransmittable extends Transmittable {
 }
 
 object WeeJsonTransmittable {
-  case class fromTransformer[T](t: T, w: Transformer[T]) extends WeeJsonTransmittable{
+  case class fromTransformer[T](t: T, w: Transformer[T]) extends WeeJsonTransmittable {
     def transmit[T](f: Visitor[_, T]): T = {
       w.transform(t, f)
     }

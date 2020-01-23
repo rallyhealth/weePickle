@@ -1,7 +1,7 @@
 package com.rallyhealth.weepickle.v1.core
 
 object TestUtil {
-
+  // format: off
   private final val Hexes = Array[String](
     "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "0a", "0b", "0c", "0d", "0e", "0f",
     "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "1a", "1b", "1c", "1d", "1e", "1f",
@@ -20,6 +20,7 @@ object TestUtil {
     "e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "ea", "eb", "ec", "ed", "ee", "ef",
     "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "fa", "fb", "fc", "fd", "fe", "ff"
   )
+  // format: on
 
   def bytesToString(bs: Array[Byte]) = bs.map(b => Hexes(b & 0xFF)).mkString("-")
   def stringToBytes(s: String) = s.split('-').map(Integer.parseInt(_, 16).toByte)
