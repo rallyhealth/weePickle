@@ -8,8 +8,8 @@ import scala.annotation.StaticAnnotation
   *
   * For naming, consider that some implementations (e.g. vpack) may sort object keys,
   * so symbol prefixes work well for ensuring the tag is the first property.
-  * Receivers will fast path if this is the first field of the object.
-  * Otherwise, Receivers will have to buffer the content and find the tag later.
+  * Tos will fast path if this is the first field of the object.
+  * Otherwise, Tos will have to buffer the content and find the tag later.
   *
   * You can also tag the subclasses with [[key]] to override values for this field,
   * which will otherwise default to the FQCN of the classname.

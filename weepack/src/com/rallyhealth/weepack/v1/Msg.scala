@@ -3,7 +3,7 @@ package com.rallyhealth.weepack.v1
 import java.io.ByteArrayOutputStream
 import java.time.Instant
 
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Transmittable, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, FromData, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -21,8 +21,8 @@ import scala.collection.mutable.ArrayBuffer
   * appropriately sized versions are written out when the message is serialized
   * to bytes.
   */
-sealed trait Msg extends Transmittable {
-  def transmit[T](f: Visitor[_, T]) = Msg.transmit(this, f)
+sealed trait Msg extends FromData {
+  def transform[T](to: Visitor[_, T]) = Msg.transform(this, to)
 
   /**
     * Returns the `String` value of this [[Msg]], fails if it is not
@@ -100,7 +100,7 @@ sealed trait Msg extends Transmittable {
   }
 
   def writeBytesTo(out: java.io.OutputStream): Unit = {
-    this.transmit(new MsgPackTransmitter(out))
+    this.transform(new MsgPackRenderer(out))
   }
 }
 case object Null extends Msg
@@ -172,7 +172,7 @@ object Msg extends MsgVisitor[Msg, Msg] {
       def update(x: Msg, y: Msg) = x.obj(i) = y
     }
   }
-  def transmit[T](j: Msg, f: Visitor[_, T]): T = {
+  def transform[T](j: Msg, f: Visitor[_, T]): T = {
     j match {
       case Null  => f.visitNull()
       case True  => f.visitTrue()
@@ -192,7 +192,7 @@ object Msg extends MsgVisitor[Msg, Msg] {
       case Arr(items) =>
         val arr = f.visitArray(items.length)
         for (i <- items) {
-          arr.narrow.visitValue(transmit(i, arr.subVisitor))
+          arr.narrow.visitValue(transform(i, arr.subVisitor))
         }
         arr.visitEnd()
 
@@ -200,8 +200,8 @@ object Msg extends MsgVisitor[Msg, Msg] {
         val obj = f.visitObject(items.size)
         for ((k, v) <- items) {
           val keyVisitor = obj.visitKey()
-          obj.visitKeyValue(k.transmit(keyVisitor))
-          obj.narrow.visitValue(transmit(v, obj.subVisitor))
+          obj.visitKeyValue(k.transform(keyVisitor))
+          obj.narrow.visitValue(transform(v, obj.subVisitor))
         }
         obj.visitEnd()
       case Ext(tag, data) => f.visitExt(tag, data, 0, data.length)
@@ -253,7 +253,7 @@ object Msg extends MsgVisitor[Msg, Msg] {
 
   override def visitTimestamp(instant: Instant): Msg = {
     // DRY, but unoptimized.
-    val writer = new MsgPackTransmitter(new ByteArrayOutputStream(15))
+    val writer = new MsgPackRenderer(new ByteArrayOutputStream(15))
     val baos = writer.visitTimestamp(instant)
     val arr = baos.toByteArray
     arr(1) match {

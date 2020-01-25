@@ -19,8 +19,8 @@ class PlayJsonImplicitsSpec
       val message = WeePickleEnvelope(PlayCiphertext("pony"))
 
       "weepickle" - {
-        "weepickle.write" in assert(FromScala(message).transmit(ToJson.string) === string)
-        "weepickle.read" in assert(FromJson(string).transmit(ToScala[WeePickleEnvelope]) === message)
+        "weepickle.write" in assert(FromScala(message).transform(ToJson.string) === string)
+        "weepickle.read" in assert(FromJson(string).transform(ToScala[WeePickleEnvelope]) === message)
       }
 
       "play-json" - {
@@ -38,8 +38,8 @@ class PlayJsonImplicitsSpec
       "weepickle" - {
         import com.rallyhealth.weejson.v1.play.PlayJsonImplicits.PlayJsonConversions._
 
-        "weepickle.write" in assert(FromScala(message).transmit(ToJson.string) === string)
-        "weepickle.read" in assert(FromJson(string).transmit(ToScala[PlayEnvelope]) === message)
+        "weepickle.write" in assert(FromScala(message).transform(ToJson.string) === string)
+        "weepickle.read" in assert(FromJson(string).transform(ToScala[PlayEnvelope]) === message)
       }
 
       "play-json" - {
@@ -58,7 +58,7 @@ class PlayJsonImplicitsSpec
 
       "weepickle" - {
         "weepickle.read" in {
-          (the[Exception] thrownBy (FromJson(json).transmit(ToScala[Envelope]))).getCause shouldBe a[JsResultException]
+          (the[Exception] thrownBy (FromJson(json).transform(ToScala[Envelope]))).getCause shouldBe a[JsResultException]
         }
       }
 
@@ -82,7 +82,7 @@ class PlayJsonImplicitsSpec
         import com.rallyhealth.weejson.v1.play.PlayJsonImplicits.PlayJsonConversions._
 
         "weepickle.read" in {
-          (the[Exception] thrownBy (FromJson(json)).transmit(ToScala[Envelope])).getCause shouldBe a[JsResultException]
+          (the[Exception] thrownBy (FromJson(json)).transform(ToScala[Envelope])).getCause shouldBe a[JsResultException]
         }
       }
 

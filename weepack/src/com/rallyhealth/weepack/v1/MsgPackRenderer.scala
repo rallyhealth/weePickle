@@ -7,7 +7,8 @@ import java.time.format.DateTimeFormatter
 import com.rallyhealth.weepack.v1.Msg.visitString
 import com.rallyhealth.weepack.v1.{MsgPackKeys => MPK}
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
-class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream()) extends MsgVisitor[T, T] {
+
+class MsgPackRenderer[T <: java.io.OutputStream](out: T = new ByteArrayOutputStream()) extends MsgVisitor[T, T] {
   override def visitArray(length: Int): ArrVisitor[T, T] = new ArrVisitor[T, T] {
     require(length != -1, "Length of com.rallyhealth.weepack.v1 array must be known up front")
     if (length <= 15) {
@@ -19,7 +20,7 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
       out.write(MPK.Array32)
       writeUInt32(length)
     }
-    def subVisitor = MsgPackTransmitter.this
+    def subVisitor = MsgPackRenderer.this
     def visitValue(v: T): Unit = () // do nothing
     def visitEnd(): T = out // do nothing
   }
@@ -35,8 +36,8 @@ class MsgPackTransmitter[T <: java.io.OutputStream](out: T = new ByteArrayOutput
       out.write(MPK.Map32)
       writeUInt32(length)
     }
-    def subVisitor = MsgPackTransmitter.this
-    def visitKey(): Visitor[_, _] = MsgPackTransmitter.this
+    def subVisitor = MsgPackRenderer.this
+    def visitKey(): Visitor[_, _] = MsgPackRenderer.this
     def visitKeyValue(s: Any): Unit = () // do nothing
     def visitValue(v: T): Unit = () // do nothing
     def visitEnd(): T = out // do nothing

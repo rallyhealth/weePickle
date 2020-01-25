@@ -13,12 +13,12 @@ object JsonPointerVisitorTests extends TestSuite {
 
   case class Foo(foo: List[String], s: String, i: Int, b: Boolean)
 
-  implicit lazy val rw = weepickle.v1.WeePickle.macroX[Foo]
+  implicit lazy val rw = weepickle.v1.WeePickle.macroFromTo[Foo]
 
   override def tests: Tests = Tests {
     test("failures") {
       def assertPathFailure(json: String, expectedPath: String) = {
-        val cause = intercept[Exception](WeeJson.read(json).transmit(JsonPointerVisitor(rw)))
+        val cause = intercept[Exception](WeeJson.read(json).transform(JsonPointerVisitor(rw)))
         val failureAtPath = findException(cause)
         failureAtPath.get.jsonPointer ==> expectedPath
       }

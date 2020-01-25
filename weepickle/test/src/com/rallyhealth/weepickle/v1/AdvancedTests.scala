@@ -8,20 +8,20 @@ object shared {
     import common.Message
     case class That(common: Message)
     object That{
-      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[That] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[That] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     }
   }
   object other {
     import common.Message
     case class Other(common: Message)
     object Other{
-      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Other] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Other] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     }
   }
   object common {
     case class Message(content: String)
     object Message{
-      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Message] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Message] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     }
   }
 }
@@ -30,76 +30,76 @@ object All {
   import shared.other._
   sealed trait Outers
   object Outers{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Outers] = com.rallyhealth.weepickle.v1.WeePickle.Transceiver.merge(
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Outers] = com.rallyhealth.weepickle.v1.WeePickle.FromTo.merge(
       Out1.rw
     )
   }
   case class Out1(a: Other) extends Outers
   object Out1{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Out1] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Out1] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
   }
 
   import shared.that._
   import shared.common._
   sealed trait Inners extends Outers
   object Inners{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Inners] = com.rallyhealth.weepickle.v1.WeePickle.Transceiver.merge(
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inners] = com.rallyhealth.weepickle.v1.WeePickle.FromTo.merge(
       Inner1.rw,
       Inner2.rw
     )
   }
   case class Inner1(b: That) extends Inners
   object Inner1{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Inner1] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inner1] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
   }
   case class Inner2(a: Message) extends Inners
   object Inner2{
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.Transceiver[Inner2] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inner2] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
   }
 }
 
-import com.rallyhealth.weepickle.v1.WeePickle.{Transceiver, macroX}
+import com.rallyhealth.weepickle.v1.WeePickle.{FromTo, macroFromTo}
 sealed trait Gadt[T]
 object Gadt{
-  implicit def rw[T]: Transceiver[Gadt[T]] = macroX[Gadt[_]].asInstanceOf[Transceiver[Gadt[T]]]
+  implicit def rw[T]: FromTo[Gadt[T]] = macroFromTo[Gadt[_]].asInstanceOf[FromTo[Gadt[T]]]
   case class IsDir(path: String) extends Gadt[Boolean]
   object IsDir{
-    implicit val rw: Transceiver[IsDir] = macroX
+    implicit val rw: FromTo[IsDir] = macroFromTo
   }
   case class Exists(path: String) extends Gadt[Boolean]
   object Exists{
-    implicit val rw: Transceiver[Exists] = macroX
+    implicit val rw: FromTo[Exists] = macroFromTo
   }
   case class ReadBytes(path: String) extends Gadt[Array[Byte]]
   object ReadBytes{
-    implicit val rw: Transceiver[ReadBytes] = macroX
+    implicit val rw: FromTo[ReadBytes] = macroFromTo
   }
   case class CopyOver(src: Seq[Byte], path: String) extends Gadt[Unit]
   object CopyOver{
-    implicit val rw: Transceiver[CopyOver] = macroX
+    implicit val rw: FromTo[CopyOver] = macroFromTo
   }
 }
 
 sealed trait Gadt2[T, V]
 object Gadt2{
-  implicit def rw[T, V: Transceiver]: Transceiver[Gadt2[T, V]] =
-    macroX[Gadt2[_, V]].asInstanceOf[Transceiver[Gadt2[T, V]]]
+  implicit def rw[T, V: FromTo]: FromTo[Gadt2[T, V]] =
+    macroFromTo[Gadt2[_, V]].asInstanceOf[FromTo[Gadt2[T, V]]]
 
   case class IsDir[V](v: V) extends Gadt2[Boolean, V]
   object IsDir{
-    implicit def rw[V: Transceiver]: Transceiver[IsDir[V]] = macroX
+    implicit def rw[V: FromTo]: FromTo[IsDir[V]] = macroFromTo
   }
   case class Exists[V](v: V) extends Gadt2[Boolean, V]
   object Exists{
-    implicit def rw[V: Transceiver]: Transceiver[Exists[V]] = macroX
+    implicit def rw[V: FromTo]: FromTo[Exists[V]] = macroFromTo
   }
   case class ReadBytes[V](v: V) extends Gadt2[Array[Byte], V]
   object ReadBytes{
-    implicit def rw[V: Transceiver]: Transceiver[ReadBytes[V]] = macroX
+    implicit def rw[V: FromTo]: FromTo[ReadBytes[V]] = macroFromTo
   }
   case class CopyOver[V](src: Seq[Byte], v: String) extends Gadt2[Int, V]
   object CopyOver{
-    implicit def rw[V]: Transceiver[CopyOver[V]] = macroX
+    implicit def rw[V]: FromTo[CopyOver[V]] = macroFromTo
   }
 }
 
@@ -107,8 +107,8 @@ object AdvancedTests extends TestSuite {
   import All._
   val tests = Tests {
     "complexTraits" - {
-      val reader = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Receiver[Outers]]
-      val writer = implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transmitter[Outers]]
+      val reader = implicitly[com.rallyhealth.weepickle.v1.WeePickle.To[Outers]]
+      val writer = implicitly[com.rallyhealth.weepickle.v1.WeePickle.From[Outers]]
       assert(reader != null)
       assert(writer != null)
     }
@@ -301,14 +301,14 @@ object AdvancedTests extends TestSuite {
       }
       test("scala-issue-11768"){
         // Make sure this compiles
-        class Thing[T: com.rallyhealth.weepickle.v1.WeePickle.Transmitter, V: com.rallyhealth.weepickle.v1.WeePickle.Transmitter](t: Option[(V, T)]){
-          implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transmitter[Option[(V, T)]]]
+        class Thing[T: com.rallyhealth.weepickle.v1.WeePickle.From, V: com.rallyhealth.weepickle.v1.WeePickle.From](t: Option[(V, T)]){
+          implicitly[com.rallyhealth.weepickle.v1.WeePickle.From[Option[(V, T)]]]
         }
       }
       //      test("companionImplicitPickedUp"){
-      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.Receiver[TypedFoo]] eq TypedFoo.readerTransmitter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transmitter[TypedFoo]] eq TypedFoo.readerTransmitter)
-      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.Transceiver[TypedFoo]] eq TypedFoo.readerTransmitter)
+      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.To[TypedFoo]] eq TypedFoo.readerFrom)
+      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.From[TypedFoo]] eq TypedFoo.readerFrom)
+      //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.FromTo[TypedFoo]] eq TypedFoo.readerFrom)
       //      }
       //      test("companionImplicitWorks"){
       //

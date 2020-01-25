@@ -17,7 +17,7 @@ case class WeePickleEnvelope(enveloped: PlayCiphertext)
 object WeePickleEnvelope {
 
   import PlayJsonConversions._
-  implicit val rw = WeePickle.macroX[WeePickleEnvelope]
+  implicit val rw = WeePickle.macroFromTo[WeePickleEnvelope]
 }
 
 case class WeePickleCiphertext(ciphertext: String)
@@ -25,7 +25,7 @@ case class WeePickleCiphertext(ciphertext: String)
 object WeePickleCiphertext {
 
   import PlayJsonConversions._
-  implicit val rw = WeePickle.macroX[WeePickleCiphertext]
+  implicit val rw = WeePickle.macroFromTo[WeePickleCiphertext]
 }
 
 case class PlayEnvelope(enveloped: WeePickleCiphertext)

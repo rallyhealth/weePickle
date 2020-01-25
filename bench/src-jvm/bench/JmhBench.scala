@@ -50,12 +50,12 @@ class JmhBench {
 
   @Benchmark
   def bytesToCcWeeJackson(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transmit(reader[Seq[Common.Data]]))
+    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(to[Seq[Common.Data]]))
   }
 
   @Benchmark
   def bytesToCcWeeJacksonAsync(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transmit(reader[Seq[Common.Data]]))
+    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(to[Seq[Common.Data]]))
   }
 
 //  @Benchmark
@@ -66,14 +66,14 @@ class JmhBench {
 
   @Benchmark
   def bytesToCcWeePack(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleMsgPack).transmit(ToScala[Seq[Common.Data]]))
+    bh.consume(FromJson(Common.benchmarkSampleMsgPack).transform(ToScala[Seq[Common.Data]]))
   }
 
   @Benchmark
   def ccToBytesWeeJackson(bh: Blackhole): Unit = {
     val out = new ByteArrayOutputStream()
     val visitor = JsonRenderer(DefaultJsonFactory.Instance.createGenerator(out))
-    FromScala(Common.benchmarkSampleData).transmit(visitor).close()
+    FromScala(Common.benchmarkSampleData).transform(visitor).close()
     bh.consume(out.toByteArray)
   }
 
@@ -87,7 +87,7 @@ class JmhBench {
   def ccToStringWeeJackson(bh: Blackhole): Unit = {
     val writer = new StringWriter()
     val visitor = JsonRenderer(DefaultJsonFactory.Instance.createGenerator(writer))
-    FromScala(Common.benchmarkSampleData).transmit(visitor).close()
+    FromScala(Common.benchmarkSampleData).transform(visitor).close()
     bh.consume(writer.toString)
   }
 
@@ -99,12 +99,12 @@ class JmhBench {
 
   @Benchmark
   def ccToBytesWeePack(bh: Blackhole): Unit = {
-    bh.consume(FromScala(Common.benchmarkSampleData).transmit(ToMsgPack.bytes))
+    bh.consume(FromScala(Common.benchmarkSampleData).transform(ToMsgPack.bytes))
   }
 
   @Benchmark
   def stringToCcWeeJackson(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleJson).transmit(ToScala[Seq[Common.Data]]))
+    bh.consume(FromJson(Common.benchmarkSampleJson).transform(ToScala[Seq[Common.Data]]))
   }
 
 //  @Benchmark

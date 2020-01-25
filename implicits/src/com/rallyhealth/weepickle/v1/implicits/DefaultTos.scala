@@ -11,8 +11,8 @@ import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits {
-  implicit val UnitReceiver: Receiver[Unit] = new SimpleReceiver[Unit] {
+trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits {
+  implicit val ToUnit: To[Unit] = new SimpleTo[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {
       def subVisitor = NoOpVisitor
@@ -26,13 +26,13 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       def visitKeyValue(v: Any): Unit = ()
     }
   }
-  implicit val BooleanReceiver: Receiver[Boolean] = new SimpleReceiver[Boolean] {
+  implicit val ToBoolean: To[Boolean] = new SimpleTo[Boolean] {
     override def expectedMsg = "expected boolean"
     override def visitTrue() = true
     override def visitFalse() = false
   }
 
-  implicit val DoubleReceiver: Receiver[Double] = new NumericReceiver[Double] {
+  implicit val ToDouble: To[Double] = new NumericTo[Double] {
     override def expectedMsg = "expected number"
     override def visitString(cs: CharSequence): Double = cs.toString.toDouble
     override def visitInt32(d: Int): Double = d
@@ -45,7 +45,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     }
   }
 
-  implicit val IntReceiver: Receiver[Int] = new NumericReceiver[Int] {
+  implicit val ToInt: To[Int] = new NumericTo[Int] {
     override def expectedMsg = "expected number"
     override def visitInt32(d: Int): Int = d
     override def visitInt64(d: Long): Int = d.toInt
@@ -55,7 +55,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       Util.parseIntegralNum(cs, decIndex, expIndex).toInt
     }
   }
-  implicit val FloatReceiver: Receiver[Float] = new NumericReceiver[Float] {
+  implicit val ToFloat: To[Float] = new NumericTo[Float] {
     override def expectedMsg = "expected number"
 
     override def visitString(cs: CharSequence): Float = cs.toString.toFloat
@@ -68,7 +68,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       cs.toString.toFloat
     }
   }
-  implicit val ShortReceiver: Receiver[Short] = new NumericReceiver[Short] {
+  implicit val ToShort: To[Short] = new NumericTo[Short] {
     override def expectedMsg = "expected number"
     override def visitInt32(d: Int): Short = d.toShort
     override def visitInt64(d: Long): Short = d.toShort
@@ -78,7 +78,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       Util.parseIntegralNum(cs, decIndex, expIndex).toShort
     }
   }
-  implicit val ByteReceiver: Receiver[Byte] = new NumericReceiver[Byte] {
+  implicit val ToByte: To[Byte] = new NumericTo[Byte] {
     override def expectedMsg = "expected number"
     override def visitInt32(d: Int): Byte = d.toByte
     override def visitInt64(d: Long): Byte = d.toByte
@@ -89,12 +89,12 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     }
   }
 
-  implicit val StringReceiver: Receiver[String] = new SimpleReceiver[String] {
+  implicit val ToString: To[String] = new SimpleTo[String] {
     override def expectedMsg = "expected string"
     override def visitString(cs: CharSequence): String = cs.toString
   }
 
-  class MapStringReceiver[T](f: CharSequence => T) extends SimpleReceiver[T] {
+  class MapStringTo[T](f: CharSequence => T) extends SimpleTo[T] {
     override def expectedMsg = "expected string"
     override def visitString(cs: CharSequence): T = f(cs)
   }
@@ -103,7 +103,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     * Forwards some methods to their alternate implementations for numeric types.
     * Similar to weeJson/JsVisitor, but for numeric types.
     */
-  private trait NumericReceiver[J] extends SimpleReceiver[J] {
+  private trait NumericTo[J] extends SimpleTo[J] {
     override def visitFloat64String(s: String) = {
       visitFloat64StringParts(s, s.indexOf('.'), s.indexOf('E') match {
         case -1 => s.indexOf('e')
@@ -112,7 +112,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     }
   }
 
-  implicit val CharReceiver: Receiver[Char] = new NumericReceiver[Char] {
+  implicit val ToChar: To[Char] = new NumericTo[Char] {
     override def expectedMsg = "expected char"
     override def visitString(d: CharSequence): Char = d.charAt(0)
     override def visitChar(d: Char): Char = d
@@ -124,8 +124,8 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       Util.parseIntegralNum(cs, decIndex, expIndex).toChar
     }
   }
-  implicit val UUIDReceiver: Receiver[UUID] = new MapStringReceiver(s => UUID.fromString(s.toString))
-  implicit val LongReceiver: Receiver[Long] = new NumericReceiver[Long] {
+  implicit val ToUUID: To[UUID] = new MapStringTo(s => UUID.fromString(s.toString))
+  implicit val ToLong: To[Long] = new NumericTo[Long] {
     override def expectedMsg = "expected number"
     override def visitString(d: CharSequence): Long = com.rallyhealth.weepickle.v1.core.Util.parseLong(d, 0, d.length())
     override def visitInt32(d: Int): Long = d.toLong
@@ -137,7 +137,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     }
   }
   private val digitLimit = 10000
-  implicit val BigIntReceiver: Receiver[BigInt] = new SimpleReceiver[BigInt] {
+  implicit val ToBigInt: To[BigInt] = new SimpleTo[BigInt] {
     override def expectedMsg = "expected number or numeric string"
     override def visitString(cs: CharSequence): BigInt = {
       if (cs.length() > digitLimit) {
@@ -153,7 +153,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     override def visitInt64(d: Long): BigInt = BigInt(d)
     override def visitUInt64(d: Long): BigInt = BigInt(java.lang.Long.toUnsignedString(d))
   }
-  implicit val BigDecimalReceiver: Receiver[BigDecimal] = new SimpleReceiver[BigDecimal] {
+  implicit val ToBigDecimal: To[BigDecimal] = new SimpleTo[BigDecimal] {
     override def expectedMsg = "expected number or numeric string"
     override def visitString(cs: CharSequence): BigDecimal = {
       if (cs.length() > digitLimit) {
@@ -172,21 +172,21 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     override def visitUInt64(d: Long): BigDecimal = BigDecimal(java.lang.Long.toUnsignedString(d))
     override def visitFloat64(d: Double): BigDecimal = BigDecimal(d)
   }
-  implicit val SymbolReceiver: Receiver[Symbol] = new MapStringReceiver(s => Symbol(s.toString))
-  implicit val UriReceiver: Receiver[URI] = new MapStringReceiver(s => URI.create(s.toString))
+  implicit val ToSymbol: To[Symbol] = new MapStringTo(s => Symbol(s.toString))
+  implicit val ToUri: To[URI] = new MapStringTo(s => URI.create(s.toString))
 
-  def MapReceiver0[M[A, B] <: collection.Map[A, B], K, V](
+  def MapTo0[M[A, B] <: collection.Map[A, B], K, V](
     make: Iterable[(K, V)] => M[K, V]
-  )(implicit k: Receiver[K], v: Receiver[V]): Receiver[M[K, V]] = {
-    if (k ne StringReceiver) SeqLikeReceiver[Array, (K, V)].map(x => make(x))
+  )(implicit k: To[K], v: To[V]): To[M[K, V]] = {
+    if (k ne ToString) ToSeqLike[Array, (K, V)].map(x => make(x))
     else
-      new SimpleReceiver[M[K, V]] {
+      new SimpleTo[M[K, V]] {
         override def visitObject(length: Int): ObjVisitor[Any, M[K, V]] = new ObjVisitor[Any, M[K, V]] {
           val strings = mutable.Buffer.empty[K]
           val values = mutable.Buffer.empty[V]
           def subVisitor = v
 
-          def visitKey(): Visitor[_, _] = StringReceiver
+          def visitKey(): Visitor[_, _] = ToString
 
           def visitKeyValue(s: Any): Unit = {
             strings.append(s.toString.asInstanceOf[K])
@@ -201,26 +201,26 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
         def expectedMsg = "expected map"
       }
   }
-  implicit def MapReceiver1[K, V](implicit k: Receiver[K], v: Receiver[V]): Receiver[collection.Map[K, V]] = {
-    MapReceiver0[collection.Map, K, V](_.toMap)
+  implicit def ToMap[K, V](implicit k: To[K], v: To[V]): To[collection.Map[K, V]] = {
+    MapTo0[collection.Map, K, V](_.toMap)
   }
-  implicit def MapReceiver2[K, V](implicit k: Receiver[K], v: Receiver[V]): Receiver[collection.immutable.Map[K, V]] = {
-    MapReceiver0[collection.immutable.Map, K, V] { seq =>
+  implicit def ToImmutableMap[K, V](implicit k: To[K], v: To[V]): To[collection.immutable.Map[K, V]] = {
+    MapTo0[collection.immutable.Map, K, V] { seq =>
       val b = collection.immutable.Map.newBuilder[K, V]
       seq.foreach(b += _)
       b.result()
     }
   }
-  implicit def MapReceiver3[K, V](implicit k: Receiver[K], v: Receiver[V]): Receiver[collection.mutable.Map[K, V]] = {
-    MapReceiver0[collection.mutable.Map, K, V] { seq =>
+  implicit def ToMutableMap[K, V](implicit k: To[K], v: To[V]): To[collection.mutable.Map[K, V]] = {
+    MapTo0[collection.mutable.Map, K, V] { seq =>
       val b = collection.mutable.Map.newBuilder[K, V]
       seq.foreach(b += _)
       b.result()
     }
   }
 
-  implicit def OptionReceiver[T: Receiver]: Receiver[Option[T]] = {
-    new Receiver.MapReceiver[T, T, Option[T]](implicitly[Receiver[T]]) {
+  implicit def ToOption[T: To]: To[Option[T]] = {
+    new To.MapTo[T, T, Option[T]](implicitly[To[T]]) {
 
       private def f(t: T): Option[T] = Option(t)
 
@@ -232,11 +232,11 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
     }
   }
 
-  implicit def SomeReceiver[T: Receiver]: Receiver[Some[T]] = OptionReceiver[T].narrow[Some[T]]
-  implicit def NoneReceiver: Receiver[None.type] = OptionReceiver[Unit].narrow[None.type]
+  implicit def ToSome[T: To]: To[Some[T]] = ToOption[T].narrow[Some[T]]
+  implicit def ToNone: To[None.type] = ToOption[Unit].narrow[None.type]
 
-  implicit def ArrayReceiver[T: Receiver: ClassTag]: Receiver[Array[T]] =
-    if (implicitly[Receiver[T]] == ByteReceiver) new SimpleReceiver[Array[T]] {
+  implicit def ToArray[T: To: ClassTag]: To[Array[T]] =
+    if (implicitly[To[T]] == ToByte) new SimpleTo[Array[T]] {
       override def expectedMsg = "expected sequence"
 
       override def visitBinary(bytes: Array[Byte], offset: Int, len: Int) = {
@@ -251,10 +251,10 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
 
         def visitEnd(): Array[T] = b.result()
 
-        def subVisitor = implicitly[Receiver[T]]
+        def subVisitor = implicitly[To[T]]
       }
     } else
-      new SimpleReceiver[Array[T]] {
+      new SimpleTo[Array[T]] {
         override def expectedMsg = "expected sequence"
         override def visitArray(length: Int): ArrVisitor[Any, Array[T]] = new ArrVisitor[Any, Array[T]] {
           val b = mutable.ArrayBuilder.make[T]
@@ -265,11 +265,11 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
 
           def visitEnd(): Array[T] = b.result()
 
-          def subVisitor = implicitly[Receiver[T]]
+          def subVisitor = implicitly[To[T]]
         }
       }
-  implicit def SeqLikeReceiver[C[_], T](implicit r: Receiver[T], factory: Factory[T, C[T]]): Receiver[C[T]] =
-    new SimpleReceiver[C[T]] {
+  implicit def ToSeqLike[C[_], T](implicit r: To[T], factory: Factory[T, C[T]]): To[C[T]] =
+    new SimpleTo[C[T]] {
       override def expectedMsg = "expected sequence"
       override def visitArray(length: Int): ArrVisitor[Any, C[T]] = new ArrVisitor[Any, C[T]] {
         val b = factory.newBuilder
@@ -284,7 +284,7 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       }
     }
 
-  implicit val DurationReceiver = new MapStringReceiver(
+  implicit val ToDuration = new MapStringTo(
     s =>
       if (s.charAt(0) == 'i' &&
           s.charAt(1) == 'n' &&
@@ -307,11 +307,11 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
       } else Duration(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length()), TimeUnit.NANOSECONDS)
   )
 
-  implicit val InfiniteDurationReceiver = DurationReceiver.narrow[Duration.Infinite]
-  implicit val FiniteDurationReceiver = DurationReceiver.narrow[FiniteDuration]
+  implicit val ToInfiniteDuration = ToDuration.narrow[Duration.Infinite]
+  implicit val ToFiniteDuration = ToDuration.narrow[FiniteDuration]
 
-  implicit def EitherReceiver[T1: Receiver, T2: Receiver]: SimpleReceiver[Either[T1, T2]] =
-    new SimpleReceiver[Either[T1, T2]] {
+  implicit def ToEither[T1: To, T2: To]: SimpleTo[Either[T1, T2]] =
+    new SimpleTo[Either[T1, T2]] {
       override def expectedMsg = "expected sequence"
       override def visitArray(length: Int): ArrVisitor[Any, Either[T1, T2]] = new ArrVisitor[Any, Either[T1, T2]] {
         var right: java.lang.Boolean = null
@@ -329,14 +329,14 @@ trait DefaultReceivers extends com.rallyhealth.weepickle.v1.core.Types with Gene
         def visitEnd(): Either[T1, T2] = value
 
         def subVisitor: Visitor[_, _] = right match {
-          case null                    => IntReceiver
-          case java.lang.Boolean.TRUE  => implicitly[Receiver[T2]]
-          case java.lang.Boolean.FALSE => implicitly[Receiver[T1]]
+          case null                    => ToInt
+          case java.lang.Boolean.TRUE  => implicitly[To[T2]]
+          case java.lang.Boolean.FALSE => implicitly[To[T1]]
         }
       }
     }
-  implicit def RightReceiver[T1: Receiver, T2: Receiver] =
-    EitherReceiver[T1, T2].narrow[Right[T1, T2]]
-  implicit def LeftReceiver[T1: Receiver, T2: Receiver] =
-    EitherReceiver[T1, T2].narrow[Left[T1, T2]]
+  implicit def ToRight[T1: To, T2: To] =
+    ToEither[T1, T2].narrow[Right[T1, T2]]
+  implicit def ToLeft[T1: To, T2: To] =
+    ToEither[T1, T2].narrow[Left[T1, T2]]
 }

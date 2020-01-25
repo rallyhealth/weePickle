@@ -6,7 +6,7 @@ import com.rallyhealth.weepickle.v1.core._
 import scala.collection.compat._
 
 trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I] {
-  def apply(s: String): I = FromJson(s).transmit(this)
+  def apply(s: String): I = FromJson(s).transform(this)
 
   def transformArray[T](f: Visitor[_, T], items: Iterable[I]): T = {
     val ctx = f.visitArray(items.size).narrow

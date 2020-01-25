@@ -7,17 +7,17 @@ import com.rallyhealth.weepickle.v1.core.Abort
 
 import scala.util.{Failure, Success, Try}
 
-trait Receivers extends DefaultReceivers {
+trait Tos extends DefaultTos {
 
-  implicit val LocalDateReceiver: Receiver[LocalDate] = new MapStringReceiver(s => LocalDate.parse(s.toString))
-  implicit val LocalTimeReceiver: Receiver[LocalTime] = new MapStringReceiver(s => LocalTime.parse(s.toString))
-  implicit val LocalDateTimeReceiver: Receiver[LocalDateTime] = new MapStringReceiver(
+  implicit val LocalDateTo: To[LocalDate] = new MapStringTo(s => LocalDate.parse(s.toString))
+  implicit val LocalTimeTo: To[LocalTime] = new MapStringTo(s => LocalTime.parse(s.toString))
+  implicit val LocalDateTimeTo: To[LocalDateTime] = new MapStringTo(
     s => LocalDateTime.parse(s.toString)
   )
-  implicit val OffsetDateTimeReceiver: Receiver[OffsetDateTime] = new MapStringReceiver(
+  implicit val OffsetDateTimeTo: To[OffsetDateTime] = new MapStringTo(
     s => OffsetDateTime.parse(s.toString)
   )
-  implicit val InstantReceiver: Receiver[Instant] = new SimpleReceiver[Instant] {
+  implicit val InstantTo: To[Instant] = new SimpleTo[Instant] {
     override def expectedMsg: String = "expected timestamp"
     override def visitTimestamp(instant: Instant): Instant = instant
     override def visitString(cs: CharSequence): Instant = Instant.parse(cs.toString)
@@ -34,5 +34,5 @@ trait Receivers extends DefaultReceivers {
       else visitFloat64String(s.toString) // likely invalid path
     }
   }
-  implicit val DateReceiver: Receiver[Date] = InstantReceiver.map(i => new Date(i.toEpochMilli))
+  implicit val DateTo: To[Date] = InstantTo.map(i => new Date(i.toEpochMilli))
 }

@@ -19,9 +19,9 @@ object JvmPrimitiveTests extends TestSuite {
       test("Instant") {
         test("String") { rw(Instant.parse("2015-05-03T10:15:30Z"), "\"2015-05-03T10:15:30Z\"") }
         test("Millis") {
-          WeePickle.InstantReceiver.visitInt64(1579664660824L) ==> Instant.parse("2020-01-22T03:44:20.824Z")
-          WeePickle.InstantReceiver.visitFloat64String("1579664660824") ==> Instant.parse("2020-01-22T03:44:20.824Z")
-          WeePickle.InstantReceiver.visitFloat64StringParts("1579664660824", -1, -1) ==> Instant.parse(
+          WeePickle.InstantTo.visitInt64(1579664660824L) ==> Instant.parse("2020-01-22T03:44:20.824Z")
+          WeePickle.InstantTo.visitFloat64String("1579664660824") ==> Instant.parse("2020-01-22T03:44:20.824Z")
+          WeePickle.InstantTo.visitFloat64StringParts("1579664660824", -1, -1) ==> Instant.parse(
             "2020-01-22T03:44:20.824Z"
           )
         }

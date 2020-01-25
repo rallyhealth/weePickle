@@ -10,14 +10,14 @@ import scala.util.{Failure, Success, Try}
 /**
   * Convenience shims back to inefficient play-json formats.
   *
-  * weePickle [[Transceiver]] macros are more performant than using play-json Formats.
+  * weePickle [[FromTo]] macros are more performant than using play-json Formats.
   * play-json always requires going through an intermediate heavyweight AST:
   * - [[JsValue]] boxes every type. Extra allocations.
   * - [[JsObject]] is full of hash maps which are less efficient than struct-like classes (both cpu and memory).
   */
 object PlayJsonImplicits {
 
-  implicit class ReceiverOps[T](val reader: Receiver[T]) extends AnyVal {
+  implicit class ToOps[T](val reader: To[T]) extends AnyVal {
 
     def asReads: Reads[T] = Reads { jsValue =>
       Try(PlayJson.transform(jsValue, reader)) match {
@@ -27,36 +27,36 @@ object PlayJsonImplicits {
     }
   }
 
-  implicit class TransmitterOps[T](val writer: Transmitter[T]) extends AnyVal {
+  implicit class FromOps[T](val writer: From[T]) extends AnyVal {
 
     def asWrites: Writes[T] = Writes[T] { obj =>
-      writer.transmit(obj, PlayJson)
+      writer.transform(obj, PlayJson)
     }
   }
 
   implicit class ReadsOps[T](val reads: Reads[T]) extends AnyVal {
 
-    def asReceiver: Receiver[T] = PlayJson.JsValueReceiver.map(_.as[T](reads))
+    def asTo: To[T] = PlayJson.JsValueTo.map(_.as[T](reads))
 
-    def asReceiverJsResult: Receiver[JsResult[T]] = PlayJson.JsValueReceiver.map(_.validate[T](reads))
+    def asToJsResult: To[JsResult[T]] = PlayJson.JsValueTo.map(_.validate[T](reads))
   }
 
   implicit class WritesOps[T](val writes: Writes[T]) extends AnyVal {
 
-    def asTransmitter: Transmitter[T] = new Transmitter[T] {
-      override def transmit0[V](in: T, out: Visitor[_, V]): V = {
+    def asFrom: From[T] = new From[T] {
+      override def transform0[V](in: T, out: Visitor[_, V]): V = {
         val jsValue = writes.writes(in)
         PlayJson.transform(jsValue, out)
       }
     }
   }
 
-  implicit class TransceiverFormat[T](val format: Format[T]) extends AnyVal {
+  implicit class FromToFormat[T](val format: Format[T]) extends AnyVal {
 
-    def asTransceiver: Transceiver[T] = Transceiver.join(format.asReceiver, format.asTransmitter)
+    def asFromTo: FromTo[T] = FromTo.join(format.asTo, format.asFrom)
   }
 
-  implicit class FormatTransceiver[T](val rw: Transceiver[T]) extends AnyVal {
+  implicit class FormatFromTo[T](val rw: FromTo[T]) extends AnyVal {
 
     def asFormat: Format[T] = Format(rw.asReads, rw.asWrites)
   }
@@ -70,11 +70,11 @@ object PlayJsonImplicits {
     */
   object PlayJsonConversions {
 
-    implicit def playTransmitter[T: Writes]: Transmitter[T] = implicitly[Writes[T]].asTransmitter
+    implicit def playFrom[T: Writes]: From[T] = implicitly[Writes[T]].asFrom
 
-    implicit def playReceiver[T: Reads]: Receiver[T] = implicitly[Reads[T]].asReceiver
+    implicit def playTo[T: Reads]: To[T] = implicitly[Reads[T]].asTo
 
-    implicit def playReceiverJsResult[T: Reads]: Receiver[JsResult[T]] = implicitly[Reads[T]].asReceiverJsResult
+    implicit def playToJsResult[T: Reads]: To[JsResult[T]] = implicitly[Reads[T]].asToJsResult
   }
 
   /**
@@ -86,9 +86,9 @@ object PlayJsonImplicits {
     */
   object WeePickleConversions {
 
-    implicit def weepickleReads[T: Receiver]: Reads[T] = implicitly[Receiver[T]].asReads
+    implicit def weepickleReads[T: To]: Reads[T] = implicitly[To[T]].asReads
 
-    implicit def weepickleWrites[T: Transmitter]: Writes[T] = implicitly[Transmitter[T]].asWrites
+    implicit def weepickleWrites[T: From]: Writes[T] = implicitly[From[T]].asWrites
   }
 
 }

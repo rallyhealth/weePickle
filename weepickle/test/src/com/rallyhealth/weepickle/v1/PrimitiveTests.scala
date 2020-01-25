@@ -23,11 +23,11 @@ object PrimitiveTests extends TestSuite {
       test("quotes") - rw("i am a \"cow\"", """ "i am a \"cow\"" """)
       test("unicode") {
         rw("叉烧包")
-        FromScala("叉烧包").transmit(ToJson.string) ==> "\"叉烧包\""
+        FromScala("叉烧包").transform(ToJson.string) ==> "\"叉烧包\""
         // TODO moved to low level API.
 //        FromScala("叉烧包", escapeUnicode = true).transform(ToJson.string).toLowerCase ==> "\"\\u53c9\\u70e7\\u5305\""
-        FromJson("\"\\u53c9\\u70e7\\u5305\"").transmit(ToScala[String]) ==> "叉烧包"
-        FromJson("\"叉烧包\"").transmit(ToScala[String]) ==> "叉烧包"
+        FromJson("\"\\u53c9\\u70e7\\u5305\"").transform(ToScala[String]) ==> "叉烧包"
+        FromJson("\"叉烧包\"").transform(ToScala[String]) ==> "叉烧包"
       }
       test("null") - rw(null: String, "null")
       test("chars") {
@@ -38,8 +38,8 @@ object PrimitiveTests extends TestSuite {
     }
     test("Symbol") {
       test("plain") - rw('i_am_a_cow, """ "i_am_a_cow" """)(
-        com.rallyhealth.weepickle.v1.WeePickle.SymbolReceiver,
-        com.rallyhealth.weepickle.v1.WeePickle.SymbolTransmitter
+        com.rallyhealth.weepickle.v1.WeePickle.ToSymbol,
+        com.rallyhealth.weepickle.v1.WeePickle.FromSymbol
       )
       test("unicode") - rw('叉烧包, """ "叉烧包" """)
       test("null") - rw(null: Symbol, "null")
@@ -77,10 +77,10 @@ object PrimitiveTests extends TestSuite {
       )
       test("null") - rw(null: BigDecimal, "null")
       test("json integer") - {
-        FromJson("123").transmit(ToScala[BigDecimal]) ==> BigDecimal(123)
+        FromJson("123").transform(ToScala[BigDecimal]) ==> BigDecimal(123)
       }
       test("json float") - {
-        FromJson("123.4").transmit(ToScala[BigDecimal]) ==> BigDecimal(123.4)
+        FromJson("123.4").transform(ToScala[BigDecimal]) ==> BigDecimal(123.4)
       }
       test("abuse cases") {
         /*
@@ -123,7 +123,7 @@ object PrimitiveTests extends TestSuite {
       test("fractional") - rw(125123.1542312, """125123.1542312""")
       test("negative") - rw(-125123.1542312, """-125123.1542312""")
       test("nan") - assert(
-        FromScala(Double.NaN).transmit(ToJson.string) == "\"NaN\""
+        FromScala(Double.NaN).transform(ToJson.string) == "\"NaN\""
       )
     }
 
@@ -153,7 +153,7 @@ object PrimitiveTests extends TestSuite {
       test("inf") - rw(Float.PositiveInfinity, """ "Infinity" """)
       "neg-inf" - rw(Float.NegativeInfinity, """ "-Infinity" """)
       test("nan") - assert(
-        FromScala(Float.NaN).transmit(ToJson.string) == "\"NaN\""
+        FromScala(Float.NaN).transform(ToJson.string) == "\"NaN\""
       )
     }
 

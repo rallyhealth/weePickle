@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1
 
-import com.rallyhealth.weepickle.v1.core.{Transmittable, Visitor}
+import com.rallyhealth.weepickle.v1.core.{FromData, Visitor}
 
 /**
   * Converters for default scala types.
@@ -17,20 +17,20 @@ object WeePickle extends AttributeTagged {
       * - `FromJson("[1,2,3]").transform(ToScala[Seq[Int]])`
       * - `FromJson("""{"name":"Twilight"}""").transform(ToScala[Pony])`
       */
-    def apply[Out](implicit pickleOut: Receiver[Out]): Visitor[_, Out] = pickleOut
+    def apply[Out](implicit to: To[Out]): Visitor[_, Out] = to
   }
 
   object FromScala {
 
     /**
-      * Pairs the scala data type with a [[Transmitter]]
+      * Pairs the scala data type with a [[From]]
       * capable of pushing the data through a [[Visitor]].
       *
       * ==Examples==
       * - `FromScala(Seq(1,2,3)).transform(ToJson.string) // [1,2,3]`
       * - `FromScala(pony).transform(ToJson.string) // {"name":"Twilight"}`
       */
-    def apply[In](scala: In)(implicit pickleIn: Transmitter[In]): Transmittable = fromScala(scala)
+    def apply[In](scala: In)(implicit from: From[In]): FromData = fromScala(scala)
   }
 
 }

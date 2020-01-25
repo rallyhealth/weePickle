@@ -95,10 +95,10 @@ trait Visitor[-T, +J] extends AutoCloseable {
 
   def visitTimestamp(instant: Instant): J
 
-  def map[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReceiver[T, J, Z](Visitor.this) {
+  def map[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapTo[T, J, Z](Visitor.this) {
     def mapNonNullsFunction(v: J): Z = f(v)
   }
-  def mapNulls[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapReceiver[T, J, Z](Visitor.this) {
+  def mapNulls[Z](f: J => Z): Visitor[T, Z] = new Visitor.MapTo[T, J, Z](Visitor.this) {
     override def mapFunction(v: J): Z = f(v)
     def mapNonNullsFunction(v: J): Z = f(v)
   }
@@ -166,36 +166,36 @@ sealed trait ObjArrVisitor[-T, +J] {
   def narrow: ObjArrVisitor[Any, J] = this.asInstanceOf[ObjArrVisitor[Any, J]]
 }
 object Visitor {
-  class Delegate[T, J](delegatedReceiver: Visitor[T, J]) extends Visitor[T, J] {
+  class Delegate[T, J](delegatedTo: Visitor[T, J]) extends Visitor[T, J] {
 
-    override def visitNull(): J = delegatedReceiver.visitNull()
-    override def visitTrue(): J = delegatedReceiver.visitTrue()
-    override def visitFalse(): J = delegatedReceiver.visitFalse()
+    override def visitNull(): J = delegatedTo.visitNull()
+    override def visitTrue(): J = delegatedTo.visitTrue()
+    override def visitFalse(): J = delegatedTo.visitFalse()
 
-    override def visitString(cs: CharSequence): J = delegatedReceiver.visitString(cs)
+    override def visitString(cs: CharSequence): J = delegatedTo.visitString(cs)
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): J = {
-      delegatedReceiver.visitFloat64StringParts(cs, decIndex, expIndex)
+      delegatedTo.visitFloat64StringParts(cs, decIndex, expIndex)
     }
 
     override def visitFloat64(d: Double): J = {
-      delegatedReceiver.visitFloat64(d)
+      delegatedTo.visitFloat64(d)
     }
-    override def visitObject(length: Int): ObjVisitor[T, J] = delegatedReceiver.visitObject(length)
-    override def visitArray(length: Int): ArrVisitor[T, J] = delegatedReceiver.visitArray(length)
+    override def visitObject(length: Int): ObjVisitor[T, J] = delegatedTo.visitObject(length)
+    override def visitArray(length: Int): ArrVisitor[T, J] = delegatedTo.visitArray(length)
 
-    override def visitFloat32(d: Float): J = delegatedReceiver.visitFloat32(d)
-    override def visitInt32(i: Int): J = delegatedReceiver.visitInt32(i)
-    override def visitInt64(l: Long): J = delegatedReceiver.visitInt64(l)
-    override def visitUInt64(ul: Long): J = delegatedReceiver.visitUInt64(ul)
-    override def visitFloat64String(s: String): J = delegatedReceiver.visitFloat64String(s)
-    override def visitChar(c: Char): J = delegatedReceiver.visitChar(c)
+    override def visitFloat32(d: Float): J = delegatedTo.visitFloat32(d)
+    override def visitInt32(i: Int): J = delegatedTo.visitInt32(i)
+    override def visitInt64(l: Long): J = delegatedTo.visitInt64(l)
+    override def visitUInt64(ul: Long): J = delegatedTo.visitUInt64(ul)
+    override def visitFloat64String(s: String): J = delegatedTo.visitFloat64String(s)
+    override def visitChar(c: Char): J = delegatedTo.visitChar(c)
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): J =
-      delegatedReceiver.visitBinary(bytes, offset, len)
+      delegatedTo.visitBinary(bytes, offset, len)
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): J =
-      delegatedReceiver.visitExt(tag, bytes, offset, len)
-    override def visitTimestamp(instant: Instant): J = delegatedReceiver.visitTimestamp(instant)
+      delegatedTo.visitExt(tag, bytes, offset, len)
+    override def visitTimestamp(instant: Instant): J = delegatedTo.visitTimestamp(instant)
 
-    override def close(): Unit = delegatedReceiver.close()
+    override def close(): Unit = delegatedTo.close()
   }
 
   class ArrDelegate[T, J](protected val arrVisitor: ArrVisitor[T, J]) extends ArrVisitor[T, J] {
@@ -224,46 +224,46 @@ object Visitor {
     override def toString: String = objVisitor.toString
   }
 
-  abstract class MapReceiver[-T, V, Z](delegatedReceiver: Visitor[T, V]) extends Visitor[T, Z] {
+  abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V]) extends Visitor[T, Z] {
 
     def mapNonNullsFunction(t: V): Z
     def mapFunction(v: V): Z =
       if (v == null) null.asInstanceOf[Z]
       else mapNonNullsFunction(v)
 
-    override def visitFalse(): Z = mapFunction(delegatedReceiver.visitFalse())
-    override def visitNull(): Z = mapFunction(delegatedReceiver.visitNull())
+    override def visitFalse(): Z = mapFunction(delegatedTo.visitFalse())
+    override def visitNull(): Z = mapFunction(delegatedTo.visitNull())
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Z = {
-      mapFunction(delegatedReceiver.visitFloat64StringParts(cs, decIndex, expIndex))
+      mapFunction(delegatedTo.visitFloat64StringParts(cs, decIndex, expIndex))
     }
     override def visitFloat64(d: Double): Z = {
-      mapFunction(delegatedReceiver.visitFloat64(d))
+      mapFunction(delegatedTo.visitFloat64(d))
     }
     override def visitString(cs: CharSequence): Z = {
-      mapFunction(delegatedReceiver.visitString(cs))
+      mapFunction(delegatedTo.visitString(cs))
     }
-    override def visitTrue(): Z = mapFunction(delegatedReceiver.visitTrue())
+    override def visitTrue(): Z = mapFunction(delegatedTo.visitTrue())
 
     override def visitObject(length: Int): ObjVisitor[T, Z] = {
-      new MapObjContext[T, V, Z](delegatedReceiver.visitObject(length), mapNonNullsFunction)
+      new MapObjContext[T, V, Z](delegatedTo.visitObject(length), mapNonNullsFunction)
     }
     override def visitArray(length: Int): ArrVisitor[T, Z] = {
-      new MapArrContext[T, V, Z](delegatedReceiver.visitArray(length), mapNonNullsFunction)
+      new MapArrContext[T, V, Z](delegatedTo.visitArray(length), mapNonNullsFunction)
     }
 
-    override def visitFloat32(d: Float): Z = mapFunction(delegatedReceiver.visitFloat32(d))
-    override def visitInt32(i: Int): Z = mapFunction(delegatedReceiver.visitInt32(i))
-    override def visitInt64(l: Long): Z = mapFunction(delegatedReceiver.visitInt64(l))
-    override def visitUInt64(ul: Long): Z = mapFunction(delegatedReceiver.visitUInt64(ul))
-    override def visitFloat64String(s: String): Z = mapFunction(delegatedReceiver.visitFloat64String(s))
-    override def visitChar(c: Char): Z = mapFunction(delegatedReceiver.visitChar(c))
+    override def visitFloat32(d: Float): Z = mapFunction(delegatedTo.visitFloat32(d))
+    override def visitInt32(i: Int): Z = mapFunction(delegatedTo.visitInt32(i))
+    override def visitInt64(l: Long): Z = mapFunction(delegatedTo.visitInt64(l))
+    override def visitUInt64(ul: Long): Z = mapFunction(delegatedTo.visitUInt64(ul))
+    override def visitFloat64String(s: String): Z = mapFunction(delegatedTo.visitFloat64String(s))
+    override def visitChar(c: Char): Z = mapFunction(delegatedTo.visitChar(c))
     override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): Z =
-      mapFunction(delegatedReceiver.visitBinary(bytes, offset, len))
+      mapFunction(delegatedTo.visitBinary(bytes, offset, len))
     override def visitExt(tag: Byte, bytes: Array[Byte], offset: Int, len: Int): Z =
-      mapFunction(delegatedReceiver.visitExt(tag, bytes, offset, len))
-    override def visitTimestamp(instant: Instant): Z = mapFunction(delegatedReceiver.visitTimestamp(instant))
+      mapFunction(delegatedTo.visitExt(tag, bytes, offset, len))
+    override def visitTimestamp(instant: Instant): Z = mapFunction(delegatedTo.visitTimestamp(instant))
 
-    override def close(): Unit = delegatedReceiver.close()
+    override def close(): Unit = delegatedTo.close()
   }
 
   class MapArrContext[T, V, Z](src: ArrVisitor[T, V], f: V => Z) extends ArrVisitor[T, Z] {

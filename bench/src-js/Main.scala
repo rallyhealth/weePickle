@@ -36,32 +36,32 @@ object Main{
     )
   }
   def weepickleWebDefault(duration: Int) = {
-    import com.rallyhealth.weepickle.v1.WeePickle.{Transceiver => RW}
-    implicit def rw1: RW[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw2: RW[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw3: RW[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw4: RW[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw5: RW[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw6: RW[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw7: RW[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw8: RW[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit def rw9: RW[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    import com.rallyhealth.weepickle.v1.WeePickle.{FromTo => RW}
+    implicit def rw1: RW[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw2: RW[A] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw3: RW[B] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw4: RW[C] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw5: RW[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw6: RW[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw7: RW[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw8: RW[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit def rw9: RW[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     bench[String](duration)(
       com.rallyhealth.weepickle.v1.WeePickle.web.read[Seq[Data]],
       com.rallyhealth.weepickle.v1.WeePickle.web.write(_)
     )
   }
   def weepickleWebDefaultCached(duration: Int) = {
-    import com.rallyhealth.weepickle.v1.WeePickle.{Transceiver => RW}
-    implicit lazy val rw1: RW[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw2: RW[A] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw3: RW[B] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw4: RW[C] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw5: RW[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw6: RW[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw7: RW[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw8: RW[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroX
-    implicit lazy val rw9: RW[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroX
+    import com.rallyhealth.weepickle.v1.WeePickle.{FromTo => RW}
+    implicit lazy val rw1: RW[Data] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw2: RW[A] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw3: RW[B] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw4: RW[C] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw5: RW[LL] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw6: RW[Node] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw7: RW[End.type] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw8: RW[ADTc] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    implicit lazy val rw9: RW[ADT0] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     bench[String](duration)(
       com.rallyhealth.weepickle.v1.WeePickle.web.read[Seq[Data]],
       com.rallyhealth.weepickle.v1.WeePickle.web.write(_)

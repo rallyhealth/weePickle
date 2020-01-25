@@ -14,32 +14,32 @@ object MacroImplicits {
       )
     }
   }
-  def applyR[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
+  def applyTo[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
-    dieIfNothing[T](c)("Receiver")
-    c.Expr[T](q"${c.prefix}.macroR0[$e, ${c.prefix}.Receiver]")
+    dieIfNothing[T](c)("To")
+    c.Expr[T](q"${c.prefix}.macroTo0[$e, ${c.prefix}.To]")
   }
-  def applyT[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
+  def applyFrom[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
-    dieIfNothing[T](c)("Transmitter")
-    c.Expr[T](q"${c.prefix}.macroT0[$e, ${c.prefix}.Transmitter]")
+    dieIfNothing[T](c)("From")
+    c.Expr[T](q"${c.prefix}.macroFrom0[$e, ${c.prefix}.From]")
   }
 
-  def applyX[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
+  def applyFromTo[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
-    dieIfNothing[T](c)("Transmitter")
-    c.Expr[T](q"${c.prefix}.Transceiver.join(${c.prefix}.macroR, ${c.prefix}.macroT)")
+    dieIfNothing[T](c)("From")
+    c.Expr[T](q"${c.prefix}.FromTo.join(${c.prefix}.macroTo, ${c.prefix}.macroFrom)")
   }
 
 }
 trait MacroImplicits { this: com.rallyhealth.weepickle.v1.core.Types =>
-  implicit def macroSingletonR[R <: Singleton]: Receiver[R] = macro MacroImplicits.applyR[R]
-  implicit def macroSingletonT[T <: Singleton]: Transmitter[T] = macro MacroImplicits.applyT[T]
-  implicit def macroSingletonX[X <: Singleton]: Transceiver[X] = macro MacroImplicits.applyX[X]
-  def macroT[T]: Transmitter[T] = macro MacroImplicits.applyT[T]
-  def macroR[R]: Receiver[R] = macro MacroImplicits.applyR[R]
-  def macroX[X]: Transceiver[X] = macro MacroImplicits.applyX[Transceiver[X]]
+  implicit def macroSingletonR[R <: Singleton]: To[R] = macro MacroImplicits.applyTo[R]
+  implicit def macroSingletonT[T <: Singleton]: From[T] = macro MacroImplicits.applyFrom[T]
+  implicit def macroSingletonX[X <: Singleton]: FromTo[X] = macro MacroImplicits.applyFromTo[X]
+  def macroFrom[F]: From[F] = macro MacroImplicits.applyFrom[F]
+  def macroTo[T]: To[T] = macro MacroImplicits.applyTo[T]
+  def macroFromTo[X]: FromTo[X] = macro MacroImplicits.applyFromTo[FromTo[X]]
 
-  def macroR0[T, M[_]]: Receiver[T] = macro internal.Macros.macroRImpl[T, M]
-  def macroT0[T, M[_]]: Transmitter[T] = macro internal.Macros.macroTImpl[T, M]
+  def macroTo0[T, M[_]]: To[T] = macro internal.Macros.macroRImpl[T, M]
+  def macroFrom0[T, M[_]]: From[T] = macro internal.Macros.macroTImpl[T, M]
 }
