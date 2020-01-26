@@ -200,7 +200,7 @@ object weejson extends Module{
   }
 
   object yaml extends Cross[YamlModule](scalaVersions: _*)
-  class YamlModule(val crossScalaVersion: String) extends CommonModule with CrossScalaModule {
+  class YamlModule(val crossScalaVersion: String) extends CommonPublishModule {
     def artifactName = shade("weeyaml")
     def platformSegment = "jvm"
     def moduleDeps = Seq(jackson())
@@ -239,9 +239,7 @@ object weejson extends Module{
   object play extends Cross[PlayModule](scalaPlayVersions:_*)
   class PlayModule(val crossScalaVersion: String, val crossPlayVersion: String) extends CommonPublishModule {
 
-    override def sources = T.sources{
-      super.sources() ++ CrossModuleBase.scalaVersionPaths("", s => millSourcePath / os.up  / "src")
-    }
+    override def millSourcePath = super.millSourcePath / os.up
 
     def artifactName = T {
       val name = "weejson-play" + crossPlayVersion.split('.').take(2).mkString // e.g. "25", "27"
