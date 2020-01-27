@@ -22,7 +22,9 @@ object BufferedValue extends Transformer[BufferedValue] {
   case class Arr(value: BufferedValue*) extends BufferedValue
   case class Num(s: String, decIndex: Int, expIndex: Int) extends BufferedValue
   case class NumLong(l: Long) extends BufferedValue
-  case class NumRaw(d: Double) extends BufferedValue
+  case class NumDouble(d: Double) extends BufferedValue
+  case class Binary(b: Array[Byte]) extends BufferedValue
+  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue
   case class Timestamp(i: Instant) extends BufferedValue
   case object False extends BufferedValue {
     def value = false
@@ -42,7 +44,9 @@ object BufferedValue extends Transformer[BufferedValue] {
       case BufferedValue.Str(s)       => f.visitString(s)
       case BufferedValue.Num(s, d, e) => f.visitFloat64StringParts(s, d, e)
       case BufferedValue.NumLong(l)   => f.visitInt64(l)
-      case BufferedValue.NumRaw(d)    => f.visitFloat64(d)
+      case BufferedValue.NumDouble(d) => f.visitFloat64(d)
+      case BufferedValue.Binary(b)    => f.visitBinary(b, 0, b.length)
+      case BufferedValue.Ext(tag, b)  => f.visitExt(tag, b, 0, b.length)
       case BufferedValue.Timestamp(i) => f.visitTimestamp(i)
       case BufferedValue.Arr(items @ _*) =>
         val ctx = f.visitArray(-1).narrow
@@ -92,12 +96,23 @@ object BufferedValue extends Transformer[BufferedValue] {
 
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): BufferedValue =
       BufferedValue.Num(cs.toString, decIndex, expIndex)
-    override def visitFloat64(d: Double): BufferedValue = BufferedValue.NumRaw(d)
+    override def visitFloat64(d: Double): BufferedValue = BufferedValue.NumDouble(d)
 
     override def visitInt64(l: Long): BufferedValue = NumLong(l)
 
     def visitString(cs: CharSequence): BufferedValue = BufferedValue.Str(cs.toString)
 
     override def visitTimestamp(instant: Instant): BufferedValue = Timestamp(instant)
+
+    override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): BufferedValue = {
+      BufferedValue.Binary(bytes.slice(offset, len))
+    }
+
+    override def visitExt(
+      tag: Byte,
+      bytes: Array[Byte],
+      offset: Int,
+      len: Int
+    ): BufferedValue = BufferedValue.Ext(tag, bytes.slice(offset, len))
   }
 }

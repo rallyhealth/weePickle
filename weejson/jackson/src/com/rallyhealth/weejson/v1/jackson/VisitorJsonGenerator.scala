@@ -47,8 +47,6 @@ class VisitorJsonGenerator[J](
     }
   }
 
-  @inline private def index: Int = -1 // unknowable without a parser
-
   protected def facade: Visitor[_, _] = top.subVisitor
 
   protected def top: ObjArrVisitor[Any, _] = ctxt
@@ -232,7 +230,6 @@ class VisitorJsonGenerator[J](
   * After the receiving method returns control, the contents may change.
   *
   * Cheaper than allocating a String when one is not needed.
-  * For example, [[com.rallyhealth.weejson.v1.Renderer.escape()]] writes out the chars one at a time.
   */
 private final class TextBufferCharSequence(var buf: Array[Char], var off: Int, var len: Int) extends CharSequence {
 

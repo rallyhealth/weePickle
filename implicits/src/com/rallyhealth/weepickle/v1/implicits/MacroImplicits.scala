@@ -33,9 +33,9 @@ object MacroImplicits {
 
 }
 trait MacroImplicits { this: com.rallyhealth.weepickle.v1.core.Types =>
-  implicit def macroSingletonR[R <: Singleton]: To[R] = macro MacroImplicits.applyTo[R]
-  implicit def macroSingletonT[T <: Singleton]: From[T] = macro MacroImplicits.applyFrom[T]
-  implicit def macroSingletonX[X <: Singleton]: FromTo[X] = macro MacroImplicits.applyFromTo[X]
+  implicit def macroSingletonTo[T <: Singleton]: To[T] = macro MacroImplicits.applyTo[T]
+  implicit def macroSingletonFrom[F <: Singleton]: From[F] = macro MacroImplicits.applyFrom[F]
+  implicit def macroSingletonFromTo[X <: Singleton]: FromTo[X] = macro MacroImplicits.applyFromTo[X]
   def macroFrom[F]: From[F] = macro MacroImplicits.applyFrom[F]
   def macroTo[T]: To[T] = macro MacroImplicits.applyTo[T]
   def macroFromTo[X]: FromTo[X] = macro MacroImplicits.applyFromTo[FromTo[X]]
