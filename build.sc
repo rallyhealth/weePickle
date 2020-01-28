@@ -337,6 +337,7 @@ object bench extends Module {
     def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",
+      ivy"com.lihaoyi::upickle:0.9.8",
     )
   }
 }

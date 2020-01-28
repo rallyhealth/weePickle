@@ -58,12 +58,6 @@ class JmhBench {
     bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(to[Seq[Common.Data]]))
   }
 
-//  @Benchmark
-//  def bytesToCcWeeJson(bh: Blackhole): Unit = {
-//    // TODO replace with upstream uJson parser
-////    bh.consume(parser.ByteArrayParser.transform(Common.benchmarkSampleJsonBytes, reader[Seq[Common.Data]]))
-//  }
-
   @Benchmark
   def bytesToCcWeePack(bh: Blackhole): Unit = {
     bh.consume(FromJson(Common.benchmarkSampleMsgPack).transform(ToScala[Seq[Common.Data]]))
@@ -77,12 +71,6 @@ class JmhBench {
     bh.consume(out.toByteArray)
   }
 
-//  @Benchmark
-//  def ccToBytesWeeJson(bh: Blackhole): Unit = {
-//    // TODO replace with upstream uJson parser
-//    bh.consume(FromScala(Common.benchmarkSampleData).transform(parser.BytesRenderer()).toBytes)
-//  }
-
   @Benchmark
   def ccToStringWeeJackson(bh: Blackhole): Unit = {
     val writer = new StringWriter()
@@ -90,12 +78,6 @@ class JmhBench {
     FromScala(Common.benchmarkSampleData).transform(visitor).close()
     bh.consume(writer.toString)
   }
-
-//  @Benchmark
-//  def ccToStringWeeJson(bh: Blackhole): Unit = {
-//    // TODO replace with upstream uJson parser
-//    bh.consume(FromScala(Common.benchmarkSampleData).transform(parser.StringRenderer()).toString)
-//  }
 
   @Benchmark
   def ccToBytesWeePack(bh: Blackhole): Unit = {
@@ -106,10 +88,4 @@ class JmhBench {
   def stringToCcWeeJackson(bh: Blackhole): Unit = {
     bh.consume(FromJson(Common.benchmarkSampleJson).transform(ToScala[Seq[Common.Data]]))
   }
-
-//  @Benchmark
-//  def stringToCcWeeJson(bh: Blackhole): Unit = {
-//    // TODO replace with upstream uJson parser
-//    bh.consume(parser.StringParser.transform(Common.benchmarkSampleJson, WeePickle.reader[Seq[Common.Data]]))
-//  }
 }
