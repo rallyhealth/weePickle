@@ -6,4 +6,3 @@ env:
 
 script:
 - ./mill -i __.$PLATFORM.__.test.test
-

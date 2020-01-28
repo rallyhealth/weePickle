@@ -49,7 +49,8 @@ trait CommonPublishModule extends CommonModule with PublishModule with CrossScal
       "scm:git://github.com/rallyhealth/weePickle.git"
     ),
     developers = Seq(
-      Developer("lihaoyi", "Li Haoyi","https://github.com/lihaoyi")
+      Developer("lihaoyi", "Li Haoyi", "https://github.com/lihaoyi"),
+      Developer("htmldoug", "Doug Roper", "https://github.com/htmldoug")
     )
   )
 }
