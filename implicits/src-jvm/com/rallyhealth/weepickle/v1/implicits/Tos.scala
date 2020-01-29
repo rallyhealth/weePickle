@@ -9,15 +9,15 @@ import scala.util.{Failure, Success, Try}
 
 trait Tos extends DefaultTos {
 
-  implicit val LocalDateTo: To[LocalDate] = new MapStringTo(s => LocalDate.parse(s.toString))
-  implicit val LocalTimeTo: To[LocalTime] = new MapStringTo(s => LocalTime.parse(s.toString))
-  implicit val LocalDateTimeTo: To[LocalDateTime] = new MapStringTo(
+  implicit val ToLocalDate: To[LocalDate] = new MapStringTo(s => LocalDate.parse(s.toString))
+  implicit val ToLocalTime: To[LocalTime] = new MapStringTo(s => LocalTime.parse(s.toString))
+  implicit val ToLocalDateTime: To[LocalDateTime] = new MapStringTo(
     s => LocalDateTime.parse(s.toString)
   )
-  implicit val OffsetDateTimeTo: To[OffsetDateTime] = new MapStringTo(
+  implicit val ToOffsetDateTime: To[OffsetDateTime] = new MapStringTo(
     s => OffsetDateTime.parse(s.toString)
   )
-  implicit val InstantTo: To[Instant] = new SimpleTo[Instant] {
+  implicit val ToInstant: To[Instant] = new SimpleTo[Instant] {
     override def expectedMsg: String = "expected timestamp"
     override def visitTimestamp(instant: Instant): Instant = instant
     override def visitString(cs: CharSequence): Instant = Instant.parse(cs.toString)
@@ -34,5 +34,5 @@ trait Tos extends DefaultTos {
       else visitFloat64String(s.toString) // likely invalid path
     }
   }
-  implicit val DateTo: To[Date] = InstantTo.map(i => new Date(i.toEpochMilli))
+  implicit val ToDate: To[Date] = ToInstant.map(i => new Date(i.toEpochMilli))
 }
