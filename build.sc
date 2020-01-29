@@ -14,7 +14,8 @@ val scalaPlayVersions = Seq(
   ("2.11.12", "2.5.19"),
   ("2.11.12", "2.7.4"),
   ("2.12.8", "2.7.4"),
-  ("2.13.0", "2.7.4")
+  ("2.13.0", "2.7.4"),
+  ("2.13.0", "2.8.1"),
 )
 
 trait CommonModule extends ScalaModule with ScalafmtModule {
