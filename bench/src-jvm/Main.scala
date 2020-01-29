@@ -8,14 +8,11 @@ import com.fasterxml.jackson.databind.util.TokenBuffer
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.rallyhealth.weejson.v1.{StringRenderer, Value}
-import com.rallyhealth.weejson.v1.jackson.FromJson
+import com.rallyhealth.weejson.v1.Value
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack}
 
 object Main {
-  import ADTs.ADT0
-  import Defaults._
-  import Generic.ADT
   import Hierarchy._
   import Recursive._
   def main(args: Array[String]): Unit = {
@@ -56,7 +53,7 @@ object Main {
   def weejsonAst(duration: Int) = {
     Common.bench0[String, com.rallyhealth.weejson.v1.Value](duration, Common.benchmarkSampleJson)(
       FromJson(_).transform(Value),
-      _.render()
+      _.transform(ToJson.string)
     )
   }
   def weepackAst(duration: Int) = {
@@ -74,7 +71,7 @@ object Main {
   def uJsonPlayJsonAst(duration: Int) = {
     Common.bench0[String, play.api.libs.json.JsValue](duration, Common.benchmarkSampleJson)(
       com.rallyhealth.weejson.v1.play.PlayJson(_),
-      com.rallyhealth.weejson.v1.play.PlayJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.weejson.v1.play.PlayJson.transform(_, ToJson.string)
     )
   }
 
@@ -87,7 +84,7 @@ object Main {
   def uJsonCirceJsonAst(duration: Int) = {
     Common.bench0[String, io.circe.Json](duration, Common.benchmarkSampleJson)(
       com.rallyhealth.weejson.v1.circe.CirceJson(_),
-      com.rallyhealth.weejson.v1.circe.CirceJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.weejson.v1.circe.CirceJson.transform(_, ToJson.string)
     )
   }
 
@@ -100,7 +97,7 @@ object Main {
   def uJsonArgonautJsonAst(duration: Int) = {
     Common.bench0[String, argonaut.Json](duration, Common.benchmarkSampleJson)(
       com.rallyhealth.weejson.v1.argonaut.ArgonautJson(_),
-      com.rallyhealth.weejson.v1.argonaut.ArgonautJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.weejson.v1.argonaut.ArgonautJson.transform(_, ToJson.string)
     )
   }
   def json4sJsonAst(duration: Int) = {
@@ -112,7 +109,7 @@ object Main {
   def uJsonJson4sJsonAst(duration: Int) = {
     Common.bench0[String, org.json4s.JsonAST.JValue](duration, Common.benchmarkSampleJson)(
       com.rallyhealth.weejson.v1.json4s.Json4sJson(_),
-      com.rallyhealth.weejson.v1.json4s.Json4sJson.transform(_, StringRenderer()).toString
+      com.rallyhealth.weejson.v1.json4s.Json4sJson.transform(_, ToJson.string)
     )
   }
   def jacksonModuleScala(duration: Int) = {

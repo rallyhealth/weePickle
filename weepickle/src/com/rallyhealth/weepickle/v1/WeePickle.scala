@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1
 
-import com.rallyhealth.weepickle.v1.core.{FromData, Visitor}
+import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 
 /**
   * Converters for default scala types.
@@ -30,7 +30,7 @@ object WeePickle extends AttributeTagged {
       * - `FromScala(Seq(1,2,3)).transform(ToJson.string) // [1,2,3]`
       * - `FromScala(pony).transform(ToJson.string) // {"name":"Twilight"}`
       */
-    def apply[In](scala: In)(implicit from: From[In]): FromData = fromScala(scala)
+    def apply[In](scala: In)(implicit from: From[In]): FromInput = fromScala(scala)
   }
 
 }

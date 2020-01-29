@@ -29,7 +29,7 @@ trait Api
   /**
     * Somewhat internal version of [[WeePickle.FromScala]] for use by custom API bundles.
     */
-  def fromScala[In](scala: In)(implicit from: From[In]): FromData = new FromData {
+  def fromScala[In](scala: In)(implicit from: From[In]): FromInput = new FromInput {
     override def transform[T](to: Visitor[_, T]): T = from.transform(scala, to)
   }
 

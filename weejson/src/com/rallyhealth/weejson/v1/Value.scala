@@ -1,12 +1,13 @@
 package com.rallyhealth.weejson.v1
 
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, FromData, Visitor}
+import com.rallyhealth.weejson.v1.jackson.ToJson
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, ObjVisitor, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-sealed trait Value extends FromData {
+sealed trait Value extends FromInput {
   def value: Any
 
   /**
@@ -115,14 +116,8 @@ sealed trait Value extends FromData {
   def update[V](s: Value.Selector, f: Value => V)(implicit v: V => Value): Unit = s(this) = v(f(s(this)))
 
   def transform[T](to: Visitor[_, T]): T = Value.transform(this, to)
-  override def toString = render()
-  def render(indent: Int = -1, escapeUnicode: Boolean = false): String =
-    this.transform(StringRenderer(indent, escapeUnicode)).toString
 
-  def writeBytesTo(out: java.io.OutputStream, indent: Int = -1, escapeUnicode: Boolean = false): Unit = {
-    this.transform(BytesRenderer(out, indent, escapeUnicode))
-  }
-  def writeBytesTo(out: java.io.OutputStream): Unit = writeBytesTo(out, -1, false)
+  override def toString = transform(ToJson.string)
 }
 
 /**

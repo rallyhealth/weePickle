@@ -555,10 +555,10 @@ object ExampleTests extends TestSuite {
 
         // Rendering the AST to a string
 
-        exampleAst.transform(StringRenderer()).toString ==> "[1,2,3]"
+        exampleAst.transform(ToJson.string) ==> "[1,2,3]"
 
         // Or to a byte array
-        exampleAst.transform(BytesRenderer()).toByteArray ==> "[1,2,3]".getBytes
+        exampleAst.transform(ToJson.bytes) ==> "[1,2,3]".getBytes
 
         // Re-formatting JSON, either compacting it
         WeeJson.transform("[1, 2, 3]", StringRenderer()).toString ==> "[1,2,3]"

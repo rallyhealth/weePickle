@@ -4,41 +4,41 @@ import java.io.{File, InputStream, Reader}
 import java.nio.file.Path
 
 import com.fasterxml.jackson.core.{JsonFactory, JsonParser}
-import com.rallyhealth.weepickle.v1.core.{CallbackVisitor, FromData, Visitor, TransformException}
+import com.rallyhealth.weepickle.v1.core.{CallbackVisitor, FromInput, Visitor, TransformException}
 
 import scala.util.Try
 import scala.util.control.NonFatal
 
 object FromJson extends JsonParserOps {
 
-  override def apply(string: String): FromData = super.apply(string)
+  override def apply(string: String): FromInput = super.apply(string)
 
-  override def apply(bytes: Array[Byte]): FromData = super.apply(bytes)
+  override def apply(bytes: Array[Byte]): FromInput = super.apply(bytes)
 
-  override def apply(in: InputStream): FromData = super.apply(in)
+  override def apply(in: InputStream): FromInput = super.apply(in)
 
-  override def apply(reader: Reader): FromData = super.apply(reader)
+  override def apply(reader: Reader): FromInput = super.apply(reader)
 
-  override def apply(file: File): FromData = super.apply(file)
+  override def apply(file: File): FromInput = super.apply(file)
 
-  override def apply(path: Path): FromData = super.apply(path)
+  override def apply(path: Path): FromInput = super.apply(path)
 }
 
 abstract class JsonParserOps(factory: JsonFactory = DefaultJsonFactory.Instance) {
 
-  def apply(string: String): FromData = fromParser(factory.createParser(string))
+  def apply(string: String): FromInput = fromParser(factory.createParser(string))
 
-  def apply(bytes: Array[Byte]): FromData = fromParser(factory.createParser(bytes))
+  def apply(bytes: Array[Byte]): FromInput = fromParser(factory.createParser(bytes))
 
-  def apply(in: InputStream): FromData = fromParser(factory.createParser(in))
+  def apply(in: InputStream): FromInput = fromParser(factory.createParser(in))
 
-  def apply(reader: Reader): FromData = fromParser(factory.createParser(reader))
+  def apply(reader: Reader): FromInput = fromParser(factory.createParser(reader))
 
-  def apply(file: File): FromData = fromParser(factory.createParser(file))
+  def apply(file: File): FromInput = fromParser(factory.createParser(file))
 
-  def apply(path: Path): FromData = fromParser(factory.createParser(path.toFile))
+  def apply(path: Path): FromInput = fromParser(factory.createParser(path.toFile))
 
-  protected def fromParser(parser: JsonParser): FromData = new JsonFromData(parser)
+  protected def fromParser(parser: JsonParser): FromInput = new JsonFromInput(parser)
 }
 
 /**
@@ -46,7 +46,7 @@ abstract class JsonParserOps(factory: JsonFactory = DefaultJsonFactory.Instance)
   *
   * @see https://github.com/FasterXML/jackson
   */
-class JsonFromData(parser: JsonParser) extends FromData {
+class JsonFromInput(parser: JsonParser) extends FromInput {
 
   override def transform[T](to: Visitor[_, T]): T = {
     if (parser.nextToken() == null) {

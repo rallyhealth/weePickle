@@ -3,7 +3,7 @@ package com.rallyhealth.weepack.v1
 import java.io.ByteArrayOutputStream
 import java.time.Instant
 
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, FromData, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, FromInput, Visitor}
 
 import scala.collection.compat._
 import scala.collection.mutable
@@ -21,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
   * appropriately sized versions are written out when the message is serialized
   * to bytes.
   */
-sealed trait Msg extends FromData {
+sealed trait Msg extends FromInput {
   def transform[T](to: Visitor[_, T]) = Msg.transform(this, to)
 
   /**
@@ -97,10 +97,6 @@ sealed trait Msg extends FromData {
   def isNull = this match {
     case Null => true
     case _    => false
-  }
-
-  def writeBytesTo(out: java.io.OutputStream): Unit = {
-    this.transform(new MsgPackRenderer(out))
   }
 }
 case object Null extends Msg
