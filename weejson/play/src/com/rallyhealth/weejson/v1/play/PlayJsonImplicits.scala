@@ -17,28 +17,28 @@ import scala.util.{Failure, Success, Try}
   */
 object PlayJsonImplicits {
 
-  implicit class ToOps[T](val reader: To[T]) extends AnyVal {
+  implicit class ToOps[T](val to: To[T]) extends AnyVal {
 
     def asReads: Reads[T] = Reads { jsValue =>
-      Try(PlayJson.transform(jsValue, reader)) match {
+      Try(PlayJson.transform(jsValue, to)) match {
         case Success(obj) => JsSuccess(obj)
         case Failure(t)   => JsError(t.toString)
       }
     }
   }
 
-  implicit class FromOps[T](val writer: From[T]) extends AnyVal {
+  implicit class FromOps[T](val from: From[T]) extends AnyVal {
 
     def asWrites: Writes[T] = Writes[T] { obj =>
-      writer.transform(obj, PlayJson)
+      from.transform(obj, PlayJson)
     }
   }
 
   implicit class ReadsOps[T](val reads: Reads[T]) extends AnyVal {
 
-    def asTo: To[T] = PlayJson.JsValueTo.map(_.as[T](reads))
+    def asTo: To[T] = PlayJson.ToJsValue.map(_.as[T](reads))
 
-    def asToJsResult: To[JsResult[T]] = PlayJson.JsValueTo.map(_.validate[T](reads))
+    def asToJsResult: To[JsResult[T]] = PlayJson.ToJsValue.map(_.validate[T](reads))
   }
 
   implicit class WritesOps[T](val writes: Writes[T]) extends AnyVal {
