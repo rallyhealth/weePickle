@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v1.implicits
 
 import java.net.URI
+import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -92,6 +93,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
   implicit val ToString: To[String] = new SimpleTo[String] {
     override def expectedMsg = "expected string"
     override def visitString(cs: CharSequence): String = cs.toString
+    override def visitTimestamp(instant: Instant): String = instant.toString
   }
 
   class MapStringTo[T](f: CharSequence => T) extends SimpleTo[T] {
@@ -135,6 +137,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Long = {
       Util.parseIntegralNum(cs, decIndex, expIndex).toLong
     }
+    override def visitTimestamp(instant: Instant): Long = instant.toEpochMilli
   }
   private val digitLimit = 10000
   implicit val ToBigInt: To[BigInt] = new SimpleTo[BigInt] {
