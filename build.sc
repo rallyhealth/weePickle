@@ -165,7 +165,7 @@ object weepack extends Module {
 
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends CommonJvmModule {
-    def moduleDeps = Seq(core.jvm())
+    def moduleDeps = Seq(core.jvm(), weepickle.jvm())
     def artifactName = shade("weepack")
     object test extends Tests with CommonModule  {
       def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm().test, core.jvm().test)
@@ -298,7 +298,7 @@ trait weepickleModule extends CommonPublishModule{
 object weepickle extends Module{
   object jvm extends Cross[JvmModule](scalaVersions: _*)
   class JvmModule(val crossScalaVersion: String) extends weepickleModule with CommonJvmModule{
-    def moduleDeps = Seq(weejson.jvm(), weepack.jvm(), implicits.jvm(), weejson.jackson())
+    def moduleDeps = Seq(weejson.jvm(), implicits.jvm(), weejson.jackson())
 
     object test extends Tests with CommonModule{
       def moduleDeps = {
@@ -339,6 +339,8 @@ object bench extends Module {
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",
       ivy"com.lihaoyi::upickle:0.9.8",
+      ivy"org.msgpack:jackson-dataformat-msgpack:0.8.20",
+      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.10.2",
     )
   }
 }

@@ -18,8 +18,7 @@ trait Api
     with implicits.Tos
     with implicits.Froms
     with Api.NoOpMappers
-    with FromToValue
-    with FromToMsg {
+    with FromToValue {
 
   /**
     * Somewhat internal version of [[WeePickle.ToScala]] for use by custom API bundles.

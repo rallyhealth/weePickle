@@ -1,7 +1,6 @@
 package com.rallyhealth.weepickle.v1.core
 
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 
 /**
   * A [[Visitor]] specialized to work with JSON types. Forwards the
@@ -58,6 +57,6 @@ trait JsVisitor[-T, +J] extends Visitor[T, J] {
   def visitChar(c: Char): J = visitString(c.toString)
 
   def visitTimestamp(instant: Instant): J = {
-    visitString(DateTimeFormatter.ISO_INSTANT.format(instant))
+    visitString(instant.toString)
   }
 }

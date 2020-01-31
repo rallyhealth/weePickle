@@ -14,14 +14,22 @@ import org.openjdk.jmh.infra.Blackhole
   * ==Run with==
   * mill bench.jvm.runJmh ParseBytesBench
   *
+  * java 8:
   * {{{
   * Benchmark                   Mode  Cnt    Score   Error  Units
   * ParseBytesBench.uJson      thrpt       250.238          ops/s
   * ParseBytesBench.weePickle  thrpt       392.815          ops/s
   * }}}
+  *
+  * java 11:
+  * {{{
+  * Benchmark                   Mode  Cnt    Score    Error  Units
+  * ParseBytesBench.uJson      thrpt   15  292.643 ± 13.337  ops/s
+  * ParseBytesBench.weePickle  thrpt   15  376.108 ± 21.080  ops/s
+  * }}}
   */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 1, time = 10, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
 @Fork(
@@ -32,7 +40,7 @@ import org.openjdk.jmh.infra.Blackhole
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
   ),
-  value = 1
+  value = 5
 )
 class ParseBytesBench {
 
@@ -53,14 +61,22 @@ class ParseBytesBench {
   * ==Run with==
   * mill bench.jvm.runJmh ParseBytesToStringBench
   *
+  * java 8:
   * {{{
   * Benchmark                           Mode  Cnt    Score   Error  Units
   * ParseBytesToStringBench.uJson      thrpt       106.882          ops/s
   * ParseBytesToStringBench.weePickle  thrpt       220.347          ops/s
   * }}}
+  *
+  * java 11:
+  * {{{
+  * Benchmark                           Mode  Cnt    Score   Error  Units
+  * ParseBytesToStringBench.uJson      thrpt   15  121.047 ± 2.615  ops/s
+  * ParseBytesToStringBench.weePickle  thrpt   15  195.739 ± 8.495  ops/s
+  * }}}
   */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 1, time = 10, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
 @Fork(
@@ -71,7 +87,7 @@ class ParseBytesBench {
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
   ),
-  value = 1
+  value = 5
 )
 class ParseBytesToStringBench {
 

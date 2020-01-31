@@ -257,4 +257,14 @@ object Msg extends MsgVisitor[Msg, Msg] {
       case 12 => visitExt(-1, arr, 3, 12)
     }
   }
+
+  import com.rallyhealth.weepickle.v1.WeePickle.{From, To}
+
+  implicit val ToMsgValue: To[com.rallyhealth.weepack.v1.Msg] =
+    new To.Delegate(com.rallyhealth.weepack.v1.Msg)
+
+  implicit val FromMsgValue: From[com.rallyhealth.weepack.v1.Msg] =
+    new From[com.rallyhealth.weepack.v1.Msg] {
+      def transform0[Out](v: Msg, out: Visitor[_, Out]): Out = FromMsgPack(v).transform(out)
+    }
 }

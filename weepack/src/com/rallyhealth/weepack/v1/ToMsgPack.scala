@@ -9,7 +9,7 @@ object ToMsgPack {
   /**
     * Write the given MessagePack struct as a binary
     */
-  def bytes: Visitor[ByteArrayOutputStream, Array[Byte]] = { // TODO, no ByteArrayOutputStream
+  def bytes: Visitor[ByteArrayOutputStream, Array[Byte]] = {
     outputStream(new ByteArrayOutputStream()).map(_.toByteArray)
   }
 
