@@ -1,5 +1,42 @@
-weePickle is a fork of uPickle, stabilized with MiMa and shading.
-It can be used safely within libraries without causing dependency hell.
+## WeePickle
+A JSON, YAML, MsgPack, XML, etc. serialization framework with MiMa and shading.
+Safe for use by libraries without causing dependency hell.
+
+## Features
+* [SemVer](https://semver.org/) ([mima](https://github.com/lightbend/mima)) + [Shading](https://github.com/rallyhealth/sbt-shading) => strong backwards compatibility + forwards interop, even across major versions
+* [Zero-overhead conversion](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html) between:
+    * [jackson-core formats](https://github.com/FasterXML/jackson#active-jackson-projects) (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
+    * scala json ASTs (circe, json4s, play-json, argonaut)
+    * case classes (flexible macros)
+
+## sbt
+```sbt
+"com.rallyhealth" %% "weepickle-v1" % "version"
+```
+
+## TL;DR
+Scala to json:
+```scala
+FromScala(List(1, 2, 3)).transform(ToJson.string) // "[1,2,3]"
+```
+
+Json to scala:
+```scala
+FromJson("[1,2,3]").transform(ToScala[List[Int]]) // List(1, 2, 3)
+```
+
+case class:
+```scala
+import com.rallyhealth.weepickle.v1.WeePickle
+case class Foo(i: Int)
+
+object Foo {
+  implicit val rw = WeePickle.macroFromTo[Foo]
+}
+
+FromScala(Foo(1)).transform(ToJson.string)        // """{"i":1}"""
+FromJson("""{"i":1}""").transform(ToScala[Foo])   // Foo(1)
+```
 
 ## [Shading](https://github.com/rallyhealth/sbt-shading) + [SemVer](https://semver.org/) + [MiMa](https://github.com/lightbend/mima)
 
