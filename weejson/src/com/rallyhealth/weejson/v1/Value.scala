@@ -157,19 +157,19 @@ object Value extends AstTransformer[Value] {
   implicit def JsonableNull(i: Null): Null.type = Null
   implicit def JsonableString(s: CharSequence): Str = Str(s.toString)
 
-  def transform[T](j: Value, f: Visitor[_, T]): T = {
-    j match {
-      case Null   => f.visitNull()
-      case True   => f.visitTrue()
-      case False  => f.visitFalse()
-      case Str(s) => f.visitString(s)
+  def transform[T](i: Value, to: Visitor[_, T]): T = {
+    i match {
+      case Null   => to.visitNull()
+      case True   => to.visitTrue()
+      case False  => to.visitFalse()
+      case Str(s) => to.visitString(s)
       case Num(d) =>
         // precision sensitive
-        if (d.isValidLong) f.visitInt64(d.longValue)
-        else if (d.isDecimalDouble) f.visitFloat64(d.doubleValue)
-        else f.visitFloat64String(d.toString)
-      case Arr(items) => transformArray(f, items)
-      case Obj(items) => transformObject(f, items)
+        if (d.isValidLong) to.visitInt64(d.longValue)
+        else if (d.isDecimalDouble) to.visitFloat64(d.doubleValue)
+        else to.visitFloat64String(d.toString)
+      case Arr(items) => transformArray(to, items)
+      case Obj(items) => transformObject(to, items)
     }
   }
 
