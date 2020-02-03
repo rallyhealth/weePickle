@@ -57,6 +57,14 @@ object Defaults {
     implicit val rw: RW[FooIncludeDefault] = macroFromTo
   }
 }
+case class Maybe1(i: Option[Int])
+object Maybe1 {
+  implicit val rw = WeePickle.macroFromTo[Maybe1]
+}
+case class Maybe2(@dropDefault i: Option[Int] = None)
+object Maybe2 {
+  implicit val rw = WeePickle.macroFromTo[Maybe2]
+}
 object Keyed {
   case class KeyBar(@com.rallyhealth.weepickle.v1.implicits.key("hehehe") kekeke: Int)
   object KeyBar {
@@ -185,6 +193,15 @@ object ExampleTests extends TestSuite {
       test("options") {
         FromScala(Some(1)).transform(ToJson.string) ==> "1"
         FromScala(None).transform(ToJson.string) ==> "null"
+
+        FromScala(Maybe1(None)).transform(ToJson.string) ==> """{"i":null}"""
+        FromJson("""{"i":null}""").transform(ToScala[Maybe1]) ==> Maybe1(None)
+        FromJson("""{}""").transform(ToScala[Maybe1]) ==> Maybe1(None)
+
+        FromScala(Maybe1(Some(42))).transform(ToJson.string) ==> """{"i":42}"""
+        FromJson("""{"i":42}""").transform(ToScala[Maybe1]) ==> Maybe1(Some(42))
+
+        FromScala(Maybe2(None)).transform(ToJson.string) ==> """{}"""
       }
       test("tuples") {
         FromScala((1, "omg")).transform(ToJson.string) ==> """[1,"omg"]"""
