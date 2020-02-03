@@ -36,24 +36,24 @@ object BufferedValue extends Transformer[BufferedValue] {
     def value = null
   }
 
-  def transform[T](j: BufferedValue, f: Visitor[_, T]): T = {
-    j match {
-      case BufferedValue.Null         => f.visitNull()
-      case BufferedValue.True         => f.visitTrue()
-      case BufferedValue.False        => f.visitFalse()
-      case BufferedValue.Str(s)       => f.visitString(s)
-      case BufferedValue.Num(s, d, e) => f.visitFloat64StringParts(s, d, e)
-      case BufferedValue.NumLong(l)   => f.visitInt64(l)
-      case BufferedValue.NumDouble(d) => f.visitFloat64(d)
-      case BufferedValue.Binary(b)    => f.visitBinary(b, 0, b.length)
-      case BufferedValue.Ext(tag, b)  => f.visitExt(tag, b, 0, b.length)
-      case BufferedValue.Timestamp(i) => f.visitTimestamp(i)
+  def transform[T](i: BufferedValue, to: Visitor[_, T]): T = {
+    i match {
+      case BufferedValue.Null         => to.visitNull()
+      case BufferedValue.True         => to.visitTrue()
+      case BufferedValue.False        => to.visitFalse()
+      case BufferedValue.Str(s)       => to.visitString(s)
+      case BufferedValue.Num(s, d, e) => to.visitFloat64StringParts(s, d, e)
+      case BufferedValue.NumLong(l)   => to.visitInt64(l)
+      case BufferedValue.NumDouble(d) => to.visitFloat64(d)
+      case BufferedValue.Binary(b)    => to.visitBinary(b, 0, b.length)
+      case BufferedValue.Ext(tag, b)  => to.visitExt(tag, b, 0, b.length)
+      case BufferedValue.Timestamp(i) => to.visitTimestamp(i)
       case BufferedValue.Arr(items @ _*) =>
-        val ctx = f.visitArray(-1).narrow
+        val ctx = to.visitArray(-1).narrow
         for (item <- items) ctx.visitValue(transform(item, ctx.subVisitor))
         ctx.visitEnd()
       case BufferedValue.Obj(items @ _*) =>
-        val ctx = f.visitObject(-1).narrow
+        val ctx = to.visitObject(-1).narrow
         for ((k, item) <- items) {
           val keyVisitor = ctx.visitKey()
 

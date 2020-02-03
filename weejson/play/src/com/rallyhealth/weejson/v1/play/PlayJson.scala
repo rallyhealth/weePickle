@@ -7,13 +7,13 @@ import com.rallyhealth.weepickle.v1.WeePickle._
 import scala.collection.mutable.ArrayBuffer
 
 object PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
-  def transform[T](j: JsValue, f: Visitor[_, T]): T = j match {
-    case JsArray(xs)   => transformArray(f, xs)
-    case JsBoolean(b)  => if (b) f.visitTrue() else f.visitFalse()
-    case JsNull        => f.visitNull()
-    case JsNumber(d)   => f.visitFloat64String(d.toString)
-    case JsObject(kvs) => transformObject(f, kvs)
-    case JsString(s)   => f.visitString(s)
+  def transform[T](i: JsValue, to: Visitor[_, T]): T = i match {
+    case JsArray(xs)   => transformArray(to, xs)
+    case JsBoolean(b)  => if (b) to.visitTrue() else to.visitFalse()
+    case JsNull        => to.visitNull()
+    case JsNumber(d)   => to.visitFloat64String(d.toString)
+    case JsObject(kvs) => transformObject(to, kvs)
+    case JsString(s)   => to.visitString(s)
   }
   def visitArray(length: Int): ArrVisitor[JsValue, JsValue] = new AstArrVisitor[Array](JsArray(_))
 
