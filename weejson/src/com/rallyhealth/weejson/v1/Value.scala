@@ -6,8 +6,9 @@ import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, ObjVisitor, Vis
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.language.dynamics
 
-sealed trait Value extends FromInput {
+sealed trait Value extends FromInput with Dynamic {
   def value: Any
 
   /**
@@ -101,6 +102,37 @@ sealed trait Value extends FromInput {
   def isNull: Boolean = this match {
     case Null => true
     case _    => false
+  }
+
+  def selectDynamic(field: String): Value = apply(field)
+  def applyDynamic(field: String)(arrayIdx: Int): Value = apply(field).apply(arrayIdx)
+  def updateDynamic(field: String)(v: Value): Unit = update(field, v)
+
+  def opt(selector: OptSelector => OptSelector): Option[Value] = selector(new OptSelector(Some(this))).maybe
+
+  class OptSelector private[Value] (val maybe: Option[Value]) extends Dynamic {
+    def selectDynamic(field: String): OptSelector = apply(field)
+    def applyDynamic(field: String)(arrayIdx: Int): OptSelector = apply(field).apply(arrayIdx)
+
+    def apply(field: String): OptSelector = {
+      new OptSelector(
+        for {
+          value <- maybe
+            obj <- value.objOpt
+            v <- obj.get(field)
+        } yield v
+      )
+    }
+
+    def apply(arrayIdx: Int): OptSelector = {
+      new OptSelector(
+        for {
+          value <- maybe
+            arr <- value.arrOpt
+            v <- arr.lift(arrayIdx)
+        } yield v
+      )
+    }
   }
 
   def apply(s: Value.Selector): Value = s(this)
