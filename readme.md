@@ -27,22 +27,22 @@ resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
 ## Getting Started
 Json to scala:
 ```scala
-FromJson("[1,2,3]").transform(ToScala[List[Int]]) // List(1, 2, 3)
+FromJson("[1,2,3]").transform(ToScala[List[Int]])    ==> List(1, 2, 3)
 ```
 
 Scala to json:
 ```scala
-FromScala(List(1, 2, 3)).transform(ToJson.string) // "[1,2,3]"
+FromScala(List(1, 2, 3)).transform(ToJson.string)    ==> "[1,2,3]"
 ```
 
 Json to pretty json:
 ```scala
-FromJson("[1,2,3]").transform(ToPrettyJson.string)
-// [
-//     1,
-//     2,
-//     3
-// ]
+FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
+[
+    1,
+    2,
+    3
+]
 ```
 
 Files & yaml:
@@ -62,8 +62,8 @@ object Foo {
   implicit val rw = WeePickle.macroFromTo[Foo]
 }
 
-FromScala(Foo(1)).transform(ToJson.string)        // """{"i":1}"""
-FromJson("""{"i":1}""").transform(ToScala[Foo])   // Foo(1)
+FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
+FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
 ```
 
 ## Pick Any Two
@@ -96,19 +96,19 @@ If a field is missing upon deserialization, weePickle uses the default value if 
 ```scala
 case class Dflt(i: Int = 42)
 
-FromJson("""{}""").transform(ToScala[Dflt])          // Dflt(42)
-FromJson("""{"i": 999}""").transform(ToScala[Dflt])  // Dflt(999)
+FromJson("""{}""").transform(ToScala[Dflt])          ==> Dflt(42)
+FromJson("""{"i": 999}""").transform(ToScala[Dflt])  ==> Dflt(999)
 ```
 
 If a field at serialization time has the same value as the default, it will be written unless annotated with `@dropDefault`.
 
 ```scala
-FromScala(Dflt(42)).transform(ToJson.string)         // """{"i": 42}"""
+FromScala(Dflt(42)).transform(ToJson.string)         ==> """{"i": 42}"""
 ```
 
 ```scala
 case class Dflt2(@dropDefault i: Int = 42)
-FromScala(Dflt2(42)).transform(ToJson.string)        // """{}"""
+FromScala(Dflt2(42)).transform(ToJson.string)        ==> """{}"""
 ```
 
 ## Options
@@ -121,7 +121,7 @@ object Maybe1 {
 }
 
 FromScala(Maybe1(Some(42))).transform(ToJson.string) ==> """{"i":42}"""
-FromJson("""{"i":42}""").transform(ToScala[Maybe1]) ==> Maybe1(Some(42))
+FromJson("""{"i":42}""").transform(ToScala[Maybe1])  ==> Maybe1(Some(42))
 ```
 
 `None` is translated as `null` ([rationale](differences.md#re-null)):
@@ -136,105 +136,61 @@ If you want to suppress the field entirely on `None`, you can use [Defaults](#De
 ```scala
 case class Maybe2(@dropDefault i: Option[Int] = None)
 
-FromScala(Maybe2(None)).transform(ToJson.string) ==> """{}"""
+FromScala(Maybe2(None)).transform(ToJson.string)     ==> """{}"""
 ```
 
-## [Shading](https://github.com/rallyhealth/sbt-shading) + [SemVer](https://semver.org/) + [MiMa](https://github.com/lightbend/mima)
+## Custom Keys
+weePickle allows you to specify the key that a field is serialized with via a `@key` annotation.
 
-Many of Rally Health's libraries need to work with JSON. However, we have
-found (through long painful experience) that letting them use Play-Json
-puts us into a particular form of Dependency Hell: the libraries wind up
-dependent on a *specific version* of Play-Json, which means that upgrading
-Play requires upgrading much of our ecosystem, which is a hassle. We want
-to decouple our libraries from Play as much as possible, to reduce this
-friction.
+```scala
+case class KeyBar(@key("hehehe") kekeke: Int)
+object KeyBar{
+  implicit val rw = WeePickle.macroFromTo[KeyBar]
+}
 
-So we are encouraging libraries to make use of weePickle instead: it's
-popular, well-supported and fast.
-
-However, if we allowed libraries to simply pick random versions of
-uPickle, we'd be right back where we were with Play-Json: if different
-libraries used different versions, we could wind up with evictions and
-runtime collisions, since uPickle isn't shaded.
-
-So this is a shaded fork of uPickle. It is hard-shaded (instead of using
-sbt-assembly or something like that) because uPickle includes macros with
-hard-coded paths, so automatic shading isn't likely to work correctly.
-
-## Differences
-The upstream https://github.com/lihaoyi/upickle macros serialize some things differently
-than other common libs like circe and play-json. Many of the differences have 
-well-reasoned motivations, but hinder adoption as a drop-in replacement.
-
-In https://github.com/rallyhealth/weePickle, the macros have been changed to work
-more like circe and play-json, as described [here](differences.md).
-
-### Building weePickle
-
-weePickle is based on Mill, not sbt. (There is an sbt file, but it's just
-for the documentation.) In order to build this, you will need to install
-Mill:
-```
-brew install mill
+FromScala(KeyBar(10)).transform(ToJson.string)             ==> """{"hehehe":10}"""
+FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar])  ==> KeyBar(10)
 ```
 
-#### IntelliJ
-You can generate an IntelliJ project structure with:
-```
-./genIdea.sh
-```
+## Sealed Hierarchies
+Sealed hierarchies are serialized as tagged values, the serialized object tagged with the full name of the instance's class:
 
-#### Compile
+```scala
+sealed trait Outcome
+case class Success(value: Int) extends Outcome
+case class DeferredVictory(excuses: Seq[String]) extends Outcome
 
-To build the entire system, say:
-```
-mill __.compile
-```
-In Mill, a single underscore `_` is the wildcard, and a double underscore
-`__` is a recursive wildcard that drills into sub-modules. So the above
-formula means "find all modules and submodules, and compile them".
+object Result {
+  implicit val rw = WeePickle.macroFromTo[Outcome]
+}
+object Success {
+  implicit val rw = WeePickle.macroFromTo[Success]
+}
+object DeferredVictory {
+  implicit val rw = WeePickle.macroFromTo[DeferredVictory]
+}
 
-#### Testing
+FromScala(DeferredVictory(Seq("My json AST is too slow."))).transform(ToJson.string))  ==>
+  """{"$type":"com.example.DeferredVictory","excuses":["My json AST is too slow."]}"""
 
-Similarly, to run all unit tests:
-```
-mill __.test
-```
-
-#### Packaging
-
-To create the JAR files:
-```
-mill __.jar
+// You can read tagged value without knowing its
+// type in advance, just use type of the sealed trait
+FromJson("""{"$type":"com.example.Success","value":42}""").transform(ToScala[Outcome]) ==> Success(42)
 ```
 
-(There's also a `__.assembly` task, which I believe creates fatjars,
-but I can't see why we would care in this case.)
+You can customize the `"$type"` key and values with annotations:
+```scala
+@discriminator("flavor")
+sealed trait Outcome
 
-#### When Things Silently Fail
+@key("success")
+case class Success(value: Int) extends Outcome
 
-Mill has one iffy characteristic: when something is broken in the
-`build.sc` file, it will often fail silently. No errors or anything;
-just nothing happens.
+@key("deferredVictory")
+case class DeferredVictory(excuses: Seq[String]) extends Outcome
 
-When this occurs, the `resolve` command tends to be a lifesaver. This
-steps back and just shows what tasks *would* be run by the given
-command, and it does generally show the errors.
-
-So for example, when compile seems to be dead in the water, say:
+FromScala(Success(42)).transform(ToJson.string)      ==> """{"flavor":"s",value:42}""" 
 ```
-mill resolve __.compile
-```
-and it will generally show you what's broken.
 
-### Original Readme
-
-uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
-
-- [Documentation](https://lihaoyi.github.io/uPickle)
-
-If you use uPickle and like it, please support it by donating to lihaoyi's Patreon:
-
-- [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
-
-[![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle)
+## Developing
+See [developing.md](developing.md) for building, testing, and IDE support.
