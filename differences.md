@@ -18,11 +18,11 @@ play-json always writes a `"key":"value"` pair regardless of whether it's the ca
 
 weepickle works [differently](http://www.lihaoyi.com/upickle/#Defaults). If a field is missing upon deserialization, weepickle uses the default value if one exists. If a field at serialization time has the same value as the default, weepickle leaves it out of the serialized blob.
 
-OpenAPI 3 [has support](https://swagger.io/specification/#schemaObject) for weepickle's behavior:
+OpenAPI 3 [has support](https://swagger.io/specification/#schemaObject) for dropping defaults:
 
 > default - The default value represents what would be assumed by the consumer of the input as the value of the schema if one is not provided.
 
-...but the play-json macros do not. play-json is not tolerant of omitted default values will throw if a field is missing, even if the case-class provdes a default!
+...but the play-json macros do not. play-json is not tolerant of omitted default values will throw if a field is missing, even if the case-class provides a default!
 
 If a service swapped play-json with weepickle, it would be easy to stop sending fields, and break API compatibility. Any API change that requires your consumers to update is a breaking API change.
 Potential for accidents is high here while there are many play-json consumers.
@@ -143,10 +143,12 @@ with `@discriminator` annotations on the sealed parent type:
 ## WeeJson/WeePack
 `WeeJson` and `WeePack` are accessible via named objects instead of package objects. For example: `WeeJson.read("{}")` instead of `ujson.read("{}")`. This makes them more easily importable and avoids naming collisions.
 
-## ReadTransmitter => FromTo
-`Receiver` + `Transmitter` = `FromTo` (not `ReadTransmitter`)
+## ReadWriter => FromTo
+`Reader` => `From`
 
-Two people independently asked me why their code wasn't working because they expected a class named `FromTo`, so that's the name now.
+`Writer` => `To`
+
+`From` + `To` = `FromTo`
 
 ## weejson.Num(Double) => weejson.Num(BigDecimal) 
 ujson's `case class Num(value: Double)` has been replaced with `case class Num(value: BigDecimal)`. This makes it capable of representing 64-bit whole numbers (particularly from external APIs) without precision loss.
