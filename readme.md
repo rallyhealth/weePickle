@@ -3,29 +3,57 @@ A JSON, YAML, MsgPack, XML, etc. serialization framework with MiMa and shading.
 Safe for use by libraries without causing dependency hell.
 
 ## Features
-* [SemVer](https://semver.org/) ([mima](https://github.com/lightbend/mima)) + [Shading](https://github.com/rallyhealth/sbt-shading) => strong backwards compatibility + forwards interop, even across major versions
-* [Zero-overhead conversion](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html) between:
-    * [jackson-core formats](https://github.com/FasterXML/jackson#active-jackson-projects) (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
-    * scala json ASTs (circe, json4s, play-json, argonaut)
-    * case classes (flexible macros)
+- [SemVer](https://semver.org/) ([mima](https://github.com/lightbend/mima)) + [Shading](https://github.com/rallyhealth/sbt-shading) => strong backwards compatibility + forwards interop, even across major versions
+- [Zero-overhead conversion](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html) between:
+    - [jackson-core formats](https://github.com/FasterXML/jackson#active-jackson-projects) (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
+    - scala json ASTs (circe, json4s, play-json, argonaut)
+    - case classes (flexible macros)
 
 ## sbt
+
 ```sbt
+resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
+```
+<table>
+<tr>
+<td><pre lang="sbt">
 "com.rallyhealth" %% "weepickle-v1" % "version"
-```
+</pre></td>
+<td><img src="https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg" title="Download" /></td>
+</tr>
+</table>
 
-## TL;DR
-Scala to json:
-```scala
-FromScala(List(1, 2, 3)).transform(ToJson.string) // "[1,2,3]"
-```
 
+## Getting Started
 Json to scala:
 ```scala
-FromJson("[1,2,3]").transform(ToScala[List[Int]]) // List(1, 2, 3)
+FromJson("[1,2,3]").transform(ToScala[List[Int]])    ==> List(1, 2, 3)
 ```
 
-case class:
+Scala to json:
+```scala
+FromScala(List(1, 2, 3)).transform(ToJson.string)    ==> "[1,2,3]"
+```
+
+Json to pretty json:
+```scala
+FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
+[
+    1,
+    2,
+    3
+]
+```
+
+Files & yaml:
+```scala
+val jsonFile = Files.newInputStream(Paths.get("file.json"))
+val yamlFile = Files.newOutputStream(Paths.get("file.yml"))
+
+FromJson(jsonFile).transform(ToYaml.outputStream(yamlFile))
+```
+
+case classes:
 ```scala
 import com.rallyhealth.weepickle.v1.WeePickle
 case class Foo(i: Int)
@@ -34,106 +62,135 @@ object Foo {
   implicit val rw = WeePickle.macroFromTo[Foo]
 }
 
-FromScala(Foo(1)).transform(ToJson.string)        // """{"i":1}"""
-FromJson("""{"i":1}""").transform(ToScala[Foo])   // Foo(1)
+FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
+FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
 ```
 
-## [Shading](https://github.com/rallyhealth/sbt-shading) + [SemVer](https://semver.org/) + [MiMa](https://github.com/lightbend/mima)
+## Pick Any Two
+You can convert directly between any `From`/`To` types. See [Zero-Overhead Tree Processing with the Visitor Pattern](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html) for how this works.
 
-Many of Rally Health's libraries need to work with JSON. However, we have
-found (through long painful experience) that letting them use Play-Json
-puts us into a particular form of Dependency Hell: the libraries wind up
-dependent on a *specific version* of Play-Json, which means that upgrading
-Play requires upgrading much of our ecosystem, which is a hassle. We want
-to decouple our libraries from Play as much as possible, to reduce this
-friction.
+The following is a non-exhaustive map of type support:
+![From and To convertable types](readme/map.svg)
 
-So we are encouraging libraries to make use of weePickle instead: it's
-popular, well-supported and fast.
+## Supported Types
+- `Boolean`, `Byte`, `Char`, `Short`, `Int`, `Long`, `Float`, `Double`
+- `Tuple`s from 1 to 22
+- Immutable `Seq`, `List`, `Vector`, `Set`, `SortedSet`, `Option`, `Array`, `Maps`, and all other collections with a reasonable `CanBuildFrom` implementation
+- `Duration`, `Either`,
+- `Date`, `Instant`, `LocalDate`, `LocalTime`, `LocalDateTime`, `OffsetDateTime`
+- Stand-alone `case class`es and `case object`s, and their generic equivalents,
+- Non-generic `case class`es and `case object`s that are part of a `sealed trait` or `sealed class` hierarchy
+- `sealed trait` and `sealed class`es themselves, assuming that all subclasses are picklable
+- `UUID`s
+- `null`
 
-However, if we allowed libraries to simply pick random versions of
-uPickle, we'd be right back where we were with Play-Json: if different
-libraries used different versions, we could wind up with evictions and
-runtime collisions, since uPickle isn't shaded.
+Readability/writability is recursive: a container such as a Tuple or case class is only readable if all its contents are readable, and only writable if all its contents are writable. That means that you cannot serialize a `List[Any]`, since weePickle doesn't provide a generic way of serializing `Any`. Case classes are only serializable up to 64 fields.
 
-So this is a shaded fork of uPickle. It is hard-shaded (instead of using
-sbt-assembly or something like that) because uPickle includes macros with
-hard-coded paths, so automatic shading isn't likely to work correctly.
+Case classes are serialized using the `apply` and `unapply` methods on their companion objects. This means that you can make your own classes serializable by giving them companions `apply` and `unapply`. `sealed` hierarchies are serialized as tagged unions: whatever the serialization of the actual object, together with the fully-qualified name of its class, so the correct class in the sealed hierarchy can be reconstituted later.
 
-## Differences
-The upstream https://github.com/lihaoyi/upickle macros serialize some things differently
-than other common libs like circe and play-json. Many of the differences have 
-well-reasoned motivations, but hinder adoption as a drop-in replacement.
+Anything else is not supported by default, but you can add support using Custom Picklers.
 
-In https://github.com/rallyhealth/weePickle, the macros have been changed to work
-more like circe and play-json, as described [here](differences.md).
+## Defaults
+If a field is missing upon deserialization, weePickle uses the default value if one exists.
 
-### Building weePickle
+```scala
+case class Dflt(i: Int = 42)
 
-weePickle is based on Mill, not sbt. (There is an sbt file, but it's just
-for the documentation.) In order to build this, you will need to install
-Mill:
-```
-brew install mill
+FromJson("""{}""").transform(ToScala[Dflt])          ==> Dflt(42)
+FromJson("""{"i": 999}""").transform(ToScala[Dflt])  ==> Dflt(999)
 ```
 
-#### IntelliJ
-You can generate an IntelliJ project structure with:
-```
-./genIdea.sh
-```
+If a field at serialization time has the same value as the default, it will be written unless annotated with `@dropDefault`.
 
-#### Compile
-
-To build the entire system, say:
-```
-mill __.compile
-```
-In Mill, a single underscore `_` is the wildcard, and a double underscore
-`__` is a recursive wildcard that drills into sub-modules. So the above
-formula means "find all modules and submodules, and compile them".
-
-#### Testing
-
-Similarly, to run all unit tests:
-```
-mill __.test
+```scala
+FromScala(Dflt(42)).transform(ToJson.string)         ==> """{"i": 42}"""
 ```
 
-#### Packaging
-
-To create the JAR files:
-```
-mill __.jar
+```scala
+case class Dflt2(@dropDefault i: Int = 42)
+FromScala(Dflt2(42)).transform(ToJson.string)        ==> """{}"""
 ```
 
-(There's also a `__.assembly` task, which I believe creates fatjars,
-but I can't see why we would care in this case.)
+## Options
+`Option[T]` are unwrapped when the option is `Some` ([rationale](differences.md#options)):
 
-#### When Things Silently Fail
+```scala
+case class Maybe1(i: Option[Int])
+object Maybe1 {
+  implicit val rw = WeePickle.macroFromTo[Maybe1]
+}
 
-Mill has one iffy characteristic: when something is broken in the
-`build.sc` file, it will often fail silently. No errors or anything;
-just nothing happens.
-
-When this occurs, the `resolve` command tends to be a lifesaver. This
-steps back and just shows what tasks *would* be run by the given
-command, and it does generally show the errors.
-
-So for example, when compile seems to be dead in the water, say:
+FromScala(Maybe1(Some(42))).transform(ToJson.string) ==> """{"i":42}"""
+FromJson("""{"i":42}""").transform(ToScala[Maybe1])  ==> Maybe1(Some(42))
 ```
-mill resolve __.compile
+
+`None` is translated as `null` ([rationale](differences.md#re-null)):
+
+```scala
+FromScala(Maybe1(None)).transform(ToJson.string) ==> """{"i":null}"""
+FromJson("""{"i":null}""").transform(ToScala[Maybe1]) ==> Maybe1(None)
+FromJson("""{}""").transform(ToScala[Maybe1]) ==> Maybe1(None)
 ```
-and it will generally show you what's broken.
 
-### Original Readme
+If you want to suppress the field entirely on `None`, you can use [Defaults](#Defaults).
+```scala
+case class Maybe2(@dropDefault i: Option[Int] = None)
 
-uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
+FromScala(Maybe2(None)).transform(ToJson.string)     ==> """{}"""
+```
 
-- [Documentation](https://lihaoyi.github.io/uPickle)
+## Custom Keys
+weePickle allows you to specify the key that a field is serialized with via a `@key` annotation.
 
-If you use uPickle and like it, please support it by donating to lihaoyi's Patreon:
+```scala
+case class KeyBar(@key("hehehe") kekeke: Int)
+object KeyBar{
+  implicit val rw = WeePickle.macroFromTo[KeyBar]
+}
 
-- [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
+FromScala(KeyBar(10)).transform(ToJson.string)             ==> """{"hehehe":10}"""
+FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar])  ==> KeyBar(10)
+```
 
-[![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle)
+## Sealed Hierarchies
+Sealed hierarchies are serialized as tagged values, the serialized object tagged with the full name of the instance's class:
+
+```scala
+sealed trait Outcome
+case class Success(value: Int) extends Outcome
+case class DeferredVictory(excuses: Seq[String]) extends Outcome
+
+object Result {
+  implicit val rw = WeePickle.macroFromTo[Outcome]
+}
+object Success {
+  implicit val rw = WeePickle.macroFromTo[Success]
+}
+object DeferredVictory {
+  implicit val rw = WeePickle.macroFromTo[DeferredVictory]
+}
+
+FromScala(DeferredVictory(Seq("My json AST is too slow."))).transform(ToJson.string))  ==>
+  """{"$type":"com.example.DeferredVictory","excuses":["My json AST is too slow."]}"""
+
+// You can read tagged value without knowing its
+// type in advance, just use type of the sealed trait
+FromJson("""{"$type":"com.example.Success","value":42}""").transform(ToScala[Outcome]) ==> Success(42)
+```
+
+You can customize the `"$type"` key and values with annotations:
+```scala
+@discriminator("flavor")
+sealed trait Outcome
+
+@key("success")
+case class Success(value: Int) extends Outcome
+
+@key("deferredVictory")
+case class DeferredVictory(excuses: Seq[String]) extends Outcome
+
+FromScala(Success(42)).transform(ToJson.string)      ==> """{"flavor":"s",value:42}""" 
+```
+
+## Developing
+See [developing.md](developing.md) for building, testing, and IDE support.
