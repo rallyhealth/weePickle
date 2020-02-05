@@ -19,23 +19,3 @@ runtime collisions, since uPickle isn't shaded.
 So this is a shaded fork of uPickle. It is hard-shaded (instead of using
 sbt-assembly or something like that) because uPickle includes macros with
 hard-coded paths, so automatic shading isn't likely to work correctly.
-
-## Differences
-The upstream https://github.com/lihaoyi/upickle macros serialize some things differently than other common libs like circe and play-json. Many of the differences have well-reasoned motivations, but hinder adoption as a drop-in replacement.
-
-In https://github.com/rallyhealth/weePickle, the macros have been changed to work
-more like circe and play-json, as described [here](differences.md).
-
-
-
-### Original Readme
-
-uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
-
-- [Documentation](https://lihaoyi.github.io/uPickle)
-
-If you use uPickle and like it, please support it by donating to lihaoyi's Patreon:
-
-- [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
-
-[![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle)

@@ -1,27 +1,23 @@
-## WeePickle
+# WeePickle [![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle) <img src="https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg" title="Download" />
+
 A JSON, YAML, MsgPack, XML, etc. serialization framework with MiMa and shading.
-Safe for use by libraries without causing dependency hell.
+
+Safe for use in libraries without causing dependency hell ([rationale](shading.md)).
 
 ## Features
 - [SemVer](https://semver.org/) ([mima](https://github.com/lightbend/mima)) + [Shading](https://github.com/rallyhealth/sbt-shading) => strong backwards compatibility + forwards interop, even across major versions
 - [Zero-overhead conversion](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html) between:
-    - [jackson-core formats](https://github.com/FasterXML/jackson#active-jackson-projects) (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
+    - [jackson-core](https://github.com/FasterXML/jackson#active-jackson-projects) (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
     - scala json ASTs (circe, json4s, play-json, argonaut)
     - case classes (flexible macros)
+    - [MessagePack](#messagepack)
 
 ## sbt
-
-```sbt
+```scala
 resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
+libraryDependencies += "com.rallyhealth" %% "weepickle-v1" % "version"
 ```
-<table>
-<tr>
-<td><pre lang="sbt">
-"com.rallyhealth" %% "weepickle-v1" % "version"
-</pre></td>
-<td><img src="https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg" title="Download" /></td>
-</tr>
-</table>
+version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg) ](https://bintray.com/rallyhealth/maven/weePickle/_latestVersion)
 
 
 ## Getting Started
@@ -160,7 +156,7 @@ sealed trait Outcome
 case class Success(value: Int) extends Outcome
 case class DeferredVictory(excuses: Seq[String]) extends Outcome
 
-object Result {
+object Outcome {
   implicit val rw = WeePickle.macroFromTo[Outcome]
 }
 object Success {
@@ -183,14 +179,103 @@ You can customize the `"$type"` key and values with annotations:
 @discriminator("flavor")
 sealed trait Outcome
 
-@key("success")
+@key("s")
 case class Success(value: Int) extends Outcome
 
-@key("deferredVictory")
+@key("dv")
 case class DeferredVictory(excuses: Seq[String]) extends Outcome
 
 FromScala(Success(42)).transform(ToJson.string)      ==> """{"flavor":"s",value:42}""" 
 ```
 
+## jackson-core
+weePickle leans heavily on [jackson-core](https://github.com/FasterXML/jackson-core) for interop with JSON, YAML, and most other formats. Jackson-databind is not used.
+
+### Motivations
+1. jackson-core's JSON support is mature, widely used, and heavily optimized.
+2. The ecosystem of possible formats is huge: https://github.com/FasterXML/jackson#active-jackson-projects
+3. jackson-core has a solid track record of backward compatibility.
+
+### Buffer pooling
+Internally, jackson-core uses buffer pooling to achieve some of its performance. Buffers return to the pool after calling `close()` on the underlying Parser/Generator. If this doesn't happen, new buffers get allocated for each message and performance suffers slightly.
+
+`FromJson` doesn't trust you and calls `close()` automatically after writing a single [json text](https://tools.ietf.org/html/rfc7159#section-2), which covers the vast majority of use cases. If you're working with multiple json texts separated by whitespace, jackson can handle it, but you have to drop down below the high level API and remember to close the parser/generator yourself.
+
+## Value AST
+WeePickle includes its own AST named `Value`, largely unchanged from the upstream [uJson](http://www.lihaoyi.com/upickle/#uJson).
+
+```scala
+val obj = Obj(
+  "foo" -> Arr(
+    42,
+    "omg",
+    true
+  )
+)
+
+obj("foo")(0).num                  ==> 42
+
+obj.toString                       ==> """{"foo":[42,"omg",true]}"""
+obj.transform(ToPrettyJson.string) ==>
+  """{
+    "foo": [
+      42,
+      "omg",
+      true
+    ]
+  }"""
+
+FromJson("""{"foo":[42,"omg",true]}""").transform(Value) ==> obj
+```
+
+See:
+- http://www.lihaoyi.com/upickle/#uJson
+- http://www.lihaoyi.com/post/uJsonfastflexibleandintuitiveJSONforScala.html
+
+## MessagePack
+weePack is weePickle's [MessagePack](https://msgpack.org/index.html) implementation, largely unchanged from the upstream [uPack](http://www.lihaoyi.com/upickle/#uPack).
+
+### sbt
+```scala
+resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
+libraryDependencies += "com.rallyhealth" %% "weepack-v1" % "version"
+```
+version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg) ](https://bintray.com/rallyhealth/maven/weePickle/_latestVersion)
+
+### Benchmarks
+`FromMsgPack`/`ToMsgPack` perform exceptionally well under benchmarks, yielding higher throughput than JSON or the official [jackson-dataformat-msgpack](https://github.com/msgpack/msgpack-java/blob/develop/msgpack-jackson/README.md).
+
+#### ParserBench
+java 11:
+```
+Benchmark                    Mode  Cnt    Score    Error  Units
+ParserBench.jsonBytes       thrpt   15  245.665 ±  3.202  ops/s
+ParserBench.jsonString      thrpt   15  213.312 ±  5.250  ops/s
+ParserBench.msgpackJackson  thrpt   15  205.738 ±  2.789  ops/s
+ParserBench.msgpackScala    thrpt   15  422.313 ± 17.172  ops/s
+ParserBench.smile           thrpt   15  271.947 ±  1.116  ops/s
+```
+
+#### GeneratorBench
+java 11:
+```
+Benchmark                       Mode  Cnt    Score    Error  Units
+GeneratorBench.jsonBytes       thrpt   15  238.335 ± 11.777  ops/s
+GeneratorBench.jsonString      thrpt   15  240.125 ±  7.871  ops/s
+GeneratorBench.msgpackJackson  thrpt   15  181.195 ±  5.774  ops/s
+GeneratorBench.msgpackScala    thrpt   15  304.540 ±  2.225  ops/s
+GeneratorBench.smile           thrpt   15  306.462 ±  3.134  ops/s
+```
+
 ## Developing
 See [developing.md](developing.md) for building, testing, and IDE support.
+
+## Upstream
+
+uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
+
+- [Documentation](https://lihaoyi.github.io/uPickle)
+
+If you use uPickle/weePickle and like it, please support it by donating to lihaoyi's Patreon:
+
+- [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
