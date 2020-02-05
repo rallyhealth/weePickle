@@ -2,7 +2,7 @@ package com.rallyhealth.weepickle.v1.implicits
 
 import java.net.URI
 import java.time.Instant
-import java.util.UUID
+import java.util.{Base64, UUID}
 import java.util.concurrent.TimeUnit
 
 import com.rallyhealth.weepickle.v1.core._
@@ -255,6 +255,9 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
         def visitEnd(): Array[T] = b.result()
 
         def subVisitor = implicitly[To[T]]
+      }
+      override def visitString(cs: CharSequence): Array[T] = {
+        Base64.getDecoder.decode(cs.toString).asInstanceOf[Array[T]]
       }
     } else
       new SimpleTo[Array[T]] {
