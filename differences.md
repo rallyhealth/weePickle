@@ -140,8 +140,8 @@ with `@discriminator` annotations on the sealed parent type:
 @key("place") case class Place(locations: Seq[ProviderLocation]) extends Provider
 ```
 
-## WeeJson/WeePack
-`WeeJson` and `WeePack` are accessible via named objects instead of package objects. For example: `WeeJson.read("{}")` instead of `ujson.read("{}")`. This makes them more easily importable and avoids naming collisions.
+## FromJson/ToJson, FromMsgPack/ToMsgPack
+`FromJson`/`ToJson` and `FromMsgPack`/`ToMsgPack` are accessible via named objects instead of package objects. For example: `FromJson("{}")` instead of `ujson.read("{}")`. This makes them more easily importable and avoids naming collisions.
 
 ## ReadWriter => FromTo
 `Reader` => `From`
