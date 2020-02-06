@@ -1,6 +1,6 @@
 ### Building weePickle
 
-weePickle is based on Mill, not sbt. (There is an sbt file, but it's just
+weePickle is based on [Mill](https://github.com/lihaoyi/mill), not sbt. (There is an sbt file, but it's just
 for the documentation.) In order to build this, you will need to install
 Mill:
 ```

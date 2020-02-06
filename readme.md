@@ -21,17 +21,17 @@ version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePic
 
 
 ## Getting Started
-Json to scala:
+JSON to Scala:
 ```scala
 FromJson("[1,2,3]").transform(ToScala[List[Int]])    ==> List(1, 2, 3)
 ```
 
-Scala to json:
+Scala to JSON:
 ```scala
 FromScala(List(1, 2, 3)).transform(ToJson.string)    ==> "[1,2,3]"
 ```
 
-Json to pretty json:
+JSON to pretty JSON:
 ```scala
 FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 [
@@ -41,7 +41,7 @@ FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 ]
 ```
 
-Files & yaml:
+Files & YAML:
 ```scala
 val jsonFile = Files.newInputStream(Paths.get("file.json"))
 val yamlFile = Files.newOutputStream(Paths.get("file.yml"))
@@ -49,7 +49,7 @@ val yamlFile = Files.newOutputStream(Paths.get("file.yml"))
 FromJson(jsonFile).transform(ToYaml.outputStream(yamlFile))
 ```
 
-case classes:
+Case Classes:
 ```scala
 import com.rallyhealth.weepickle.v1.WeePickle
 case class Foo(i: Int)
@@ -108,7 +108,7 @@ FromScala(Dflt2(42)).transform(ToJson.string)        ==> """{}"""
 ```
 
 ## Options
-`Option[T]` are unwrapped when the option is `Some` ([rationale](differences.md#options)):
+`Option[T]` is unwrapped when the Option is `Some` ([rationale](differences.md#options)):
 
 ```scala
 case class Maybe1(i: Option[Int])
@@ -136,7 +136,7 @@ FromScala(Maybe2(None)).transform(ToJson.string)     ==> """{}"""
 ```
 
 ## Custom Keys
-weePickle allows you to specify the key that a field is serialized with via a `@key` annotation.
+weePickle allows you to specify the key with which a field is serialized via a `@key` annotation.
 
 ```scala
 case class KeyBar(@key("hehehe") kekeke: Int)
@@ -189,7 +189,7 @@ FromScala(Success(42)).transform(ToJson.string)      ==> """{"flavor":"s",value:
 ```
 
 ## jackson-core
-weePickle leans heavily on [jackson-core](https://github.com/FasterXML/jackson-core) for interop with JSON, YAML, and most other formats. Jackson-databind is not used.
+weePickle leans heavily on [jackson-core](https://github.com/FasterXML/jackson-core) for interop with JSON, YAML, and most other formats. [Jackson-databind](https://github.com/FasterXML/jackson-databind) is not used.
 
 ### Motivations
 1. jackson-core's JSON support is mature, widely used, and heavily optimized.
@@ -197,7 +197,7 @@ weePickle leans heavily on [jackson-core](https://github.com/FasterXML/jackson-c
 3. jackson-core has a solid track record of backward compatibility.
 
 ### Buffer pooling
-Internally, jackson-core uses buffer pooling to achieve some of its performance. Buffers return to the pool after calling `close()` on the underlying Parser/Generator. If this doesn't happen, new buffers get allocated for each message and performance suffers slightly.
+Internally, jackson-core uses buffer pooling to achieve some of its performance. Buffers return to the pool after calling `close()` on the underlying Parser/Generator. If this doesn't happen, new buffers get allocated for each message, and performance suffers slightly.
 
 `FromJson` doesn't trust you and calls `close()` automatically after writing a single [json text](https://tools.ietf.org/html/rfc7159#section-2), which covers the vast majority of use cases. If you're working with multiple json texts separated by whitespace, jackson can handle it, but you have to drop down below the high level API and remember to close the parser/generator yourself.
 
