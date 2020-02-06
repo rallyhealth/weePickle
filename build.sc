@@ -9,6 +9,14 @@ import com.typesafe.tools.mima.lib.MiMaLib
 import com.typesafe.tools.mima.core._
 import coursier.maven.MavenRepository
 import mill.scalalib.scalafmt.ScalafmtModule
+import mill.T
+import mill.api.PathRef
+import mill.scalalib.{JavaModule, PublishModule}
+import os.Path
+import mill.api.Ctx
+import mill.scalalib.publish.Artifact
+import os.Path
+
 
 val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
 val scalaPlayVersions = Seq(
@@ -38,7 +46,7 @@ trait CommonModule extends ScalaModule with ScalafmtModule {
   )
 }
 
-trait CommonPublishModule extends CommonModule with PublishModule with CrossScalaModule{
+trait CommonPublishModule extends CommonModule with PublishM2Module with CrossScalaModule{
   def publishVersion = "1.0.2-SNAPSHOT"
 
   def pomSettings = PomSettings(
@@ -468,3 +476,52 @@ trait Jmh extends ScalaModule {
     T { Agg(ivy"org.openjdk.jmh:jmh-generator-bytecode:1.21") }
   )
 }
+
+
+trait PublishM2Module extends JavaModule with PublishModule {
+
+  /**
+    * Publish to the local Maven repository.
+    * @param path The path to the local repository (default: `os.home / ".m2" / "repository"`).
+    * @return [[PathRef]]s to published files.
+    */
+  def publishM2Local(path: Path = os.home / ".m2" / "repository") = T.command {
+    new LocalM2Publisher(path)
+      .publish(
+        jar = jar().path,
+        sourcesJar = sourceJar().path,
+        docJar = docJar().path,
+        pom = pom().path,
+        artifact = artifactMetadata()
+      ).map(PathRef(_))
+  }
+
+}
+
+class LocalM2Publisher(m2Repo: Path) {
+
+  def publish(
+    jar: Path,
+    sourcesJar: Path,
+    docJar: Path,
+    pom: Path,
+    artifact: Artifact
+  )(implicit ctx: Ctx.Log): Seq[Path] = {
+    val releaseDir = m2Repo / artifact.group.split("[.]") / artifact.id / artifact.version
+    ctx.log.info(s"Publish ${artifact.id}-${artifact.version} to ${releaseDir}")
+    os.makeDir.all(releaseDir)
+    Seq(
+      jar -> releaseDir / s"${artifact.id}-${artifact.version}.jar",
+      sourcesJar -> releaseDir / s"${artifact.id}-${artifact.version}-sources.jar",
+      docJar -> releaseDir / s"${artifact.id}-${artifact.version}-javadoc.jar",
+      pom -> releaseDir / s"${artifact.id}-${artifact.version}.pom"
+    ).map {
+      case (from, to) =>
+        os.copy.over(from, to)
+        to
+    }
+  }
+
+}
+
+
