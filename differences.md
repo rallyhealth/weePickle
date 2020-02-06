@@ -1,5 +1,5 @@
 ## Differences
-The https://github.com/lihaoyi/upickle macros serialize some things differently than other common libs like circe and play-json. Many of the differences have  well-reasoned motivations, but hinder adoption as a drop-in replacement. Many engineers will blindly change the macros without realizing their API response may change in breaking ways.
+The https://github.com/lihaoyi/upickle macros serialize some things differently than other common libs like [circe](https://github.com/circe/circe) and [play-json](https://github.com/playframework/play-json). Many of the differences have  well-reasoned motivations, but hinder adoption as a drop-in replacement. Many engineers will blindly change the macros without realizing their API response may change in breaking ways.
 
 In https://github.com/rallyhealth/weepickle, the macros have been changed to work more like circe and play-json, as described below.
 
@@ -22,7 +22,7 @@ OpenAPI 3 [has support](https://swagger.io/specification/#schemaObject) for drop
 
 > default - The default value represents what would be assumed by the consumer of the input as the value of the schema if one is not provided.
 
-...but the play-json macros do not. play-json is not tolerant of omitted default values will throw if a field is missing, even if the case-class provides a default!
+...but the play-json macros do not. play-json is not tolerant of omitted default values: it will throw if a field is missing, even if the case class provides a default!
 
 If a service swapped play-json with weepickle, it would be easy to stop sending fields, and break API compatibility. Any API change that requires your consumers to update is a breaking API change.
 Potential for accidents is high here while there are many play-json consumers.
@@ -30,8 +30,8 @@ Potential for accidents is high here while there are many play-json consumers.
 I've changed the macros to write all fields like play-json, but fill in missing defaults while reading like lihaoyi/upickle.
 
 #### `@dropDefault`
-I've added a field annotation, `@dropDefault` to make writes behave like lihaoyi/upickle.
-New services (i.e. with no legacy play-json consumers) may wish to use `@dropDefault` on their OpenAPI 3 codegen'd models.
+I've added a field annotation, `@dropDefault` to make writes behave like [lihaoyi/upickle](https://github.com/lihaoyi/upickle).
+New services (i.e., with no legacy play-json consumers) may wish to use `@dropDefault` on their OpenAPI 3 codegen'd models.
 
 ```scala
 case class Foo(
@@ -60,7 +60,7 @@ case class Maybe(m: Option[Int])
 
 
 weepickle encodes `Option` as an array. Rationale is here: https://github.com/lihaoyi/upickle/issues/75
-The approach is more robust than play-json over corner cases and simpler, too.
+The approach is more robust than play-json over corner cases, and simpler, too.
 
 For example, it is not possible to write a `play.json.Writes[Option[String]]` that when encoding the value of `None`, removes the field from its parent `JsObject`. This scenario is handled by special-case logic for `Option[_]` in the `play-json` macros. Outside of those macros, the behavior of `Writes[Option[T]]` can only return the field and `null` instead:
 
@@ -153,13 +153,13 @@ with `@discriminator` annotations on the sealed parent type:
 ## weejson.Num(Double) => weejson.Num(BigDecimal) 
 ujson's `case class Num(value: Double)` has been replaced with `case class Num(value: BigDecimal)`. This makes it capable of representing 64-bit whole numbers (particularly from external APIs) without precision loss.
 
-The primary consequence is how javascript consumers are treated. Javascript has only one number type, 64-bit floating point numbers. Seriously, put this in your chrome console:
+The primary consequence is how JavaScript consumers are treated. JavaScript has only one number type, 64-bit floating point numbers. Seriously, put this in your chrome console:
 
 ```
 Math.pow(2, 53) === (Math.pow(2, 53) + 1)
 > true
 ```
 
-In particular, this can become an issue when handling 64-bit `scala.Long` numbers. Nobody likes silent data loss, but encoding fields as numbers sometimes, but strings other times isn't great either.
+In particular, this can become an issue when handling 64-bit `scala.Long` numbers. Nobody likes silent data loss, but encoding fields as numbers sometimes, and then strings other times, isn't great either.
 
-Varying the encoding of a single field based on concrete number types, e.g. `{"foo": 1}` but `{"foo", "18014398509481984"}` is too surprising to do at the library level by default, since it requires special handling by the browser. Varying the encoding based on concrete values increases the likelihood of programming errors. For example, the js code `body.foo + 666` verified against the first case, would incorrectly return "18014398509481984666" for the second case. It is more straightforward to *always* encode values that can contain large values as strings consistently and declare it as such in your json schema.
+Varying the encoding of a single field based on concrete number types, e.g., `{"foo": 1}` but `{"foo", "18014398509481984"}` is too surprising to do at the library level by default, since it requires special handling by the browser. Varying the encoding based on concrete values increases the likelihood of programming errors. For example, the js code `body.foo + 666` verified against the first case, would incorrectly return "18014398509481984666" for the second case. It is more straightforward to *always* encode values that can contain large values as strings consistently and declare it as such in your JSON schema.
