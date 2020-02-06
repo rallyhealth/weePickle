@@ -21,7 +21,7 @@ For more background, see [shading.md](shading.md).
 weePickle combines some of the best parts of the serialization ecosystem.
 
 - [Zero-overhead conversion of uPickle](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html)
-- Async parsing of [jackson-core](https://github.com/FasterXML/jackson#active-jackson-projects), and broad format support (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
+- [jackson-core](https://github.com/FasterXML/jackson#active-jackson-projects): async parsing and broad format support (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
 - `case class` support through customizable macros
 - scala json AST interop (circe, json4s, play-json, argonaut)
 - Fast serialization to/from [MessagePack](#messagepack)
