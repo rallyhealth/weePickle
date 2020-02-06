@@ -274,7 +274,8 @@ See [developing.md](developing.md) for building, testing, and IDE support.
 
 uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
 
-- [Documentation](https://lihaoyi.github.io/uPickle)
+- [Documentation](https://lihaoyi.github.io/upickle)
+- [Project root](https://github.com/lihaoyi/upickle)
 
 If you use uPickle/weePickle and like it, please support it by donating to lihaoyi's Patreon:
 
