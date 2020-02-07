@@ -10,7 +10,7 @@ weePickle exists to fulfill two promises:
 
 ### Shading
 Both `weepickle-v1.jar` and `weepickle-v2.jar` (in the future) will coexist on the classpath peacefully by applying [shading](https://github.com/rallyhealth/sbt-shading) at multiple levels.
-1. All artifact names are suffixed with `-v1`, which prevents evictions.
+1. All artifact names are suffixed with the major version number (e.g. `-v1`), which prevents evictions.
 2. All packages are prefixed with the major version number (e.g. `com.rallyhealth.v1`), which prevents classpath conflicts.
 
 Shading allows libraries to depend directly on [weePickle-v1](#sbt) without fear of causing incompatible evictions and runtime failures.
