@@ -291,6 +291,34 @@ object weejson extends Module{
       Agg(ivy"io.circe::circe-parser:${if (isScalaOld()) "0.11.1" else "0.13.0"}")
     }
   }
+  object jsoniter extends Cross[JsoniterScalaModule](scalaVersions: _*)
+  class JsoniterScalaModule(val crossScalaVersion: String) extends CommonPublishModule{
+    def artifactName = shade("weejson-jsoniter-scala")
+    def platformSegment = "jvm"
+    def moduleDeps = Seq(weejson.jvm())
+    def ivyDeps = T{
+      Agg(ivy"com.github.plokhotnyuk.jsoniter-scala::jsoniter-scala-core:2.1.13")
+    }
+  }
+
+  object dijon extends Cross[DijonModule](scalaVersions: _*)
+  class DijonModule(val crossScalaVersion: String) extends CommonPublishModule{
+    def artifactName = shade("weejson-dijon")
+    def platformSegment = "jvm"
+    def moduleDeps = Seq(weejson.jvm())
+    def ivyDeps = T{
+      Agg(ivy"com.github.pathikrit::dijon:0.3.0")
+    }
+
+    override def scalacOptions = T{
+      // weejson/dijon/src/com/rallyhealth/weejson/v1/dijon/Dijon.scala
+      //Error:(57, 15) non-variable type argument com.github.pathikrit.dijon.SomeJson in type pattern scala.collection.mutable.Buffer[com.github.pathikrit.dijon.SomeJson] (the underlying of com.github.pathikrit.dijon.JsonArray) is unchecked since it is eliminated by erasure
+      //    case arr: JsonArray =>
+      //Error:(61, 15) non-variable type argument String in type pattern scala.collection.mutable.Map[String,com.github.pathikrit.dijon.SomeJson] (the underlying of com.github.pathikrit.dijon.JsonObject) is unchecked since it is eliminated by erasure
+      //    case obj: JsonObject =>
+      super.scalacOptions().filterNot(_ == "-Xfatal-warnings")
+    }
+  }
 
   object play extends Cross[PlayModule](scalaPlayVersions:_*)
   class PlayModule(val crossScalaVersion: String, val crossPlayVersion: String) extends CommonPublishModule {
@@ -356,6 +384,8 @@ object weepickle extends Module{
           weejson.argonaut(),
           weejson.circe(),
           weejson.json4s(),
+          weejson.dijon(),
+          weejson.jsoniter(),
           weepack.jvm().test,
           weejson.play(),
           core.jvm().test
@@ -377,6 +407,11 @@ trait BenchModule extends CommonModule {
     ivy"org.json4s::json4s-ast:3.6.9",
     ivy"com.lihaoyi::sourcecode::0.1.7",
   )
+
+  trait Tests extends super.Tests with CommonTestModule {
+    def platformSegment: String = "jvm"
+    def scalaVersion = "2.12.8"
+  }
 }
 
 object bench extends Module {
@@ -391,6 +426,8 @@ object bench extends Module {
       ivy"org.msgpack:jackson-dataformat-msgpack:0.8.20",
       ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${weejson.jacksonVersion}",
     )
+
+    object test extends Tests
   }
 }
 

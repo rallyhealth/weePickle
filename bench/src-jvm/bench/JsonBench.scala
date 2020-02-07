@@ -3,6 +3,7 @@ package bench
 import java.util.concurrent.TimeUnit
 
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
+import com.rallyhealth.weejson.v1.jsoniter_scala.FromJsoniterScala
 import com.rallyhealth.weepickle.v1.Common
 import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 import org.openjdk.jmh.annotations._
@@ -16,16 +17,17 @@ import org.openjdk.jmh.infra.Blackhole
   *
   * java 8:
   * {{{
-  * Benchmark                   Mode  Cnt    Score   Error  Units
-  * ParseBytesBench.uJson      thrpt       250.238          ops/s
-  * ParseBytesBench.weePickle  thrpt       392.815          ops/s
+  * Benchmark                           Mode  Cnt    Score    Error  Units
+  * ParseBytesBench.fromJson           thrpt    9  399.661 ± 11.302  ops/s
+  * ParseBytesBench.fromJsoniterScala  thrpt    9  506.626 ±  7.748  ops/s
+  * ParseBytesBench.uJson              thrpt    9  255.619 ±  2.171  ops/s
   * }}}
   *
   * java 11:
   * {{{
   * Benchmark                   Mode  Cnt    Score    Error  Units
   * ParseBytesBench.uJson      thrpt   15  292.643 ± 13.337  ops/s
-  * ParseBytesBench.weePickle  thrpt   15  376.108 ± 21.080  ops/s
+  * ParseBytesBench.fromJson   thrpt   15  376.108 ± 21.080  ops/s
   * }}}
   */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -36,11 +38,11 @@ import org.openjdk.jmh.infra.Blackhole
   jvmArgsAppend = Array(
     //    "-XX:+UnlockCommercialFeatures",
     //    "-XX:+FlightRecorder",
-    //    "-XX:StartFlightRecording=delay=8s,duration=30s,filename=recording.jfr,settings=profile",
+    //    "-XX:StartFlightRecording=delay=15s,duration=15s,filename=recording.jfr,settings=profile",
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
   ),
-  value = 5
+  value = 3
 )
 class ParseBytesBench {
 
@@ -50,8 +52,13 @@ class ParseBytesBench {
   }
 
   @Benchmark
-  def weePickle: Unit = {
+  def fromJson: Unit = {
     FromJson(Common.benchmarkSampleJsonBytes).transform(NoOpVisitor)
+  }
+
+  @Benchmark
+  def fromJsoniterScala: Unit = {
+    FromJsoniterScala(Common.benchmarkSampleJsonBytes).transform(NoOpVisitor)
   }
 }
 

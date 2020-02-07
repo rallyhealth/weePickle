@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 
 import com.rallyhealth.weejson.v1.jackson.{FromJson, JsonRenderer, ToJson, VisitorJsonGenerator}
+import com.rallyhealth.weejson.v1.jsoniter_scala.FromJsoniterScala
 import com.rallyhealth.weepack.v1.{FromMsgPack, ToMsgPack}
 import com.rallyhealth.weepickle.v1.Common
 import com.rallyhealth.weepickle.v1.Common.Data
@@ -14,7 +15,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 2, time = 5, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
 @Fork(
@@ -26,7 +27,7 @@ import org.openjdk.jmh.infra.Blackhole
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
   ),
-  value = 10
+  value = 1
 )
 abstract class BenchOptions
 
@@ -58,32 +59,32 @@ class GeneratorBench extends BenchOptions {
   private val source: FromInput = FromScala(Common.benchmarkSampleData)
 
   @Benchmark
-  def jsonBytes(bh: Blackhole): Unit = {
-    bh.consume(source.transform(ToJson.bytes))
+  def jsonBytes = {
+    source.transform(ToJson.bytes)
   }
 
   @Benchmark
-  def jsonString(bh: Blackhole): Unit = {
-    bh.consume(source.transform(ToJson.string))
+  def jsonString = {
+    source.transform(ToJson.string)
   }
 
   @Benchmark
-  def msgpackScala(bh: Blackhole): Unit = {
-    bh.consume(source.transform(ToMsgPack.bytes))
+  def msgpackScala = {
+    source.transform(ToMsgPack.bytes)
   }
 
   @Benchmark
-  def msgpackJackson(bh: Blackhole): Unit = {
+  def msgpackJackson = {
     val baos = new ByteArrayOutputStream()
     val visitor = JsonRenderer(DefaultMessagePackFactory.Instance.createGenerator(baos))
     source.transform(visitor)
     visitor.close()
-    bh.consume(baos.toByteArray)
+    baos.toByteArray
   }
 
   @Benchmark
-  def smile(bh: Blackhole): Unit = {
-    bh.consume(source.transform(ToSmile.bytes))
+  def smile = {
+    source.transform(ToSmile.bytes)
   }
 }
 
@@ -115,39 +116,52 @@ class ParserBench extends BenchOptions {
   private val toCaseClass: Visitor[_, Seq[Data]] = ToScala[Seq[Data]]
 
   @Benchmark
-  def jsonBytes(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(toCaseClass))
+  def jsonBytes = {
+    FromJson(Common.benchmarkSampleJsonBytes).transform(toCaseClass)
   }
 
   @Benchmark
-  def jsonString(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleJson).transform(toCaseClass))
+  def jsonBytesJis = {
+    FromJsoniterScala(Common.benchmarkSampleJsonBytes).transform(toCaseClass)
   }
 
   @Benchmark
-  def msgpackJackson(bh: Blackhole): Unit = {
+  def jsonString = {
+    FromJson(Common.benchmarkSampleJson).transform(toCaseClass)
+  }
+
+  @Benchmark
+  def jsonStringJis = {
+    FromJsoniterScala(Common.benchmarkSampleJson).transform(toCaseClass)
+  }
+
+  @Benchmark
+  def msgpackJackson = {
     val parser = DefaultMessagePackFactory.Instance.createParser(Common.benchmarkSampleMsgPack)
     // Can't use JsonFromInput because the parser throws on EOF instead of returning -1. Picky!
 
+    var result: Option[Seq[Data]] = None
     val generator = new VisitorJsonGenerator(
-      new CallbackVisitor(toCaseClass)(bh.consume(_: Any))
+      new CallbackVisitor(toCaseClass)((data: Seq[Data]) => result = Some(data))
     )
 
     parser.nextToken()
     generator.copyCurrentStructure(parser)
     parser.close()
     generator.close()
+
+    result.get
   }
 
   @Benchmark
-  def msgpackScala(bh: Blackhole): Unit = {
-    bh.consume(FromMsgPack(Common.benchmarkSampleMsgPack).transform(toCaseClass))
+  def msgpackScala = {
+    FromMsgPack(Common.benchmarkSampleMsgPack).transform(toCaseClass)
   }
 
   @Benchmark
-  def smile(bh: Blackhole): Unit = {
+  def smile = {
     val result = FromSmile(SmileBytes.smileBytes).transform(toCaseClass)
-    bh.consume(result)
+    result
   }
 }
 
