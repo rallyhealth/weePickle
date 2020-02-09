@@ -612,12 +612,8 @@ object ExampleTests extends TestSuite {
     test("byteArrays") {
       import com.rallyhealth.weepickle.v1.WeePickle._
 
-      /**
-        * JSON encoding isn't symmetric here,
-        * but base64 is more useful.
-        * e.g. https://stackoverflow.com/a/247261
-        */
       FromScala(Array[Byte](1, 2, 3, 4)).transform(ToJson.string) ==> """"AQIDBA==""""
+      FromJson(""""AQIDBA=="""").transform(ToScala[Array[Byte]]) ==> Array(1, 2, 3, 4)
       FromJson("[1,2,3,4]").transform(ToScala[Array[Byte]]) ==> Array(1, 2, 3, 4)
 
       FromScala(Array[Byte](1, 2, 3, 4)).transform(ToMsgPack.bytes) ==> Array(0xc4.toByte, 4, 1, 2, 3, 4)
