@@ -246,10 +246,11 @@ object StructTests extends TestSuite {
     }
 
     test("extra") {
-      val uuidString = "01020304-0506-0708-0901-020304050607"
-      val uuid = UUID.fromString(uuidString)
       test("UUID") {
-        rw(uuid, s""" "$uuidString" """)
+        (1 to 100).foreach { _ =>
+          val uuid = UUID.randomUUID()
+          rw(uuid, s""" "${uuid.toString}" """)
+        }
       }
     }
 
