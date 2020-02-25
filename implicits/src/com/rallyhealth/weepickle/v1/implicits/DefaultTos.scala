@@ -126,7 +126,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
       Util.parseIntegralNum(cs, decIndex, expIndex).toChar
     }
   }
-  implicit val ToUUID: To[UUID] = new MapStringTo(s => UUID.fromString(s.toString))
+  implicit val ToUUID: To[UUID] = new MapStringTo(s => Util.parseUUID(s))
   implicit val ToLong: To[Long] = new NumericTo[Long] {
     override def expectedMsg = "expected number"
     override def visitString(d: CharSequence): Long = com.rallyhealth.weepickle.v1.core.Util.parseLong(d, 0, d.length())
