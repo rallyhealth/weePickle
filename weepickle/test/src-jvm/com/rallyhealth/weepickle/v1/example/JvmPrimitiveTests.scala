@@ -16,7 +16,7 @@ object JvmPrimitiveTests extends TestSuite {
       test("LocalTime") { rw(LocalTime.parse("00:00"), "\"00:00\"") }
       test("LocalDateTime") { rw(LocalDateTime.parse("2000-01-01T00:00:00"), "\"2000-01-01T00:00:00\"") }
       test("OffsetDateTime") { rw(OffsetDateTime.parse("2007-12-03T10:15:30+01:00"), "\"2007-12-03T10:15:30+01:00\"") }
-      test("ZonedDateTime") {rw(ZonedDateTime.parse("2000-01-01T00:00:00Z"), "\"2000-01-01T00:00:00Z\"") }
+      test("ZonedDateTime") {rw(ZonedDateTime.parse("2000-01-01T00:00:00.000-06:00[America/Chicago]"), "\"2000-01-01T00:00:00.000-06:00[America/Chicago]\"") }
       test("Instant") {
         test("String") { rw(Instant.parse("2015-05-03T10:15:30Z"), "\"2015-05-03T10:15:30Z\"") }
         test("Millis") {
