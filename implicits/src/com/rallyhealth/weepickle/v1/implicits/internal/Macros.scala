@@ -415,7 +415,7 @@ object Macros {
           }
         }
        """
-      println(s"Writing wrapCaseN tree = ${tree.}")
+      println(s"Writing wrapCaseN tree = $tree")
       tree
     }
     def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
