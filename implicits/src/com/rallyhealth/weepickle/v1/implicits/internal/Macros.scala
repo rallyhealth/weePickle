@@ -292,7 +292,7 @@ object Macros {
       if (args.size > 64) {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
-      q"""
+      val tree = q"""
         ..${for (arg <- args)
         yield q"private[this] lazy val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
         new ${c.prefix}.CaseR[$targetType]{
@@ -347,6 +347,8 @@ object Macros {
           }
         }
       """
+      println(s"Reading wrapCaseN tree = $tree")
+      tree
     }
     def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
       q"${c.prefix}.To.merge[$targetType](..$subtrees)"
@@ -395,7 +397,7 @@ object Macros {
         if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
         else snippet
       }
-      q"""
+      val tree = q"""
         new ${c.prefix}.CaseW[$targetType]{
           def length(v: $targetType) = {
             var n = 0
@@ -413,6 +415,8 @@ object Macros {
           }
         }
        """
+      println(s"Writing wrapCaseN tree = ${tree.}")
+      tree
     }
     def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
       q"${c.prefix}.From.merge[$targetType](..$subtree)"
