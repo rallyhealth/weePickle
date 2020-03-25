@@ -326,7 +326,7 @@ object ExampleTests extends TestSuite {
         FromScala(B(10)).transform(ToJson.string) ==> """{"customDiscriminator":"Bee","i":10}"""
         FromJson("""{"customDiscriminator":"Bee","i":10}""").transform(ToScala[B]) ==> B(10)
       }
-      test("snakeCase") {
+      test("snakeCase by overriding Api.NoOpMappers") {
         object SnakePickle extends com.rallyhealth.weepickle.v1.AttributeTagged {
           def camelToSnake(s: String) = {
             s.split("(?=[A-Z])", -1).map(_.toLowerCase).mkString("_")
@@ -361,6 +361,31 @@ object ExampleTests extends TestSuite {
           """{"my_field_a":1,"my_field_b":"gg"}"""
 
         FromJson("""{"my_field_a":1,"my_field_b":"gg"}""").transform(SnakePickle.to[Thing]) ==>
+          Thing(1, "gg")
+      }
+
+      test("snakeCase by using mapKeys") {
+          def camelToSnake(cs: CharSequence) = {
+            cs.toString.split("(?=[A-Z])", -1).map(_.toLowerCase).mkString("_")
+          }
+          def snakeToCamel(cs: CharSequence) = {
+            val s = cs.toString
+            val res = s.split("_", -1).map(x => x(0).toUpper + x.drop(1)).mkString
+            s(0).toLower + res.drop(1)
+          }
+
+        // Default read-writing
+        FromScala(Thing(1, "gg")).transform(ToJson.string) ==>
+          """{"myFieldA":1,"myFieldB":"gg"}"""
+
+        FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(ToScala[Thing]) ==>
+          Thing(1, "gg")
+
+        // snake_case_keys read-writing
+        FromScala(Thing(1, "gg")).transform(ToJson.string.mapKeys(camelToSnake)) ==>
+          """{"my_field_a":1,"my_field_b":"gg"}"""
+
+        FromJson("""{"my_field_a":1,"my_field_b":"gg"}""").transform(to[Thing].mapKeys(snakeToCamel)) ==>
           Thing(1, "gg")
       }
 
