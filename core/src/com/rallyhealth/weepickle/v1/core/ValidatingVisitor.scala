@@ -14,8 +14,15 @@ import scala.util.{Failure, Success, Try}
   *
   * JSON Pointer is standardized by RFC 6901 and commonly used by JSON Schema.
   *
-  * Useful for debugging failures.
-  * Adds ~10% overhead depending on the parser. [?]
+  * Useful for debugging failures. May add ~10-20% overhead depending on the parser, document size, number of errors, etc..
+  *
+  * In this microbenchmark parsing a 640 KB, 24 K line Json with two errors it added ~20% (i.e., about 1 ms):
+  *
+  * [info] BenchTest.play_All     thrpt   20   57.468 ± 1.367  ops/s
+  * [info] BenchTest.wee_1_First  thrpt   20  229.404 ± 5.225  ops/s
+  * [info] BenchTest.wee_2_All    thrpt   20  184.232 ± 3.377  ops/s
+  *
+  * (But still much faster than Play)
   *
   * @see https://tools.ietf.org/html/rfc6901
   */

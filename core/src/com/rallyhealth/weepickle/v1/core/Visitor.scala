@@ -102,6 +102,7 @@ trait Visitor[-T, +J] extends AutoCloseable {
     override def mapFunction(v: J): Z = f(v)
     def mapNonNullsFunction(v: J): Z = f(v)
   }
+  def mapKeys(f: CharSequence => CharSequence): Visitor[T, J] = new Visitor.MapKeys[T, J](Visitor.this, f)
 
   /**
     * ==Responsibility==
@@ -283,6 +284,33 @@ object Visitor {
     def visitValue(v: T): Unit = src.visitValue(v)
 
     def visitEnd(): Z = f(src.visitEnd())
+  }
+
+  /*
+   * Delegates everything verbatim, except visitObject.visitKey maps the key.
+   * Good for things like going to/from snake case.
+   */
+  class MapKeys[T, J](delegatedTo: Visitor[T, J], keyMapper: CharSequence => CharSequence) extends Delegate[T, J](delegatedTo) {
+
+    override def visitObject(length: Int): ObjVisitor[T, J] =
+      new MapKeyObjDelegate[T, J](delegatedTo.visitObject(length), keyMapper)
+
+    override def visitArray(length: Int): ArrVisitor[T, J] =
+      new MapKeyArrDelegate[T, J](delegatedTo.visitArray(length), keyMapper)
+  }
+
+  class MapKeyObjDelegate[T, J](objVisitor: ObjVisitor[T, J], keyMapper: CharSequence => CharSequence) extends ObjDelegate[T, J](objVisitor) {
+
+    override def visitKey(): Visitor[_, _] = new SimpleVisitor[Any, Any] {
+        override def expectedMsg: String = "expected string key"
+        override def visitString(cs: CharSequence): Any = objVisitor.visitKey().visitString(keyMapper(cs))
+      }
+
+    override def subVisitor: Visitor[Nothing, Any] = objVisitor.subVisitor.mapKeys(keyMapper)
+  }
+
+  class MapKeyArrDelegate[T, J](arrVisitor: ArrVisitor[T, J], keyMapper: CharSequence => CharSequence) extends ArrDelegate[T, J](arrVisitor) {
+    override def subVisitor: Visitor[Nothing, Any] = arrVisitor.subVisitor.mapKeys(keyMapper)
   }
 }
 
