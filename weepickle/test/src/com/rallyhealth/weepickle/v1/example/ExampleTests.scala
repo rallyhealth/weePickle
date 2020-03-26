@@ -12,6 +12,9 @@ import com.rallyhealth.weejson.v1.yaml.{FromYaml, ToYaml}
 import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack, WeePack}
 import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
 import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
+
+import com.rallyhealth.weepickle.v1.core.VisitorImplicits._
+
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
   object Thing {

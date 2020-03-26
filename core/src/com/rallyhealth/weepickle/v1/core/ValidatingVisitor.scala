@@ -40,7 +40,7 @@ object ValidatingVisitor {
     * Compared to something like a List[String] or List[Object], this does not require
     * extra String allocation or boxing unless we actually ask for the path.
     */
-  trait HasPath {
+  private trait HasPath {
 
     /**
       * Forms a chain toward the root.
@@ -107,7 +107,7 @@ private class ValidatingVisitor[T, J](
   /*
    * Collects all errors in objects and arrays
    */
-  trait HasMultiplePaths extends HasPath {
+  private trait HasMultiplePaths extends HasPath {
 
     protected def allErrors: ListBuffer[Errors]
 

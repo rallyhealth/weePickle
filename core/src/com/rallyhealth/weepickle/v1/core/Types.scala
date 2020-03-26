@@ -3,6 +3,8 @@ package com.rallyhealth.weepickle.v1.core
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
+import VisitorImplicits._
+
 /**
   * Basic functionality to be able to read and write objects. Kept as a trait so
   * other internal files can use it, while also mixing it into the `com.rallyhealth.weepickle.v1`
