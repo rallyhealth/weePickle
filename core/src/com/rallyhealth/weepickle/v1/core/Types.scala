@@ -24,6 +24,9 @@ trait Types { types =>
         override def mapNonNullsFunction(t: T): In = g(t)
       }
     }
+    // Map the keys, coming and going
+    def bimapKeys(fromMapper: CharSequence => CharSequence, toMapper: CharSequence => CharSequence): FromTo[T] =
+      FromTo.join(this.mapKeysTo(toMapper), this.comapKeysFrom(fromMapper))
   }
 
   object FromTo {
@@ -75,6 +78,8 @@ trait Types { types =>
       override def mapFunction(v: T): Z = f(v)
       def mapNonNullsFunction(v: T): Z = f(v)
     }
+    def mapKeysTo(f: CharSequence => CharSequence): To[T] =
+      new To.Delegate[T, T](To.this.mapKeys(f))
 
     def narrow[K <: T]: To[K] = this.asInstanceOf[To[K]]
   }
@@ -120,6 +125,7 @@ trait Types { types =>
     def transform0[Out](in: In, out: Visitor[_, Out]): Out
     def comapNulls[U](f: U => In) = new From.MapFromNulls[U, In](this, f)
     def comap[U](f: U => In) = new From.MapFrom[U, In](this, f)
+    def comapKeysFrom(f: CharSequence => CharSequence): From[In] = new From.MapKeys[In](this, f)
   }
   object From {
 
@@ -129,6 +135,9 @@ trait Types { types =>
     }
     class MapFrom[U, T](src: From[T], f: U => T) extends From[U] {
       def transform0[R](v: U, out: Visitor[_, R]): R = src.transform(f(v), out)
+    }
+    class MapKeys[T](src: From[T], f: CharSequence => CharSequence) extends From[T] {
+      def transform0[R](v: T, out: Visitor[_, R]): R = src.transform(v, out.mapKeys(f))
     }
     def merge[T](writers: From[_ <: T]*) = {
       new TaggedFrom.Node(writers.asInstanceOf[Seq[TaggedFrom[T]]]: _*)
