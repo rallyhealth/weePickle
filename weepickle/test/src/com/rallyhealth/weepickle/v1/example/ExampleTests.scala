@@ -22,17 +22,17 @@ object Simple {
 //    implicit val format = Json.format[Thing]
   }
 
-  def camelToSnake(cs: CharSequence): CharSequence =
+  def snakeFromCamel(cs: CharSequence): CharSequence =
     cs.toString.split("(?=[A-Z])", -1).map(_.toLowerCase).mkString("_")
 
-  def camelFromSnake(cs: CharSequence): CharSequence =
+  def snakeToCamel(cs: CharSequence): CharSequence =
     cs.charAt(0).toLower +
       cs.toString.split("_", -1).map(x => x(0).toUpper + x.drop(1)).mkString
         .drop(1)
 
   case class SnakeyThing(myFieldA: Int, myFieldB: String)
   object SnakeyThing {
-    implicit val rw = macroFromTo[SnakeyThing].bimapKeys(camelToSnake, camelFromSnake)
+    implicit val rw = macroFromTo[SnakeyThing].bimapKeys(snakeFromCamel, snakeToCamel)
   }
 
   case class Big(i: Int, b: Boolean, str: String, c: Char, t: Thing)
@@ -366,11 +366,11 @@ object ExampleTests extends TestSuite {
        */
       test("snakeCase by overriding Api.NoOpMappers") {
         object SnakePickle extends com.rallyhealth.weepickle.v1.AttributeTagged {
-          override def objectAttributeKeyReadMap(s: CharSequence): CharSequence = camelFromSnake(s)
-          override def objectAttributeKeyWriteMap(s: CharSequence): CharSequence = camelToSnake(s)
+          override def objectAttributeKeyReadMap(s: CharSequence): CharSequence = snakeToCamel(s)
+          override def objectAttributeKeyWriteMap(s: CharSequence): CharSequence = snakeFromCamel(s)
 
-          override def objectTypeKeyReadMap(s: CharSequence): CharSequence = camelFromSnake(s)
-          override def objectTypeKeyWriteMap(s: CharSequence): CharSequence = camelToSnake(s)
+          override def objectTypeKeyReadMap(s: CharSequence): CharSequence = snakeToCamel(s)
+          override def objectTypeKeyWriteMap(s: CharSequence): CharSequence = snakeFromCamel(s)
         }
 
         // Default read-writing
@@ -399,10 +399,10 @@ object ExampleTests extends TestSuite {
           Thing(1, "gg")
 
         // snake_case_keys read-writing
-        FromScala(Thing(1, "gg")).transform(ToJson.string.mapKeys(camelToSnake)) ==>
+        FromScala(Thing(1, "gg")).transform(ToJson.string.mapKeys(snakeFromCamel)) ==>
           """{"my_field_a":1,"my_field_b":"gg"}"""
 
-        FromJson("""{"my_field_a":1,"my_field_b":"gg"}""").transform(to[Thing].mapKeys(camelFromSnake)) ==>
+        FromJson("""{"my_field_a":1,"my_field_b":"gg"}""").transform(to[Thing].mapKeys(snakeToCamel)) ==>
           Thing(1, "gg")
       }
 
