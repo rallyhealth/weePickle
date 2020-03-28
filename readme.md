@@ -73,7 +73,7 @@ The following is a non-exhaustive map of type support:
 - `Tuple`s from 1 to 22
 - Immutable `Seq`, `List`, `Vector`, `Set`, `SortedSet`, `Option`, `Array`, `Maps`, and all other collections with a reasonable `CanBuildFrom` implementation
 - `Duration`, `Either`,
-- `Date`, `Instant`, `LocalDate`, `LocalTime`, `LocalDateTime`, `OffsetDateTime`
+- `Date`, `Instant`, `LocalDate`, `LocalTime`, `LocalDateTime`, `OffsetDateTime`, `ZonedDateTime`
 - Stand-alone `case class`es and `case object`s, and their generic equivalents,
 - Non-generic `case class`es and `case object`s that are part of a `sealed trait` or `sealed class` hierarchy
 - `sealed trait` and `sealed class`es themselves, assuming that all subclasses are picklable

@@ -17,6 +17,9 @@ trait Tos extends DefaultTos {
   implicit val ToOffsetDateTime: To[OffsetDateTime] = new MapStringTo(
     s => OffsetDateTime.parse(s.toString)
   )
+  implicit val ToZonedDateTime: To[ZonedDateTime] = new MapStringTo(
+    s => ZonedDateTime.parse(s.toString)
+  )
   implicit val ToInstant: To[Instant] = new SimpleTo[Instant] {
     override def expectedMsg: String = "expected timestamp"
     override def visitTimestamp(instant: Instant): Instant = instant

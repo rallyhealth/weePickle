@@ -11,6 +11,7 @@ trait Froms extends DefaultFroms {
   implicit val FromLocalTime: From[LocalTime] = FromString.comap[LocalTime](_.toString)
   implicit val FromLocalDateTime: From[LocalDateTime] = FromString.comap[LocalDateTime](_.toString)
   implicit val FromOffsetDateTime: From[OffsetDateTime] = FromString.comap[OffsetDateTime](_.toString)
+  implicit val FromZonedDateTime: From[ZonedDateTime] = FromString.comap[ZonedDateTime](_.toString)
   implicit val FromInstant: From[Instant] = new From[Instant] {
     override def transform0[V](v: Instant, out: Visitor[_, V]): V = out.visitTimestamp(v)
   }
