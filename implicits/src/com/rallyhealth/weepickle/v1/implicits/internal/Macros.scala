@@ -67,7 +67,9 @@ object Macros {
       assumeDefaultNone: Boolean,
       omitDefault: Boolean,
       default: c.Tree,
-      localTo: TermName,
+      localToName: TermName,
+      localToDef: Tree,
+      localFromDef: Tree,
       aggregate: TermName
     ) {
       def writingCheckDefault: Boolean = hasDefault && omitDefault
@@ -130,17 +132,36 @@ object Macros {
         // include .erasure to represent varargs as "Seq", not "Whatever*"
         val isOptionWithoutDefault = !isParamWithDefault &&
           argSym.typeSignature.erasure.typeConstructor.toString == "Option"
+        val argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature)
+
+        val isEnum = argType.baseClasses.exists(_.asClass.fullName == "scala.Enumeration.Value")
+
+        val localToDef =
+          if (isEnum) {
+            // brute force to get the outer class -- @todo maybe there's a better way...
+            val getOuter = c.parse(argType.toString.replace(".Value", ""))
+            q"implicitly[${c.prefix}.To[String]].map($getOuter.withName(_))"
+          } else
+            q"implicitly[${c.prefix}.To[$argType]]"
+
+        val localFromDef =
+          if (isEnum)
+            q"implicitly[${c.prefix}.From[String]].comap[$argType](_.toString)"
+          else
+            q"implicitly[${c.prefix}.From[$argType]]"
 
         new Argument(
           i = index,
           raw = argSym.name.toString,
           mapped = customKey(argSym).getOrElse(argSym.name.toString),
-          argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
+          argType,
           hasDefault = isParamWithDefault,
           assumeDefaultNone = isOptionWithoutDefault,
           omitDefault = shouldDropDefault(argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
-          localTo = TermName("localTo" + index),
+          localToName = TermName("localTo" + index),
+          localToDef,
+          localFromDef,
           aggregate = TermName("aggregated" + index)
         )
       }
@@ -292,9 +313,9 @@ object Macros {
       if (args.size > 64) {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
-      q"""
+      val tree = q"""
         ..${for (arg <- args)
-        yield q"private[this] lazy val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
+        yield q"private[this] lazy val ${arg.localToName} = ${arg.localToDef}"}
         new ${c.prefix}.CaseR[$targetType]{
           override def visitObject(length: Int) = new CaseObjectContext{
             ..${for (arg <- args)
@@ -342,11 +363,13 @@ object Macros {
             def subVisitor: com.rallyhealth.weepickle.v1.core.Visitor[_, _] = currentIndex match{
               case -1 => com.rallyhealth.weepickle.v1.core.NoOpVisitor
               case ..${for (arg <- args)
-        yield cq"${arg.i} => ${arg.localTo} "}
+        yield cq"${arg.i} => ${arg.localToName} "}
             }
           }
         }
       """
+      // println(s"Reading wrapCaseN tree = $tree")
+      tree
     }
     def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
       q"${c.prefix}.To.merge[$targetType](..$subtrees)"
@@ -385,7 +408,7 @@ object Macros {
               ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped})
             )
           )
-          val w = implicitly[${c.prefix}.From[${arg.argType}]]
+          val w = ${arg.localFromDef}
           ctx.narrow.visitValue(w.transform(v.${TermName(arg.raw)}, ctx.subVisitor))
         """
 
@@ -395,7 +418,7 @@ object Macros {
         if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
         else snippet
       }
-      q"""
+      val tree = q"""
         new ${c.prefix}.CaseW[$targetType]{
           def length(v: $targetType) = {
             var n = 0
@@ -413,6 +436,8 @@ object Macros {
           }
         }
        """
+      // println(s"Writing wrapCaseN tree = $tree")
+      tree
     }
     def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
       q"${c.prefix}.From.merge[$targetType](..$subtree)"
