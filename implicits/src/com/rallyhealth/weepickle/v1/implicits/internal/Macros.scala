@@ -140,7 +140,9 @@ object Macros {
           if (isEnum) {
             // brute force to get the outer class -- @todo maybe there's a better way...
             val getOuter = c.parse(argType.toString.replace(".Value", ""))
-            q"implicitly[${c.prefix}.To[String]].map($getOuter.withName(_))"
+            q"""val nameToValue = scala.collection.mutable.Map.empty[String, $argType] ++ $getOuter.values.map(v => v.toString -> v)
+                implicitly[${c.prefix}.To[String]].map(nameToValue)
+             """
           } else
             q"implicitly[${c.prefix}.To[$argType]]"
 
