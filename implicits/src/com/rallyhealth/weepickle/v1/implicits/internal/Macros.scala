@@ -142,11 +142,17 @@ object Macros {
           if (isEnum) {
             // brute force to get the outer class -- @todo maybe there's a better way...
             val outer = c.parse(argType.toString.replace(".Value", ""))
-            q"""val nameToValue = new java.util.concurrent.ConcurrentHashMap[String, $argType]()
-                val javaWithName = new java.util.function.Function[String, $argType] {
-                    override def apply(name: String): $argType = $outer.withName(name)
+            q"""val nameToValueCache = new java.util.concurrent.ConcurrentHashMap[String, $argType]()
+                def nameToValue(name:String): $argType = {
+                  val cachedValue : $argType = nameToValueCache.get(name)
+                  if (cachedValue != null) cachedValue
+                  else {
+                    val fetchedValue: $argType = $outer.withName(name)
+                    nameToValueCache.put(name, fetchedValue)
+                    fetchedValue
+                  }
                 }
-                implicitly[${c.prefix}.To[String]].map(nameToValue.computeIfAbsent(_, javaWithName))
+                implicitly[${c.prefix}.To[String]].map(nameToValue)
              """
           } else
             q"implicitly[${c.prefix}.To[$argType]]"
