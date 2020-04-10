@@ -1,5 +1,7 @@
 package com.rallyhealth.weepickle.v1.implicits.internal
 
+import java.util.concurrent.ConcurrentHashMap
+
 import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key}
 
 import scala.language.experimental.macros
@@ -139,9 +141,12 @@ object Macros {
         val localToDef =
           if (isEnum) {
             // brute force to get the outer class -- @todo maybe there's a better way...
-            val getOuter = c.parse(argType.toString.replace(".Value", ""))
-            q"""val nameToValue = scala.collection.mutable.Map.empty[String, $argType] ++ $getOuter.values.map(v => v.toString -> v)
-                implicitly[${c.prefix}.To[String]].map(nameToValue)
+            val outer = c.parse(argType.toString.replace(".Value", ""))
+            q"""val nameToValue = new java.util.concurrent.ConcurrentHashMap[String, $argType]()
+                val javaWithName = new java.util.function.Function[String, $argType] {
+                    override def apply(name: String): $argType = $outer.withName(name)
+                }
+                implicitly[${c.prefix}.To[String]].map(nameToValue.computeIfAbsent(_, javaWithName))
              """
           } else
             q"implicitly[${c.prefix}.To[$argType]]"
