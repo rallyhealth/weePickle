@@ -98,6 +98,14 @@ object Custom2 {
       )
   }
 }
+object Suit extends Enumeration {
+  val Spades = Value("Spades")
+  val Hearts = Value("Hearts")
+  val Diamonds = Value("Diamonds")
+  val Clubs = Value("Clubs")
+
+  implicit val pickler = WeePickle.fromToEnumerationName(this)
+}
 
 import KeyedTag._
 import Keyed._
@@ -207,7 +215,10 @@ object ExampleTests extends TestSuite {
         FromScala((1, "omg")).transform(ToJson.string) ==> """[1,"omg"]"""
         FromScala((1, "omg", true)).transform(ToJson.string) ==> """[1,"omg",true]"""
       }
-
+      test("enumerations") {
+        FromScala(Suit.Spades).transform(ToJson.string) ==> """"Spades""""
+        FromJson(""""Spades"""").transform(ToScala[Suit.Value]) ==> Suit.Spades
+      }
       test("caseClass") {
         import com.rallyhealth.weepickle.v1._
         FromScala(Thing(1, "gg")).transform(ToJson.string) ==> """{"myFieldA":1,"myFieldB":"gg"}"""

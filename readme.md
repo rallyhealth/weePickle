@@ -188,6 +188,21 @@ case class DeferredVictory(excuses: Seq[String]) extends Outcome
 FromScala(Success(42)).transform(ToJson.string)      ==> """{"flavor":"s",value:42}""" 
 ```
 
+## Enumerations
+```scala
+object Suit extends Enumeration {
+  val Spades = Value("Spades")
+  val Hearts = Value("Hearts")
+  val Diamonds = Value("Diamonds")
+  val Clubs = Value("Clubs")
+
+  implicit val pickler = WeePickle.fromToEnumerationName(this)
+}
+
+FromScala(Suit.Spades).transform(ToJson.string)         ==> """"Spades""""
+FromJson(""""Spades"""").transform(ToScala[Suit.Value]) ==> Suit.Spades
+```
+
 ## jackson-core
 weePickle leans heavily on [jackson-core](https://github.com/FasterXML/jackson-core) for interop with JSON, YAML, and most other formats. [Jackson-databind](https://github.com/FasterXML/jackson-databind) is not used.
 
