@@ -7,6 +7,7 @@ import mill.scalalib.publish._
 import mill.scalajslib._
 import com.typesafe.tools.mima.lib.MiMaLib
 import com.typesafe.tools.mima.core._
+import coursier.maven.MavenRepository
 import mill.scalalib.scalafmt.ScalafmtModule
 
 val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
@@ -83,7 +84,7 @@ trait CommonJvmModule extends CommonPublishModule with MiMa {
     def platformSegment = "jvm"
 
     override def test(args: String*) = T.command{
-//      reportBinaryIssues() // TODO enable once a previous version is published.
+      reportBinaryIssues()
       super.test(args: _*)()
     }
   }
@@ -347,8 +348,12 @@ object bench extends Module {
 
 trait MiMa extends ScalaModule with PublishModule {
   def previousVersions = T {
-    Seq("1.0.0")
+    Seq("1.0.1")
   }
+
+  override def repositories = super.repositories ++ Seq(
+    MavenRepository("https://dl.bintray.com/rallyhealth/maven")
+  )
 
   def reportBinaryIssues = T {
     val msgs: Seq[String] = for {

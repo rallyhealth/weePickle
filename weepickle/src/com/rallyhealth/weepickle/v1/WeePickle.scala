@@ -6,7 +6,7 @@ import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
   * Converters for default scala types.
   * Macros to generate converters for case classes.
   */
-object WeePickle extends AttributeTagged {
+object WeePickle extends LowPriorityImplicits {
 
   object ToScala {
 
