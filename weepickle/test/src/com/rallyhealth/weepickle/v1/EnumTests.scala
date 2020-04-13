@@ -15,6 +15,13 @@ object EnumTests extends TestSuite {
         FromJson(""""Spades"""").transform(ToScala[Suit.Value]) ==> Suit.Spades
       }
 
+      test("override") - {
+        implicit val pickler = WeePickle.fromToEnumerationId(Suit)
+
+        FromScala(Suit.Spades).transform(ToJson.string) ==> "0"
+        FromJson("0").transform(ToScala[Suit.Value]) ==> Suit.Spades
+      }
+
       test("miss") {
         test("wrong type") - repeatedly {
           intercept[Exception] {
