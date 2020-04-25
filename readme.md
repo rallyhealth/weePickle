@@ -1,16 +1,30 @@
-# WeePickle [![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle) <img src="https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg" title="Download" />
+# weePickle [![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle) [![sbt instructions](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg)](#sbt)
 
-A JSON, YAML, MsgPack, XML, etc. serialization framework with MiMa and shading.
+A *stable* JSON, YAML, MsgPack, XML, etc. serialization framework based on [uPickle](https://lihaoyi.github.io/upickle).
 
-Safe for use in libraries without causing dependency hell ([rationale](shading.md)).
+## We're tired of dependency hell!
+weePickle exists to fulfill two promises:
+
+1. We will not break compatibility in `v1.x.y`, as enforced by [MiMa](https://github.com/lightbend/mima).
+2. When we release `v2.0.0`, you can use it immediately **without waiting for your other library dependencies to update**. We achieve this by [shading](https://github.com/rallyhealth/sbt-shading).
+
+### Shading
+Both `weepickle-v1.jar` and `weepickle-v2.jar` (in the future) will coexist on the classpath peacefully by applying [shading](https://github.com/rallyhealth/sbt-shading) at multiple levels.
+1. All artifact names are suffixed with the major version number (e.g. `-v1`), which prevents evictions.
+2. All packages are prefixed with the major version number (e.g. `com.rallyhealth.v1`), which prevents classpath conflicts.
+
+Shading allows libraries to depend directly on [weePickle-v1](#sbt) without fear of causing incompatible evictions and runtime failures.
+
+For more background, see [shading.md](shading.md).
 
 ## Features
-- [SemVer](https://semver.org/) ([mima](https://github.com/lightbend/mima)) + [Shading](https://github.com/rallyhealth/sbt-shading) => strong backwards compatibility + forwards interop, even across major versions
-- [Zero-overhead conversion](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html) between:
-    - [jackson-core](https://github.com/FasterXML/jackson#active-jackson-projects) (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
-    - scala json ASTs (circe, json4s, play-json, argonaut)
-    - case classes (flexible macros)
-    - [MessagePack](#messagepack)
+weePickle combines some of the best parts of the serialization ecosystem.
+
+- [Zero-overhead conversion of uPickle](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html)
+- [jackson-core](https://github.com/FasterXML/jackson#active-jackson-projects): async parsing and broad format support (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
+- `case class` support through customizable macros
+- scala json AST interop (circe, json4s, play-json, argonaut)
+- Fast serialization to/from [MessagePack](#messagepack)
 
 ## sbt
 ```scala
@@ -266,6 +280,10 @@ GeneratorBench.msgpackJackson  thrpt   15  181.195 ±  5.774  ops/s
 GeneratorBench.msgpackScala    thrpt   15  304.540 ±  2.225  ops/s
 GeneratorBench.smile           thrpt   15  306.462 ±  3.134  ops/s
 ```
+
+## Limitations
+- ScalaJS is not supported (jackson-core is java-only)
+- Same macro limitations as [uPickle](http://www.lihaoyi.com/upickle/#Limitations)
 
 ## Developing
 See [developing.md](developing.md) for building, testing, and IDE support.
