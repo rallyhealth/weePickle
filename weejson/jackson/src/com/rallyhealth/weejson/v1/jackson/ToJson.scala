@@ -41,7 +41,18 @@ abstract class JsonGeneratorOps(
   }
 
   def bytes: Visitor[Any, Array[Byte]] = {
-    outputStream(new ByteArrayOutputStream()).map(_.toByteArray)
+    // sizing to zero is okay because jackson-core buffers the first write.
+    // BAOS will set the buffer to exactly the size of the first write.
+    val out = new ByteArrayOutputStream(0) {
+      override def toByteArray: Array[Byte] = {
+        if (size() == buf.length) buf
+        else super.toByteArray
+      }
+    }
+    new JsonGeneratorVisitor(wrap(out)).map { gen =>
+      gen.close()
+      out.toByteArray
+    }
   }
 
   def outputStream[OutputStream <: java.io.OutputStream](out: OutputStream): Visitor[Any, OutputStream] = {

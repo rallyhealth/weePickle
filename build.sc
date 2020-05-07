@@ -264,7 +264,7 @@ object weejson extends Module{
 
   object jackson extends Cross[JacksonModule](scalaVersions:_*)
   class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
-    val jacksonVersion = "2.10.2"
+    val jacksonVersion = "2.10.4"
     object test extends Tests with ScalaTestModule {
       def platformSegment = "jvm"
       def moduleDeps = Seq(weejson.jvm().test)
