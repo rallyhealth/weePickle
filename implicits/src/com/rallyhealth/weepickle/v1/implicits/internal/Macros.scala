@@ -70,8 +70,8 @@ object Macros {
       localTo: TermName,
       aggregate: TermName
     ) {
-      def writingCheckDefault: Boolean = hasDefault && omitDefault
       def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
+      def writingCheckDefault: Boolean = readingCheckDefault && omitDefault
     }
 
     private[internal] object Argument {
@@ -390,9 +390,17 @@ object Macros {
         """
 
         /**
-          * @see [[shouldDropDefault()]]
+          * Transforming the argument to itself applies any logic that the client may have provided
+          * in the implicit definition of From and/or To for the data type. This is important as this
+          * logic may transform the value into a default value which needs to be dropped.
+          *
+          * @see [[Argument.omitDefault]].
           */
-        if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
+        if (arg.writingCheckDefault)
+          q"""
+             val fromToArg = implicitly[${c.prefix}.FromTo[${arg.argType}]]
+             if (fromToArg.transform(v.${TermName(arg.raw)}, fromToArg) != ${arg.default}) $snippet
+           """
         else snippet
       }
       q"""
