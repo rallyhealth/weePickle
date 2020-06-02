@@ -3,7 +3,7 @@ package com.rallyhealth.weepickle.v1
 import com.rallyhealth.weejson.v1.WeeJson
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.WeePickle.{From, FromScala, FromTo, OptionFrom, To, ToOption, ToValue, macroFromTo, to}
-import com.rallyhealth.weepickle.v1.implicits.dropDefault
+import com.rallyhealth.weepickle.v1.implicits.{dropDefault, dropTransformedDefault}
 import utest._
 
 /**
@@ -33,7 +33,7 @@ object DefaultInteractionsTests extends TestSuite {
 
   case class ComplexTestData(
     @dropDefault nonBlankDefaultNoneDefaultDropped: Option[String] = None,
-    @dropDefault blankDefaultNoneDefaultDropped: Option[String] = None,
+    @dropTransformedDefault blankDefaultNoneDefaultDropped: Option[String] = None,
     @dropDefault noneDefaultNoneDefaultDropped: Option[String] = None,
     @dropDefault missingDefaultNoneDefaultDropped: Option[String] = None,
     nonBlankDefaultNone: Option[String] = None,
@@ -41,7 +41,7 @@ object DefaultInteractionsTests extends TestSuite {
     noneDefaultNone: Option[String] = None,
     missingDefaultNone: Option[String] = None,
     @dropDefault nonBlankDefaultDropped: Option[String],
-    @dropDefault blankDefaultDropped: Option[String],
+    @dropTransformedDefault blankDefaultDropped: Option[String],
     @dropDefault noneDefaultDropped: Option[String],
     @dropDefault missingDefaultDropped: Option[String],
     nonBlank: Option[String],
@@ -113,7 +113,7 @@ object DefaultInteractionsTests extends TestSuite {
       )
 
       /*
-       * These are dropped -- tagged with @dropDefault, explicitly or implicitly (through blank logic)
+       * These are dropped -- tagged with @drop*Default, explicitly or implicitly (through blank logic)
        * have a value of None, and have explicit or derived default of None:
        *  - blankDefaultNoneDefaultDropped -- implicitly None (custom), explicit default None
        *  - noneDefaultNoneDefaultDropped -- explicitly None, explicit default None

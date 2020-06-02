@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1.implicits.internal
 
-import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key}
+import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, dropTransformedDefault, key}
 
 import scala.language.experimental.macros
 import scala.language.{existentials, higherKinds}
@@ -56,6 +56,11 @@ object Macros {
     }
 
     /*
+     * Various default dropping behaviors
+     */
+    private[internal] type DefaultDroppingBehavior = Option[Argument => Tree]
+
+    /*
      * Wrap all the argument stuff up in a case class for easy processing
      */
     private[internal] case class Argument(
@@ -64,14 +69,12 @@ object Macros {
       mapped: String,
       argType: Type,
       hasDefault: Boolean,
-      assumeDefaultNone: Boolean,
-      omitDefault: Boolean,
+      defaultDroppingBehavior: DefaultDroppingBehavior,
       default: c.Tree,
       localTo: TermName,
       aggregate: TermName
     ) {
-      def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
-      def writingCheckDefault: Boolean = readingCheckDefault && omitDefault
+      def conditionForDefault: Option[Tree] = defaultDroppingBehavior.map(_.apply(this))
     }
 
     private[internal] object Argument {
@@ -89,9 +92,33 @@ object Macros {
         *
         * Over time, consumers will transition to tolerant weepickle readers, and we
         * can revisit this.
+        *
+        * Both dropDefault and dropTransformedDefault are available as annotations
+        * with slightly different behaviors. See comments in dropTransformedDefault
+        * for more information on that
+        *
+        * @return the drop default behavior based on if the argument has a default and
+        *         which annotation is found
         */
-      private def shouldDropDefault(sym: c.Symbol): Boolean =
-        sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])
+      private def defaultDroppingBehavior(hasDefault: Boolean, sym: c.Symbol): DefaultDroppingBehavior = {
+        val doesNotDrop: DefaultDroppingBehavior = None
+
+        val dropsBeforeTransform: DefaultDroppingBehavior = Some(
+          arg => q"""v.${TermName(arg.raw)} != ${arg.default}"""
+        )
+        val dropsAfterTransform: DefaultDroppingBehavior = Some(
+          arg =>
+            q"""
+               val fromToArg = implicitly[${c.prefix}.FromTo[${arg.argType}]]
+               fromToArg.transform(v.${TermName(arg.raw)}, fromToArg) != ${arg.default}
+             """
+        )
+
+        if (!hasDefault) doesNotDrop
+        else if (sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])) dropsBeforeTransform
+        else if (sym.annotations.exists(_.tree.tpe == typeOf[dropTransformedDefault])) dropsAfterTransform
+        else doesNotDrop
+      }
 
       /*
        * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
@@ -130,15 +157,15 @@ object Macros {
         // include .erasure to represent varargs as "Seq", not "Whatever*"
         val isOptionWithoutDefault = !isParamWithDefault &&
           argSym.typeSignature.erasure.typeConstructor.toString == "Option"
+        val hasDefault = isParamWithDefault || isOptionWithoutDefault
 
         new Argument(
           i = index,
           raw = argSym.name.toString,
           mapped = customKey(argSym).getOrElse(argSym.name.toString),
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
-          hasDefault = isParamWithDefault,
-          assumeDefaultNone = isOptionWithoutDefault,
-          omitDefault = shouldDropDefault(argSym),
+          hasDefault = hasDefault,
+          defaultDroppingBehavior = defaultDroppingBehavior(hasDefault, argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
           localTo = TermName("localTo" + index),
           aggregate = TermName("aggregated" + index)
@@ -313,7 +340,7 @@ object Macros {
             }
 
             def visitEnd() = {
-              ..${for (arg <- args if arg.readingCheckDefault)
+              ..${for (arg <- args if arg.hasDefault)
         yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"}
 
               // Special-case 64 because java bit shifting ignores any RHS values above 63
@@ -394,14 +421,12 @@ object Macros {
           * in the implicit definition of From and/or To for the data type. This is important as this
           * logic may transform the value into a default value which needs to be dropped.
           *
-          * @see [[Argument.omitDefault]].
+          * @see [[Argument.defaultDroppingBehavior]].
           */
-        if (arg.writingCheckDefault)
-          q"""
-             val fromToArg = implicitly[${c.prefix}.FromTo[${arg.argType}]]
-             if (fromToArg.transform(v.${TermName(arg.raw)}, fromToArg) != ${arg.default}) $snippet
-           """
-        else snippet
+        arg.conditionForDefault match {
+          case Some(condition) => q"""if ($condition) $snippet"""
+          case None => snippet
+        }
       }
       q"""
         new ${c.prefix}.CaseW[$targetType]{
@@ -409,8 +434,10 @@ object Macros {
             var n = 0
             ..${for (arg <- args)
         yield {
-          if (!arg.writingCheckDefault) q"n += 1"
-          else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
+          arg.conditionForDefault match {
+            case None => q"n += 1"
+            case Some(condition) => q"""if ($condition) n += 1"""
+          }
         }}
             n
           }
