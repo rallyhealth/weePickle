@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1.implicits.internal
 
-import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key}
+import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, dropTransformedDefault, key}
 
 import scala.language.experimental.macros
 import scala.language.{existentials, higherKinds}
@@ -11,32 +11,35 @@ import scala.language.{existentials, higherKinds}
   * directly, since they are called implicitly when trying to read/write
   * types you don't have a To/From in scope for.
   */
-@deprecated("Use Macros2 instead (has better visibility definitions)", "v1.1.0")
-object Macros {
+object Macros2 {
 
-  trait DeriveDefaults[M[_]] {
-    val c: scala.reflect.macros.blackbox.Context
-    def fail(tpe: c.Type, s: String) = c.abort(c.enclosingPosition, s)
-
+  private trait DeriveDefaults[M[_]] {
+    /*
+     * Abstract members
+     */
+    protected val c: scala.reflect.macros.blackbox.Context
     import c.universe._
-    def companionTree(tpe: c.Type): Either[String, Tree] = {
-      val companionSymbol = tpe.typeSymbol.companion
 
-      if (companionSymbol == NoSymbol && tpe.typeSymbol.isClass) {
-        val clsSymbol = tpe.typeSymbol.asClass
-        val msg = "[error] The companion symbol could not be determined for " +
-          s"[[${clsSymbol.name}]]. This may be due to a bug in scalac (SI-7567) " +
-          "that arises when a case class within a function is com.rallyhealth.weepickle.v1. As a " +
-          "workaround, move the declaration to the module-level."
-        Left(msg)
-      } else {
-        val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
-        val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
-        Right(c.universe.internal.gen.mkAttributedRef(pre, companionSymbol))
-      }
+    protected def typeclass: WeakTypeTag[M[_]]
 
+    protected def wrapObject(obj: Tree): Tree
+
+    protected def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: Type, varargs: Boolean): Tree
+
+    protected def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: Type): Tree
+
+    /*
+     * Concrete, accessible members
+     */
+    def derive(tpe: Type): Tree = {
+      if (tpe.typeSymbol.asClass.isTrait || (tpe.typeSymbol.asClass.isAbstract && !tpe.typeSymbol.isJava)) {
+        val derived = deriveTrait(tpe)
+        derived
+      } else if (tpe.typeSymbol.isModuleClass) deriveObject(tpe)
+      else deriveClass(tpe)
     }
-    def getArgSyms(tpe: c.Type) = {
+
+    protected def getArgSyms(tpe: Type): Either[String, (Tree, List[Symbol], List[Symbol])] = {
       companionTree(tpe).right.flatMap { companion =>
         //tickle the companion members -- Not doing this leads to unexpected runtime behavior
         //I wonder if there is an SI related to this?
@@ -56,26 +59,48 @@ object Macros {
       }
     }
 
+    private def fail(tpe: Type, s: String): Nothing = c.abort(c.enclosingPosition, s)
+
+    private def companionTree(tpe: Type): Either[String, Tree] = {
+      val companionSymbol = tpe.typeSymbol.companion
+
+      if (companionSymbol == NoSymbol && tpe.typeSymbol.isClass) {
+        val clsSymbol = tpe.typeSymbol.asClass
+        val msg = "[error] The companion symbol could not be determined for " +
+          s"[[${clsSymbol.name}]]. This may be due to a bug in scalac (SI-7567) " +
+          "that arises when a case class within a function is com.rallyhealth.weepickle.v1. As a " +
+          "workaround, move the declaration to the module-level."
+        Left(msg)
+      } else {
+        val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
+        val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
+        Right(c.universe.internal.gen.mkAttributedRef(pre, companionSymbol))
+      }
+    }
+
+    /*
+     * Various default dropping behaviors
+     */
+    private type DefaultDroppingCondition = Option[Argument => Tree]
+
     /*
      * Wrap all the argument stuff up in a case class for easy processing
      */
-    private[internal] case class Argument(
+    protected case class Argument(
       i: Int,
       raw: String,
       mapped: String,
       argType: Type,
       hasDefault: Boolean,
-      assumeDefaultNone: Boolean,
-      omitDefault: Boolean,
-      default: c.Tree,
+      default: Tree,
       localTo: TermName,
-      aggregate: TermName
+      aggregate: TermName,
+      defaultDroppingCondition: DefaultDroppingCondition
     ) {
-      def writingCheckDefault: Boolean = hasDefault && omitDefault
-      def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
+      def conditionForDefault: Option[Tree] = defaultDroppingCondition.map(_.apply(this))
     }
 
-    private[internal] object Argument {
+    protected object Argument {
 
       /**
         * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
@@ -90,9 +115,33 @@ object Macros {
         *
         * Over time, consumers will transition to tolerant weepickle readers, and we
         * can revisit this.
+        *
+        * Both dropDefault and dropTransformedDefault are available as annotations
+        * with slightly different behaviors. See comments in dropTransformedDefault
+        * for more information on that
+        *
+        * @return the drop default behavior based on if the argument has a default and
+        *         which annotation is found
         */
-      private def shouldDropDefault(sym: c.Symbol): Boolean =
-        sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])
+      private def defaultDroppingBehavior(hasDefault: Boolean, sym: Symbol): DefaultDroppingCondition = {
+        val doesNotDrop: DefaultDroppingCondition = None
+
+        val dropsBeforeTransform: DefaultDroppingCondition = Some(
+          arg => q"""v.${TermName(arg.raw)} != ${arg.default}"""
+        )
+        val dropsAfterTransform: DefaultDroppingCondition = Some(
+          arg =>
+            q"""
+               val fromToArg = implicitly[${c.prefix}.FromTo[${arg.argType}]]
+               fromToArg.transform(v.${TermName(arg.raw)}, fromToArg) != ${arg.default}
+             """
+        )
+
+        if (!hasDefault) doesNotDrop
+        else if (sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])) dropsBeforeTransform
+        else if (sym.annotations.exists(_.tree.tpe == typeOf[dropTransformedDefault])) dropsAfterTransform
+        else doesNotDrop
+      }
 
       /*
        * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
@@ -101,11 +150,11 @@ object Macros {
        * WeePickle will automatically force a default of None to all Option fields without an explicit default.
        */
       private def deriveDefault(
-        companion: c.Tree,
+        companion: Tree,
         index: Int,
         isParamWithDefault: Boolean,
         assumeDefaultNone: Boolean
-      ): c.Tree = {
+      ): Tree = {
         val defaultName = TermName("apply$default$" + (index + 1))
         if (!isParamWithDefault) {
           if (assumeDefaultNone) q"${TermName("None")}"
@@ -115,7 +164,7 @@ object Macros {
         }
       }
 
-      private def argTypeFromSignature(tpe: Type, typeParams: List[Symbol], t: Type) = {
+      private def argTypeFromSignature(tpe: Type, typeParams: List[Symbol], t: Type): Type = {
         val concrete = tpe.dealias.asInstanceOf[TypeRef].args
         if (t.typeSymbol != definitions.RepeatedParamClass) {
           t.substituteTypes(typeParams, concrete)
@@ -125,74 +174,37 @@ object Macros {
         }
       }
 
-      def apply(tpe: Type, companion: c.Tree, typeParams: List[Symbol])(indexedArg: (Symbol, Int)): Argument = {
+      def apply(tpe: Type, companion: Tree, typeParams: List[Symbol])(indexedArg: (Symbol, Int)): Argument = {
         val (argSym, index) = indexedArg
         val isParamWithDefault = argSym.asTerm.isParamWithDefault
         // include .erasure to represent varargs as "Seq", not "Whatever*"
         val isOptionWithoutDefault = !isParamWithDefault &&
           argSym.typeSignature.erasure.typeConstructor.toString == "Option"
+        val hasDefault = isParamWithDefault || isOptionWithoutDefault
 
         new Argument(
           i = index,
           raw = argSym.name.toString,
           mapped = customKey(argSym).getOrElse(argSym.name.toString),
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
-          hasDefault = isParamWithDefault,
-          assumeDefaultNone = isOptionWithoutDefault,
-          omitDefault = shouldDropDefault(argSym),
+          hasDefault = hasDefault,
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
           localTo = TermName("localTo" + index),
-          aggregate = TermName("aggregated" + index)
+          aggregate = TermName("aggregated" + index),
+          defaultDroppingCondition = defaultDroppingBehavior(hasDefault, argSym)
         )
       }
     }
 
-    /**
-      * If a super-type is generic, find all the subtypes, but at the same time
-      * fill in all the generic type parameters that are based on the super-type's
-      * concrete type
-      */
-    def fleshedOutSubtypes(tpe: Type) = {
-      for {
-        subtypeSym <- tpe.typeSymbol.asClass.knownDirectSubclasses.filter(!_.toString.contains("<local child>"))
-          if subtypeSym.isType
-          st = subtypeSym.asType.toType
-          baseClsArgs = st.baseType(tpe.typeSymbol).asInstanceOf[TypeRef].args
-      } yield {
-        tpe match {
-          case ExistentialType(_, TypeRef(_, _, args)) =>
-            st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
-          case ExistentialType(_, _) => st
-          case TypeRef(_, _, args) =>
-            st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
-        }
-      }
-    }
-
-    def deriveObject(tpe: c.Type): c.universe.Tree = {
-      val mod = tpe.typeSymbol.asClass.module
-      val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
-      val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
-      val mod2 = c.universe.internal.gen.mkAttributedRef(pre, mod)
-
-      annotate(tpe)(wrapObject(mod2))
-
-    }
-    def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree
-
-    def derive(tpe: c.Type) = {
-      if (tpe.typeSymbol.asClass.isTrait || (tpe.typeSymbol.asClass.isAbstract && !tpe.typeSymbol.isJava)) {
-        val derived = deriveTrait(tpe)
-        derived
-      } else if (tpe.typeSymbol.isModuleClass) deriveObject(tpe)
-      else deriveClass(tpe)
-    }
-    def deriveTrait(tpe: c.Type): c.universe.Tree = {
+    /*
+     * Concrete, private members
+     */
+    private def deriveTrait(tpe: Type): Tree = {
       val clsSymbol = tpe.typeSymbol.asClass
 
       if (!clsSymbol.isSealed) {
         fail(tpe, s"[error] The referenced trait [[${clsSymbol.name}]] must be sealed.")
-      } else if (clsSymbol.knownDirectSubclasses.filter(!_.toString.contains("<local child>")).isEmpty) {
+      } else if (clsSymbol.knownDirectSubclasses.forall(_.toString.contains("<local child>"))) {
         val msg =
           s"The referenced trait [[${clsSymbol.name}]] does not have any sub-classes. This may " +
             "happen due to a limitation of scalac (SI-7046). To work around this, " +
@@ -209,25 +221,16 @@ object Macros {
       }
     }
 
-    def typeclass: c.WeakTypeTag[M[_]]
+    private def deriveObject(tpe: Type): Tree = {
+      val mod = tpe.typeSymbol.asClass.module
+      val symTab = c.universe.asInstanceOf[reflect.internal.SymbolTable]
+      val pre = tpe.asInstanceOf[symTab.Type].prefix.asInstanceOf[Type]
+      val mod2 = c.universe.internal.gen.mkAttributedRef(pre, mod)
 
-    def typeclassFor(t: Type) = {
-      //    println("typeclassFor " + weakTypeOf[M[_]](typeclass))
-
-      weakTypeOf[M[_]](typeclass) match {
-        case TypeRef(a, b, _) =>
-          internal.typeRef(a, b, List(t))
-        case ExistentialType(_, TypeRef(a, b, _)) =>
-          internal.typeRef(a, b, List(t))
-        case x =>
-          println("Dunno Wad Dis Typeclazz Is " + x)
-          println(x)
-          println(x.getClass)
-          ???
-      }
+      annotate(tpe)(wrapObject(mod2))
     }
 
-    def deriveClass(tpe: c.Type) = {
+    private def deriveClass(tpe: Type): Tree = {
       getArgSyms(tpe) match {
         case Left(msg) => fail(tpe, msg)
         case Right((companion, typeParams, argSyms)) =>
@@ -250,10 +253,48 @@ object Macros {
       }
     }
 
+    /**
+      * If a super-type is generic, find all the subtypes, but at the same time
+      * fill in all the generic type parameters that are based on the super-type's
+      * concrete type
+      */
+    private def fleshedOutSubtypes(tpe: Type): Set[Type] = {
+      for {
+        subtypeSym <- tpe.typeSymbol.asClass.knownDirectSubclasses.filter(!_.toString.contains("<local child>"))
+          if subtypeSym.isType
+          st = subtypeSym.asType.toType
+          baseClsArgs = st.baseType(tpe.typeSymbol).asInstanceOf[TypeRef].args
+      } yield {
+        tpe match {
+          case ExistentialType(_, TypeRef(_, _, args)) =>
+            st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
+          case ExistentialType(_, _) => st
+          case TypeRef(_, _, args) =>
+            st.substituteTypes(baseClsArgs.map(_.typeSymbol), args)
+        }
+      }
+    }
+
+    private def typeclassFor(t: Type): Type = {
+      //    println("typeclassFor " + weakTypeOf[M[_]](typeclass))
+
+      weakTypeOf[M[_]](typeclass) match {
+        case TypeRef(a, b, _) =>
+          internal.typeRef(a, b, List(t))
+        case ExistentialType(_, TypeRef(a, b, _)) =>
+          internal.typeRef(a, b, List(t))
+        case x =>
+          println("Dunno Wad Dis Typeclazz Is " + x)
+          println(x)
+          println(x.getClass)
+          ???
+      }
+    }
+
     /** If there is a sealed base class, annotate the derived tree in the JSON
       * representation with a class label.
       */
-    def annotate(tpe: c.Type)(derived: c.universe.Tree) = {
+    private def annotate(tpe: Type)(derived: Tree): Tree = {
       val sealedParent = tpe.baseClasses.find(_.asClass.isSealed)
       sealedParent.fold(derived) { parent =>
         val tagName = customDiscriminator(parent) match {
@@ -265,31 +306,27 @@ object Macros {
       }
     }
 
-    def customKey(sym: c.Symbol): Option[String] = {
-      sym.annotations
-        .find(_.tree.tpe == typeOf[key])
-        .flatMap(_.tree.children.tail.headOption)
-        .map { case Literal(Constant(s)) => s.toString }
-    }
-
-    def customDiscriminator(sym: c.Symbol): Option[String] = {
+    private def customDiscriminator(sym: Symbol): Option[String] = {
       sym.annotations
         .find(_.tree.tpe == typeOf[discriminator])
         .flatMap(_.tree.children.tail.headOption)
         .map { case Literal(Constant(s)) => s.toString }
     }
 
-    def wrapObject(obj: Tree): Tree
-
-    def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean): Tree
+    private def customKey(sym: Symbol): Option[String] = {
+      sym.annotations
+        .find(_.tree.tpe == typeOf[key])
+        .flatMap(_.tree.children.tail.headOption)
+        .map { case Literal(Constant(s)) => s.toString }
+    }
   }
 
-  abstract class Reading[M[_]] extends DeriveDefaults[M] {
-    val c: scala.reflect.macros.blackbox.Context
+  private abstract class Reading[M[_]] extends DeriveDefaults[M] {
     import c.universe._
-    def wrapObject(t: c.Tree) = q"new ${c.prefix}.SingletonR($t)"
 
-    def wrapCaseN(companion: c.Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean) = {
+    override def wrapObject(t: Tree) = q"new ${c.prefix}.SingletonR($t)"
+
+    override def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: Type, varargs: Boolean): Tree = {
       if (args.size > 64) {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
@@ -314,7 +351,7 @@ object Macros {
             }
 
             def visitEnd() = {
-              ..${for (arg <- args if arg.readingCheckDefault)
+              ..${for (arg <- args if arg.hasDefault)
         yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"}
 
               // Special-case 64 because java bit shifting ignores any RHS values above 63
@@ -349,34 +386,37 @@ object Macros {
         }
       """
     }
-    def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
+
+    override def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: Type): Tree = {
       q"${c.prefix}.To.merge[$targetType](..$subtrees)"
     }
   }
 
-  abstract class Writing[M[_]] extends DeriveDefaults[M] {
-    val c: scala.reflect.macros.blackbox.Context
+  private abstract class Writing[M[_]] extends DeriveDefaults[M] {
     import c.universe._
-    def wrapObject(obj: c.Tree) = q"new ${c.prefix}.SingletonW($obj)"
-    def findUnapply(tpe: Type) = {
-      val (companion, _, _) = getArgSyms(tpe).fold(
-        errMsg => c.abort(c.enclosingPosition, errMsg),
-        x => x
-      )
-      Seq("unapply", "unapplySeq")
-        .map(TermName(_))
-        .find(companion.tpe.member(_) != NoSymbol)
-        .getOrElse(
-          c.abort(
-            c.enclosingPosition,
-            "None of the following methods " +
-              "were defined: unapply, unapplySeq"
-          )
-        )
-    }
 
-    def internal = q"${c.prefix}.Internal"
-    def wrapCaseN(companion: c.Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean) = {
+    override def wrapObject(obj: Tree) = q"new ${c.prefix}.SingletonW($obj)"
+
+    //private def findUnapply(tpe: Type): TermName = {
+    //  val (companion, _, _) = getArgSyms(tpe).fold(
+    //    errMsg => c.abort(c.enclosingPosition, errMsg),
+    //    x => x
+    //  )
+    //  Seq("unapply", "unapplySeq")
+    //    .map(TermName(_))
+    //    .find(companion.tpe.member(_) != NoSymbol)
+    //    .getOrElse(
+    //      c.abort(
+    //        c.enclosingPosition,
+    //        "None of the following methods " +
+    //          "were defined: unapply, unapplySeq"
+    //      )
+    //    )
+    //}
+
+    //private def internal = q"${c.prefix}.Internal"
+
+    override def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: Type, varargs: Boolean): Tree = {
       def write(arg: Argument) = {
         val snippet = q"""
 
@@ -391,10 +431,16 @@ object Macros {
         """
 
         /**
-          * @see [[shouldDropDefault()]]
+          * Transforming the argument to itself applies any logic that the client may have provided
+          * in the implicit definition of From and/or To for the data type. This is important as this
+          * logic may transform the value into a default value which needs to be dropped.
+          *
+          * @see [[Argument.defaultDroppingCondition]].
           */
-        if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
-        else snippet
+        arg.conditionForDefault match {
+          case Some(condition) => q"""if ($condition) $snippet"""
+          case None => snippet
+        }
       }
       q"""
         new ${c.prefix}.CaseW[$targetType]{
@@ -402,8 +448,10 @@ object Macros {
             var n = 0
             ..${for (arg <- args)
         yield {
-          if (!arg.writingCheckDefault) q"n += 1"
-          else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
+          arg.conditionForDefault match {
+            case None => q"n += 1"
+            case Some(condition) => q"""if ($condition) n += 1"""
+          }
         }}
             n
           }
@@ -415,16 +463,22 @@ object Macros {
         }
        """
     }
-    def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: c.Type): Tree = {
+
+    override def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: Type): Tree = {
       q"${c.prefix}.From.merge[$targetType](..$subtree)"
     }
   }
+
+  /*
+   * Publicly accessible members of Macros2 -- everything else is private
+   */
+
   def macroRImpl[T, R[_]](
     c0: scala.reflect.macros.blackbox.Context
   )(implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[R[_]]): c0.Expr[R[T]] = {
     val res = new Reading[R] {
-      val c: c0.type = c0
-      def typeclass = e2
+      override val c: c0.type = c0
+      def typeclass: c.universe.WeakTypeTag[R[_]] = e2
     }.derive(e1.tpe)
     //    println(res)
     c0.Expr[R[T]](res)
@@ -434,8 +488,8 @@ object Macros {
     c0: scala.reflect.macros.blackbox.Context
   )(implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[W[_]]): c0.Expr[W[T]] = {
     val res = new Writing[W] {
-      val c: c0.type = c0
-      def typeclass = e2
+      override val c: c0.type = c0
+      def typeclass: c.universe.WeakTypeTag[W[_]] = e2
     }.derive(e1.tpe)
     //    println(res)
     c0.Expr[W[T]](res)

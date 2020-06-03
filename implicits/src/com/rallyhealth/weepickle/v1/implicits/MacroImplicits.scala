@@ -40,6 +40,6 @@ trait MacroImplicits { this: com.rallyhealth.weepickle.v1.core.Types =>
   def macroTo[T]: To[T] = macro MacroImplicits.applyTo[T]
   def macroFromTo[X]: FromTo[X] = macro MacroImplicits.applyFromTo[FromTo[X]]
 
-  def macroTo0[T, M[_]]: To[T] = macro internal.Macros.macroRImpl[T, M]
-  def macroFrom0[T, M[_]]: From[T] = macro internal.Macros.macroTImpl[T, M]
+  def macroTo0[T, M[_]]: To[T] = macro internal.Macros2.macroRImpl[T, M]
+  def macroFrom0[T, M[_]]: From[T] = macro internal.Macros2.macroTImpl[T, M]
 }
