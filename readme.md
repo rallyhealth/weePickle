@@ -170,14 +170,15 @@ sealed trait Outcome
 case class Success(value: Int) extends Outcome
 case class DeferredVictory(excuses: Seq[String]) extends Outcome
 
-object Outcome {
-  implicit val rw = WeePickle.macroFromTo[Outcome]
-}
 object Success {
   implicit val rw = WeePickle.macroFromTo[Success]
 }
 object DeferredVictory {
   implicit val rw = WeePickle.macroFromTo[DeferredVictory]
+}
+// order matters: the trait's companion object must come at the end for implicit resolution to work
+object Outcome {
+  implicit val rw = WeePickle.macroFromTo[Outcome]
 }
 
 FromScala(DeferredVictory(Seq("My json AST is too slow."))).transform(ToJson.string))  ==>
