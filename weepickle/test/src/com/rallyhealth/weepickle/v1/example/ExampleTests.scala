@@ -65,6 +65,20 @@ case class Maybe2(@dropDefault i: Option[Int] = None)
 object Maybe2 {
   implicit val rw = WeePickle.macroFromTo[Maybe2]
 }
+case class Maybe3(i: Option[Int] = None)
+object Maybe3 {
+  implicit val rw = WeePickle.macroFromTo[Maybe3]
+}
+case class Maybe4(i: Int, @dropDefault j: Option[Int] = None)
+object Maybe4 {
+  implicit lazy val rw = WeePickle.macroFromTo[Maybe4]
+  def apply(maybe3: Maybe3): Maybe4 = Maybe4(maybe3.i.get)
+}
+case class Maybe5(i: Int, j: Option[Int] = None)
+object Maybe5 {
+  implicit lazy val rw = WeePickle.macroFromTo[Maybe5]
+  def apply(maybe3: Maybe3): Maybe5 = Maybe5(maybe3.i.get)
+}
 object Keyed {
   case class KeyBar(@com.rallyhealth.weepickle.v1.implicits.key("hehehe") kekeke: Int)
   object KeyBar {
@@ -210,6 +224,14 @@ object ExampleTests extends TestSuite {
         FromJson("""{"i":42}""").transform(ToScala[Maybe1]) ==> Maybe1(Some(42))
 
         FromScala(Maybe2(None)).transform(ToJson.string) ==> """{}"""
+
+        FromScala(Maybe2()).transform(ToJson.string) ==> """{}"""
+
+        FromScala(Maybe3()).transform(ToJson.string) ==> """{"i":null}"""
+
+        FromScala(Maybe4(Maybe3(Some(1)))).transform(ToJson.string) ==> """{"i":1}"""
+
+        FromScala(Maybe5(Maybe3(Some(1)))).transform(ToJson.string) ==> """{"i":1}"""
       }
       test("tuples") {
         FromScala((1, "omg")).transform(ToJson.string) ==> """[1,"omg"]"""
