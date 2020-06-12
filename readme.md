@@ -121,6 +121,13 @@ case class Dflt2(@dropDefault i: Int = 42)
 FromScala(Dflt2(42)).transform(ToJson.string)        ==> """{}"""
 ```
 
+If a class is annotated with `@dropDefault`, all fields with default values will not be written.
+
+```scala
+@dropDefault case class Dflt3(i: Int = 42, j: Int = 43, k: Int = 45)
+FromScala(Dflt2(42, 43, 0)).transform(ToJson.string)        ==> """{"k": 0}"""
+```
+
 ## Options
 `Option[T]` is unwrapped when the Option is `Some` ([rationale](differences.md#options)):
 
@@ -147,6 +154,15 @@ If you want to suppress the field entirely on `None`, you can use [Defaults](#De
 case class Maybe2(@dropDefault i: Option[Int] = None)
 
 FromScala(Maybe2(None)).transform(ToJson.string)     ==> """{}"""
+```
+
+But `Option` types are a special case where `None` is an assumed default if a default is not provided explicitly.
+So putting `@dropDefault` at the class level will apply to all `Option` types in the class, whether a default is provided explicitly or not.
+
+```scala
+@dropDefault case class Maybe3(i: Option[Int], j: Option[Int], k: Option[Int] = Some(0))
+
+FromScala(Maybe3(None, None, Some(0))).transform(ToJson.string)     ==> """{}"""
 ```
 
 ## Custom Keys
