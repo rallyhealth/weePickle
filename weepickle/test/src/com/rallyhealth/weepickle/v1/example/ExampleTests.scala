@@ -56,6 +56,10 @@ object Defaults {
   object FooIncludeDefault {
     implicit val rw: RW[FooIncludeDefault] = macroFromTo
   }
+  @dropDefault case class FooOmitDefaultTopLevel(i: Int = 10, s: String = "lol")
+  object FooOmitDefaultTopLevel {
+    implicit val rw: RW[FooOmitDefaultTopLevel] = macroFromTo
+  }
 }
 case class Maybe1(i: Option[Int])
 object Maybe1 {
@@ -281,6 +285,17 @@ object ExampleTests extends TestSuite {
           FromScala(FooOmitDefault(i = 11, s = "lol")).transform(ToJson.string) ==> """{"i":11}"""
           FromScala(FooOmitDefault(i = 10, s = "lol")).transform(ToJson.string) ==> """{}"""
           FromScala(FooOmitDefault()).transform(ToJson.string) ==> """{}"""
+        }
+      }
+      test("omit top level") {
+        test("reading is tolerant") {
+          FromJson("{}").transform(ToScala[FooOmitDefaultTopLevel]) ==> FooOmitDefaultTopLevel(10, "lol")
+          FromJson("""{"i": 123}""").transform(ToScala[FooOmitDefaultTopLevel]) ==> FooOmitDefaultTopLevel(123, "lol")
+        }
+        test("writing omits defaults") {
+          FromScala(FooOmitDefaultTopLevel(i = 11, s = "lol")).transform(ToJson.string) ==> """{"i":11}"""
+          FromScala(FooOmitDefaultTopLevel(i = 10, s = "lol")).transform(ToJson.string) ==> """{}"""
+          FromScala(FooOmitDefaultTopLevel()).transform(ToJson.string) ==> """{}"""
         }
       }
       test("include") {
