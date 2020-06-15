@@ -19,7 +19,7 @@ import scala.reflect.ClassTag
 import language.postfixOps
 
 object StructTests extends TestSuite {
-  Seq(1).to(Vector)
+
   val tests = Tests {
     test("arrays") {
       test("empty") - rwk(Array[Int](), "[]")(_.toSeq)
@@ -69,25 +69,21 @@ object StructTests extends TestSuite {
         test("SortedSet") - rw(collection.mutable.SortedSet("omg", "i am", "cow"), """["cow","i am","omg"]""")
       }
       test("Map") {
-        test("Structured") - rw(
-          Map(Nil -> List(1), List(1) -> List(1, 2, 3)),
-          "[[[],[1]],[[1],[1,2,3]]]"
+        test("Structured") - roundTripMsgPack(
+          Map(Nil -> List(1), List(1) -> List(1, 2, 3))
         )
-        test("Structured2") - rw(
-          collection.mutable.Map(Nil -> List(1), List(1) -> List(1, 2, 3)),
-          "[[[],[1]],[[1],[1,2,3]]]"
+        test("Structured2") - roundTripMsgPack(
+          collection.mutable.Map(Nil -> List(1), List(1) -> List(1, 2, 3))
         )
-        test("Structured3") - rw(
-          collection.immutable.Map(Nil -> List(1), List(1) -> List(1, 2, 3)),
-          "[[[],[1]],[[1],[1,2,3]]]"
+        test("Structured3") - roundTripMsgPack(
+          collection.immutable.Map(Nil -> List(1), List(1) -> List(1, 2, 3))
         )
-        test("Structured4") - rw(
-          collection.Map(Nil -> List(1), List(1) -> List(1, 2, 3)),
-          "[[[],[1]],[[1],[1,2,3]]]"
+        test("Structured4") - roundTripMsgPack(
+          collection.Map(Nil -> List(1), List(1) -> List(1, 2, 3))
         )
         test("StructuredEmpty") - rw(
           Map[List[Int], List[Int]](),
-          "[]"
+          "{}"
         )
         test("String") - rw(
           Map("Hello" -> List(1), "World" -> List(1, 2, 3)),
@@ -109,6 +105,11 @@ object StructTests extends TestSuite {
           Map[String, List[Int]](),
           "{}"
         )
+        test("non-string key") - {
+          TestUtil.rw(Map(new StringAnyVal("a") -> 1),
+            """{"a":1}"""
+          )
+        }
       }
     }
 
@@ -201,8 +202,8 @@ object StructTests extends TestSuite {
 
     test("combinations") {
       test("SeqListMapOptionString") - rw[Seq[List[Map[Option[String], String]]]](
-        Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map())),
-        """[[],[[["omg","omg"]],[["lol","lol"],[null,""]]],[[]]]"""
+        Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol")), List(Map())),
+        """[[],[{"omg":"omg"},{"lol":"lol"}],[{}]]"""
       )
 
       // This use case is not currently supported in the rallyhealth/weepickle fork.
@@ -228,23 +229,6 @@ object StructTests extends TestSuite {
       }
     }
 
-    test("writeBytesTo") {
-      test("json") {
-        type Thing = Seq[List[Map[Option[String], String]]]
-        val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
-        val out = new ByteArrayOutputStream()
-        FromScala(thing).transform(ToJson.outputStream(out))
-        out.toByteArray ==> FromScala(thing).transform(ToJson.string).getBytes
-      }
-      test("msgpack") {
-        type Thing = Seq[List[Map[Option[String], String]]]
-        val thing: Thing = Seq(Nil, List(Map(Some("omg") -> "omg"), Map(Some("lol") -> "lol", None -> "")), List(Map()))
-        val out = new ByteArrayOutputStream()
-        FromScala(thing).transform(ToMsgPack.outputStream(out))
-        out.toByteArray ==> FromScala(thing).transform(ToMsgPack.bytes)
-      }
-    }
-
     test("transmutation") {
       test("vectorToList") {
         val vectorToList =
@@ -254,14 +238,6 @@ object StructTests extends TestSuite {
           vectorToList == List(1.1, 2.2, 3.3)
         )
 
-      }
-      test("listToMap") {
-        val listToMap =
-          FromJson(FromScala(List((1, "1"), (2, "2"))).transform(ToJson.string)).transform(ToScala[Map[Int, String]])
-        assert(
-          listToMap.isInstanceOf[Map[Int, String]],
-          listToMap == Map(1 -> "1", 2 -> "2")
-        )
       }
     }
 

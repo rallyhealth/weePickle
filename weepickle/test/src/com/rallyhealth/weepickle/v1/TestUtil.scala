@@ -3,6 +3,7 @@ import utest._
 import acyclic.file
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.{FromMsgPack, ToMsgPack}
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 
 /**
   * Created by haoyi on 4/22/14.
@@ -56,6 +57,12 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api) {
       val rewrittenBinaryStr = com.rallyhealth.weepickle.v1.core.TestUtil.bytesToString(rewrittenBinary)
       assert(writtenBinaryStr == rewrittenBinaryStr)
     }
+  }
+
+  def roundTripMsgPack[T: WeePickle.From: WeePickle.To](in: T) = {
+    val msgPack = FromScala(in).transform(ToMsgPack.bytes)
+    val roundTripped = FromMsgPack(msgPack).transform(ToScala[T])
+    assert(in == roundTripped)
   }
 
   def assertNumberFormatException[T: api.To](s: String) = {
