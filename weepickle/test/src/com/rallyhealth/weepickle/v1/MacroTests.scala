@@ -1,9 +1,9 @@
 package com.rallyhealth.weepickle.v1
 import acyclic.file
-import com.rallyhealth.weejson.v1.jackson.FromJson
+import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import utest._
 import com.rallyhealth.weepickle.v1.TestUtil._
-import com.rallyhealth.weepickle.v1.WeePickle.ToScala
+import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import com.rallyhealth.weepickle.v1.core.MutableCharSequenceVisitor
 
 object Custom {
@@ -231,6 +231,19 @@ object MacroTests extends TestSuite {
         val r2 =
           FromJson("""{"i":123, "j":false, "k":"haha", "s":"kk", "l":true, "z":[1, 2, 3]}""").transform(ToScala[ADTb])
         assert(r2 == ADTb(123, "kk"))
+      }
+      test("ignoreAnnotatedFieldsWhenSerializing") {
+        import Annotated.D
+        val w = FromScala(D("a",Some("b"),"c")).transform(ToJson.string)
+        assert(w == """{"a": "a", "c": "c"}"""" )
+
+        /**
+         * Fails :(
+         * assert(w == """{"a": "a", "c": "c"}"""" )
+         * w: String = {"a":"a","b":"b","c":"c"}
+         * utest.AssertionError: assert(w == """{"a": "a", "c": "c"}"""" )
+         * w: String = {"a":"a","b":"b","c":"c"}
+         */
       }
     }
 

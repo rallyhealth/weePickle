@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1.implicits.internal
 
-import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key}
+import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key, jsonIgnore}
 
 import scala.language.experimental.macros
 import scala.language.{existentials, higherKinds}
@@ -68,14 +68,17 @@ object Macros {
       omitDefault: Boolean,
       default: c.Tree,
       localTo: TermName,
-      aggregate: TermName
+      aggregate: TermName,
+      omitJson: Boolean
     ) {
-      def writingCheckDefault: Boolean = hasDefault && omitDefault
+      def writingCheckOmission: Boolean = (hasDefault && omitDefault) || omitJson
       def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
     }
 
     private[internal] object Argument {
 
+      private def shouldIgnoreJson(argSym: c.Symbol): Boolean =
+        argSym.annotations.exists(_.tree.tpe == typeOf[jsonIgnore])
       /**
         * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
         * the same as the default value, unless instructed explicitly not to with the
@@ -142,7 +145,8 @@ object Macros {
           omitDefault = shouldDropDefault(tpe.typeSymbol, argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
           localTo = TermName("localTo" + index),
-          aggregate = TermName("aggregated" + index)
+          aggregate = TermName("aggregated" + index),
+          omitJson = shouldIgnoreJson(argSym)
         )
       }
     }
@@ -393,7 +397,7 @@ object Macros {
         /**
           * @see [[shouldDropDefault()]]
           */
-        if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
+        if (arg.writingCheckOmission) q"""if ((v.${TermName(arg.raw)} != ${arg.default}) || ${arg.omitJson} ) $snippet"""
         else snippet
       }
       q"""
@@ -402,7 +406,7 @@ object Macros {
             var n = 0
             ..${for (arg <- args)
         yield {
-          if (!arg.writingCheckDefault) q"n += 1"
+          if (!arg.writingCheckOmission) q"n += 1"
           else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
         }}
             n

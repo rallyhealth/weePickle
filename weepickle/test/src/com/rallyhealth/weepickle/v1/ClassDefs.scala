@@ -1,8 +1,8 @@
 package com.rallyhealth.weepickle.v1
 
 //import com.rallyhealth.weepickle.v1.ADTs.ADT0
-import WeePickle.{FromTo => RW, To => R, From => W}
-import com.rallyhealth.weepickle.v1.implicits.key
+import WeePickle.{From => W, FromTo => RW, To => R}
+import com.rallyhealth.weepickle.v1.implicits.{jsonIgnore, key}
 /*
  * A whole bunch of test data that can be used by client libraries to try out
  * their typeclass derivation to make sure it's doing the right thing. Contains
@@ -191,6 +191,10 @@ object Annotated {
   @key("1") case class C(@key("lol") s1: String, @key("wtf") s2: String) extends A
   object C {
     implicit def rw: RW[C] = WeePickle.macroFromTo
+  }
+  case class D(a: String, @jsonIgnore b: Option[String], c: String)
+  object D {
+    implicit def rw: RW[D] = WeePickle.macroFromTo
   }
 }
 object Defaults {
