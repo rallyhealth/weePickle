@@ -69,16 +69,17 @@ object Macros {
       default: c.Tree,
       localTo: TermName,
       aggregate: TermName,
-      omitJson: Boolean
+      omitAlways: Boolean
     ) {
-      def writingCheckDefault: Boolean = (hasDefault && omitDefault) || omitJson
+      def writingCheckDefault: Boolean = hasDefault && omitDefault
       def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
     }
 
     private[internal] object Argument {
 
-      private def shouldIgnoreJson(argSym: c.Symbol): Boolean =
+      private def shouldDropAlways(argSym: c.Symbol): Boolean =
         argSym.annotations.exists(_.tree.tpe == typeOf[dropAlways])
+      
       /**
         * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
         * the same as the default value, unless instructed explicitly not to with the
@@ -146,7 +147,7 @@ object Macros {
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
           localTo = TermName("localTo" + index),
           aggregate = TermName("aggregated" + index),
-          omitJson = shouldIgnoreJson(argSym)
+          omitAlways = shouldDropAlways(argSym)
         )
       }
     }
@@ -395,9 +396,9 @@ object Macros {
         """
 
         /**
-          * @see [
+          * @see [[shouldDropAlways()]]
           */
-        if (arg.omitJson)
+        if (arg.omitAlways)
           q""""""
         /**
          * @see [[shouldDropDefault()]]
