@@ -80,7 +80,7 @@ object Macros {
       /**
         * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
         * the same as the default value, unless instructed explicitly not to with the
-        * [[dropDefault]] annotation.
+        * [[dropDefault]] annotation at the class or argument level.
         *
         * We are upgrading from play-json which always sends default values.
         * If teams swapped in weepickle for play-json and their rest endpoints started
@@ -91,8 +91,9 @@ object Macros {
         * Over time, consumers will transition to tolerant weepickle readers, and we
         * can revisit this.
         */
-      private def shouldDropDefault(sym: c.Symbol): Boolean =
-        sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])
+      private def shouldDropDefault(classSym: c.Symbol, argSym: c.Symbol): Boolean =
+        argSym.annotations.exists(_.tree.tpe == typeOf[dropDefault]) ||
+          classSym.annotations.exists(_.tree.tpe == typeOf[dropDefault])
 
       /*
        * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
@@ -139,7 +140,7 @@ object Macros {
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
           hasDefault = isParamWithDefault,
           assumeDefaultNone = isOptionWithoutDefault,
-          omitDefault = shouldDropDefault(argSym),
+          omitDefault = shouldDropDefault(tpe.typeSymbol, argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
           localTo = TermName("localTo" + index),
           aggregate = TermName("aggregated" + index)
