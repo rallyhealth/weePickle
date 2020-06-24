@@ -105,11 +105,6 @@ object MacroImplicits {
     }
 
     /*
-     * Various default dropping behaviors
-     */
-    private type DefaultDroppingCondition = Option[Argument => Tree]
-
-    /*
      * Wrap all the argument stuff up in a case class for easy processing
      */
     protected case class Argument(
@@ -118,20 +113,18 @@ object MacroImplicits {
       mapped: String,
       argType: Type,
       hasDefault: Boolean,
+      omitDefault: Boolean,
       default: Tree,
       localTo: TermName,
-      aggregate: TermName,
-      defaultDroppingCondition: DefaultDroppingCondition
-    ) {
-      def conditionForDefault: Option[Tree] = defaultDroppingCondition.map(_.apply(this))
-    }
+      aggregate: TermName
+    )
 
     protected object Argument {
 
       /**
         * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
         * the same as the default value, unless instructed explicitly not to with the
-        * [[dropDefault]] annotation.
+        * [[dropDefault]] annotation at the class or argument level.
         *
         * We are upgrading from play-json which always sends default values.
         * If teams swapped in weepickle for play-json and their rest endpoints started
@@ -141,33 +134,10 @@ object MacroImplicits {
         *
         * Over time, consumers will transition to tolerant weepickle readers, and we
         * can revisit this.
-        *
-        * Both dropDefault and dropTransformedDefault are available as annotations
-        * with slightly different behaviors. See comments in dropTransformedDefault
-        * for more information on that
-        *
-        * @return the drop default behavior based on if the argument has a default and
-        *         which annotation is found
         */
-      private def defaultDroppingBehavior(hasDefault: Boolean, sym: Symbol): DefaultDroppingCondition = {
-        val doesNotDrop: DefaultDroppingCondition = None
-
-        val dropsBeforeTransform: DefaultDroppingCondition = Some(
-          arg => q"""v.${TermName(arg.raw)} != ${arg.default}"""
-        )
-        val dropsAfterTransform: DefaultDroppingCondition = Some(
-          arg =>
-            q"""
-             val fromToArg = implicitly[${c.prefix}.FromTo[${arg.argType}]]
-             fromToArg.transform(v.${TermName(arg.raw)}, fromToArg) != ${arg.default}
-           """
-        )
-
-        if (!hasDefault) doesNotDrop
-        else if (sym.annotations.exists(_.tree.tpe == typeOf[dropDefault])) dropsBeforeTransform
-        else if (sym.annotations.exists(_.tree.tpe == typeOf[dropTransformedDefault])) dropsAfterTransform
-        else doesNotDrop
-      }
+      private def shouldDropDefault(classSym: c.Symbol, argSym: c.Symbol): Boolean =
+        argSym.annotations.exists(_.tree.tpe == typeOf[dropDefault]) ||
+          classSym.annotations.exists(_.tree.tpe == typeOf[dropDefault])
 
       /*
        * Play Json assumes None as the default for Option types, so None is serialized as missing from the output,
@@ -214,10 +184,10 @@ object MacroImplicits {
           mapped = customKey(argSym).getOrElse(argSym.name.toString),
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
           hasDefault = hasDefault,
+          omitDefault = shouldDropDefault(tpe.typeSymbol, argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
           localTo = TermName("localTo" + index),
-          aggregate = TermName("aggregated" + index),
-          defaultDroppingCondition = defaultDroppingBehavior(hasDefault, argSym)
+          aggregate = TermName("aggregated" + index)
         )
       }
     }
@@ -267,7 +237,7 @@ object MacroImplicits {
           companion.tpe.member(TermName("apply")).info
 
           val derive =
-          // Otherwise, reading and writing are kinda identical
+            // Otherwise, reading and writing are kinda identical
             wrapCaseN(
               companion,
               args,
@@ -357,60 +327,60 @@ object MacroImplicits {
         c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
       }
       q"""
-      ..${for (arg <- args)
+        ..${for (arg <- args)
         yield q"private[this] lazy val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
-      new ${c.prefix}.CaseR[$targetType]{
-        override def visitObject(length: Int) = new CaseObjectContext{
-          ..${for (arg <- args)
+        new ${c.prefix}.CaseR[$targetType]{
+          override def visitObject(length: Int) = new CaseObjectContext{
+            ..${for (arg <- args)
         yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"}
-          def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
-            case ..${for (arg <- args)
-        yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"}
-          }
-          def visitKey() = com.rallyhealth.weepickle.v1.core.StringVisitor
-          def visitKeyValue(s: Any) = {
-            currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
+            def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
               case ..${for (arg <- args)
-        yield cq"${arg.mapped} => ${arg.i}"}
-              case _ => -1
+        yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"}
             }
-          }
+            def visitKey() = com.rallyhealth.weepickle.v1.core.StringVisitor
+            def visitKeyValue(s: Any) = {
+              currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
+                case ..${for (arg <- args)
+        yield cq"${arg.mapped} => ${arg.i}"}
+                case _ => -1
+              }
+            }
 
-          def visitEnd() = {
-            ..${for (arg <- args if arg.hasDefault)
+            def visitEnd() = {
+              ..${for (arg <- args if arg.hasDefault)
         yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"}
 
-            // Special-case 64 because java bit shifting ignores any RHS values above 63
-            // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
-            if (found != ${if (args.length == 64) -1 else (1L << args.length) - 1}){
-              var i = 0
-              val keys = for{
-                i <- 0 until ${args.length}
-                if (found & (1L << i)) == 0
-              } yield i match{
-                case ..${for (arg <- args)
+              // Special-case 64 because java bit shifting ignores any RHS values above 63
+              // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
+              if (found != ${if (args.length == 64) -1 else (1L << args.length) - 1}){
+                var i = 0
+                val keys = for{
+                  i <- 0 until ${args.length}
+                  if (found & (1L << i)) == 0
+                } yield i match{
+                  case ..${for (arg <- args)
         yield cq"${arg.i} => ${arg.mapped}"}
+                }
+                throw new com.rallyhealth.weepickle.v1.core.Abort(
+                  "missing keys in dictionary: " + keys.mkString(", ")
+                )
               }
-              throw new com.rallyhealth.weepickle.v1.core.Abort(
-                "missing keys in dictionary: " + keys.mkString(", ")
-              )
-            }
-            $companion.apply(
-              ..${for (arg <- args)
+              $companion.apply(
+                ..${for (arg <- args)
         yield
           if (arg.i == args.length - 1 && varargs) q"${arg.aggregate}:_*"
           else q"${arg.aggregate}"}
-            )
-          }
+              )
+            }
 
-          def subVisitor: com.rallyhealth.weepickle.v1.core.Visitor[_, _] = currentIndex match{
-            case -1 => com.rallyhealth.weepickle.v1.core.NoOpVisitor
-            case ..${for (arg <- args)
+            def subVisitor: com.rallyhealth.weepickle.v1.core.Visitor[_, _] = currentIndex match{
+              case -1 => com.rallyhealth.weepickle.v1.core.NoOpVisitor
+              case ..${for (arg <- args)
         yield cq"${arg.i} => ${arg.localTo} "}
+            }
           }
         }
-      }
-    """
+      """
     }
 
     override def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: Type): Tree = {
@@ -446,48 +416,40 @@ object MacroImplicits {
       def write(arg: Argument) = {
         val snippet = q"""
 
-        val keyVisitor = ctx.visitKey()
-        ctx.visitKeyValue(
-          keyVisitor.visitString(
-            ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped})
+          val keyVisitor = ctx.visitKey()
+          ctx.visitKeyValue(
+            keyVisitor.visitString(
+              ${c.prefix}.objectAttributeKeyWriteMap(${arg.mapped})
+            )
           )
-        )
-        val w = implicitly[${c.prefix}.From[${arg.argType}]]
-        ctx.narrow.visitValue(w.transform(v.${TermName(arg.raw)}, ctx.subVisitor))
-      """
+          val w = implicitly[${c.prefix}.From[${arg.argType}]]
+          ctx.narrow.visitValue(w.transform(v.${TermName(arg.raw)}, ctx.subVisitor))
+        """
 
         /**
-          * Transforming the argument to itself applies any logic that the client may have provided
-          * in the implicit definition of From and/or To for the data type. This is important as this
-          * logic may transform the value into a default value which needs to be dropped.
-          *
-          * @see [[Argument.defaultDroppingCondition]].
+          * @see [[shouldDropDefault()]]
           */
-        arg.conditionForDefault match {
-          case Some(condition) => q"""if ($condition) $snippet"""
-          case None => snippet
-        }
+        if (arg.omitDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
+        else snippet
       }
       q"""
-      new ${c.prefix}.CaseW[$targetType]{
-        def length(v: $targetType) = {
-          var n = 0
-          ..${for (arg <- args)
+        new ${c.prefix}.CaseW[$targetType]{
+          def length(v: $targetType) = {
+            var n = 0
+            ..${for (arg <- args)
         yield {
-          arg.conditionForDefault match {
-            case None => q"n += 1"
-            case Some(condition) => q"""if ($condition) n += 1"""
-          }
+          if (!arg.omitDefault) q"n += 1"
+          else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
         }}
-          n
-        }
-        def writeToObject[R](ctx: com.rallyhealth.weepickle.v1.core.ObjVisitor[_, R],
-                             v: $targetType): Unit = {
-          ..${args.map(write)}
+            n
+          }
+          def writeToObject[R](ctx: com.rallyhealth.weepickle.v1.core.ObjVisitor[_, R],
+                               v: $targetType): Unit = {
+            ..${args.map(write)}
 
+          }
         }
-      }
-     """
+       """
     }
 
     override def mergeTrait(subtree: Seq[Tree], subtypes: Seq[Type], targetType: Type): Tree = {

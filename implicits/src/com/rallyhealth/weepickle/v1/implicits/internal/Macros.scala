@@ -11,7 +11,7 @@ import scala.language.{existentials, higherKinds}
   * directly, since they are called implicitly when trying to read/write
   * types you don't have a To/From in scope for.
   */
-@deprecated("Use Macros2 instead (has better visibility definitions)", "v1.1.0")
+@deprecated("Use MacroImplicits instead (has better visibility definitions)", "v1.1.0")
 object Macros {
 
   trait DeriveDefaults[M[_]] {
@@ -156,9 +156,9 @@ object Macros {
     def fleshedOutSubtypes(tpe: Type) = {
       for {
         subtypeSym <- tpe.typeSymbol.asClass.knownDirectSubclasses.filter(!_.toString.contains("<local child>"))
-          if subtypeSym.isType
-          st = subtypeSym.asType.toType
-          baseClsArgs = st.baseType(tpe.typeSymbol).asInstanceOf[TypeRef].args
+        if subtypeSym.isType
+        st = subtypeSym.asType.toType
+        baseClsArgs = st.baseType(tpe.typeSymbol).asInstanceOf[TypeRef].args
       } yield {
         tpe match {
           case ExistentialType(_, TypeRef(_, _, args)) =>
@@ -239,7 +239,7 @@ object Macros {
           companion.tpe.member(TermName("apply")).info
 
           val derive =
-          // Otherwise, reading and writing are kinda identical
+            // Otherwise, reading and writing are kinda identical
             wrapCaseN(
               companion,
               args,
@@ -427,7 +427,7 @@ object Macros {
       val c: c0.type = c0
       def typeclass = e2
     }.derive(e1.tpe)
-    //    println(res)
+//    println(res)
     c0.Expr[R[T]](res)
   }
 
@@ -438,7 +438,7 @@ object Macros {
       val c: c0.type = c0
       def typeclass = e2
     }.derive(e1.tpe)
-    //    println(res)
+//    println(res)
     c0.Expr[W[T]](res)
   }
 }
