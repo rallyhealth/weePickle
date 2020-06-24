@@ -1,6 +1,6 @@
 package com.rallyhealth.weepickle.v1.implicits.internal
 
-import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key, jsonIgnore}
+import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault, key, dropAlways}
 
 import scala.language.experimental.macros
 import scala.language.{existentials, higherKinds}
@@ -71,14 +71,14 @@ object Macros {
       aggregate: TermName,
       omitJson: Boolean
     ) {
-      def writingCheckOmission: Boolean = (hasDefault && omitDefault) || omitJson
+      def writingCheckDefault: Boolean = (hasDefault && omitDefault) || omitJson
       def readingCheckDefault: Boolean = hasDefault || assumeDefaultNone
     }
 
     private[internal] object Argument {
 
       private def shouldIgnoreJson(argSym: c.Symbol): Boolean =
-        argSym.annotations.exists(_.tree.tpe == typeOf[jsonIgnore])
+        argSym.annotations.exists(_.tree.tpe == typeOf[dropAlways])
       /**
         * Unlike lihaoyi/upickle, rallyhealth/weepickle will write values even if they're
         * the same as the default value, unless instructed explicitly not to with the
@@ -395,9 +395,14 @@ object Macros {
         """
 
         /**
-          * @see [[shouldDropDefault()]]
+          * @see [
           */
-        if (arg.writingCheckOmission) q"""if ((v.${TermName(arg.raw)} != ${arg.default}) || ${arg.omitJson} ) $snippet"""
+        if (arg.omitJson)
+          q""""""
+        /**
+         * @see [[shouldDropDefault()]]
+         */
+        else if (arg.writingCheckDefault) q"""if ((v.${TermName(arg.raw)} != ${arg.default})) $snippet"""
         else snippet
       }
       q"""
@@ -406,7 +411,7 @@ object Macros {
             var n = 0
             ..${for (arg <- args)
         yield {
-          if (!arg.writingCheckOmission) q"n += 1"
+          if (!arg.writingCheckDefault) q"n += 1"
           else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
         }}
             n

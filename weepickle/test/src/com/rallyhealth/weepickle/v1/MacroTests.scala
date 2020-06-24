@@ -234,16 +234,8 @@ object MacroTests extends TestSuite {
       }
       test("ignoreAnnotatedFieldsWhenSerializing") {
         import Annotated.D
-        val w = FromScala(D("a",Some("b"),"c")).transform(ToJson.string)
-        assert(w == """{"a": "a", "c": "c"}"""" )
-
-        /**
-         * Fails :(
-         * assert(w == """{"a": "a", "c": "c"}"""" )
-         * w: String = {"a":"a","b":"b","c":"c"}
-         * utest.AssertionError: assert(w == """{"a": "a", "c": "c"}"""" )
-         * w: String = {"a":"a","b":"b","c":"c"}
-         */
+        val w = FromScala(D("a", Some("b"), "c")).transform(ToJson.string)
+        assert(w == """{"a":"a","c":"c"}""")
       }
     }
 
