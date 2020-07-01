@@ -296,7 +296,7 @@ object Macros {
       }
       q"""
         ..${for (arg <- args)
-        yield q"private[this] lazy val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
+        yield q"private[this] val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
         new ${c.prefix}.CaseR[$targetType]{
           override def visitObject(length: Int) = new CaseObjectContext{
             ..${for (arg <- args)
