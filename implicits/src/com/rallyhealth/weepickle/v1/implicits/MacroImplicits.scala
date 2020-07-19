@@ -20,6 +20,11 @@ object MacroImplicits {
     dieIfNothing[T](c)("To")
     c.Expr[T](q"${c.prefix}.macroTo0[$e, ${c.prefix}.To]")
   }
+  def applyNullableTo[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
+    import c.universe._
+    dieIfNothing[T](c)("To")
+    c.Expr[T](q"${c.prefix}.macroNullableTo0[$e, ${c.prefix}.To]")
+  }
   def applyFrom[T](c: scala.reflect.macros.blackbox.Context)(implicit e: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
     dieIfNothing[T](c)("From")
@@ -112,6 +117,7 @@ object MacroImplicits {
       raw: String,
       mapped: String,
       argType: Type,
+      typeConstructor: Type,
       hasDefault: Boolean,
       omitDefault: Boolean,
       default: Tree,
@@ -174,15 +180,16 @@ object MacroImplicits {
         val (argSym, index) = indexedArg
         val isParamWithDefault = argSym.asTerm.isParamWithDefault
         // include .erasure to represent varargs as "Seq", not "Whatever*"
-        val isOptionWithoutDefault = !isParamWithDefault &&
-          argSym.typeSignature.erasure.typeConstructor.toString == "Option"
+        val typeConstructor = argSym.typeSignature.erasure.typeConstructor
+        val isOptionWithoutDefault = !isParamWithDefault && typeConstructor.toString == "Option"
         val hasDefault = isParamWithDefault || isOptionWithoutDefault
 
-        new Argument(
+        Argument(
           i = index,
           raw = argSym.name.toString,
           mapped = customKey(argSym).getOrElse(argSym.name.toString),
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
+          typeConstructor = typeConstructor,
           hasDefault = hasDefault,
           omitDefault = shouldDropDefault(tpe.typeSymbol, argSym),
           default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
@@ -320,6 +327,12 @@ object MacroImplicits {
   private abstract class Reading[M[_]] extends DeriveDefaults[M] {
     import c.universe._
 
+    def applyDefaultsWhenMissing(args: Seq[Argument]): Tree =
+      q"""..${
+        for (arg <- args if arg.hasDefault) yield
+          q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
+      }"""
+
     override def wrapObject(t: Tree) = q"new ${c.prefix}.SingletonR($t)"
 
     override def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: Type, varargs: Boolean): Tree = {
@@ -347,8 +360,7 @@ object MacroImplicits {
             }
 
             def visitEnd() = {
-              ..${for (arg <- args if arg.hasDefault)
-        yield q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"}
+              ..${applyDefaultsWhenMissing(args)}
 
               // Special-case 64 because java bit shifting ignores any RHS values above 63
               // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
@@ -386,6 +398,41 @@ object MacroImplicits {
     override def mergeTrait(subtrees: Seq[Tree], subtypes: Seq[Type], targetType: Type): Tree = {
       q"${c.prefix}.To.merge[$targetType](..$subtrees)"
     }
+  }
+
+  /*
+   * Forces a default for missing "container" types, i.e., a Seq, List, Array, or Map.
+   *
+   * If a field is missing for one of these "container" types, then call visitNull
+   * so the correct null attribute will be set given the type, e.g., Nil for a Seq.
+   *
+   * This is subtly different than actually assuming a default value. Default values
+   * affect both reading (to) and writing (from), e.g., the application of dropDefault
+   * as part of writing. We assume None as the default for Option types that don't have
+   * and explicit default defined, which are dropped as part of dropDefault writing.
+   * But these nullable container types are only considered as part of reading, so
+   * writing one, even with dropDefault defined, will still result in a value written.
+   * The rationale for this difference in treatment is that it may be surprising to
+   * have the output of an empty sequence suppressed as part of writing (e.g.,
+   * serializing to a JSON string) where a empty sequence was not explicitly defined
+   * as the default to be suppressed.
+   */
+  private abstract class NullableReading[M[_]] extends Reading[M] {
+
+    import c.universe._
+
+    val nullableContainerTypes = Set("Seq", "List", "Array", "Map") // Not "Option" -- see above
+
+    override def applyDefaultsWhenMissing(args: Seq[Argument]): Tree =
+      q"""..${
+        for (arg <- args) yield
+          if (arg.hasDefault)
+            q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
+          else if (nullableContainerTypes contains arg.typeConstructor.toString)
+            q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.localTo}.visitNull())}"
+          else
+            q""
+      }"""
   }
 
   private abstract class Writing[M[_]] extends DeriveDefaults[M] {
@@ -472,6 +519,17 @@ object MacroImplicits {
     c0.Expr[R[T]](res)
   }
 
+  def macroNullableRImpl[T, R[_]](
+    c0: scala.reflect.macros.blackbox.Context
+  )(implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[R[_]]): c0.Expr[R[T]] = {
+    val res = new NullableReading[R] {
+      override val c: c0.type = c0
+      def typeclass: c.universe.WeakTypeTag[R[_]] = e2
+    }.derive(e1.tpe)
+    //    println(res)
+    c0.Expr[R[T]](res)
+  }
+
   def macroTImpl[T, W[_]](
     c0: scala.reflect.macros.blackbox.Context
   )(implicit e1: c0.WeakTypeTag[T], e2: c0.WeakTypeTag[W[_]]): c0.Expr[W[T]] = {
@@ -490,8 +548,10 @@ trait MacroImplicits { this: com.rallyhealth.weepickle.v1.core.Types =>
   implicit def macroSingletonFromTo[X <: Singleton]: FromTo[X] = macro MacroImplicits.applyFromTo[X]
   def macroFrom[F]: From[F] = macro MacroImplicits.applyFrom[F]
   def macroTo[T]: To[T] = macro MacroImplicits.applyTo[T]
+  def macroNullableTo[T]: To[T] = macro MacroImplicits.applyNullableTo[T]
   def macroFromTo[X]: FromTo[X] = macro MacroImplicits.applyFromTo[FromTo[X]]
 
   def macroTo0[T, M[_]]: To[T] = macro MacroImplicits.macroRImpl[T, M]
+  def macroNullableTo0[T, M[_]]: To[T] = macro MacroImplicits.macroNullableRImpl[T, M]
   def macroFrom0[T, M[_]]: From[T] = macro MacroImplicits.macroTImpl[T, M]
 }
