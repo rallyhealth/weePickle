@@ -421,7 +421,7 @@ object MacroImplicits {
 
     import c.universe._
 
-    val nullableContainerTypes = Set("Seq", "List", "Array", "Map") // Not "Option" -- see above
+    val nullableContainerTypes = Set("Seq", "List", "Array", "scala.collection.immutable.Map") // Not "Option" -- see above
 
     override def applyDefaultsWhenMissing(args: Seq[Argument]): Tree =
       q"""..${
