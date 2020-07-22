@@ -11,6 +11,7 @@ import scala.language.{existentials, higherKinds}
   * directly, since they are called implicitly when trying to read/write
   * types you don't have a To/From in scope for.
   */
+@deprecated("Use MacroImplicits instead (has better visibility definitions)", "v1.1.0")
 object Macros {
 
   trait DeriveDefaults[M[_]] {

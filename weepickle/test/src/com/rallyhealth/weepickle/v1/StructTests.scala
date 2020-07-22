@@ -13,6 +13,7 @@ import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.ToMsgPack
 import com.rallyhealth.weepickle.v1.TestUtil._
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
+import com.rallyhealth.weepickle.v1.core.Abort
 
 import scala.reflect.ClassTag
 import language.postfixOps
@@ -160,6 +161,25 @@ object StructTests extends TestSuite {
         implicit val r = WeePickle.macroTo[Bar]
       }
       assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(Some(1)))
+    }
+
+    test("apply defaults for missing inputs for nullable container types") {
+      object NoDefaultContainerTypes {
+        case class Bar(option: Option[Int], seq: Seq[Int], list: List[Int], array: Array[Int], map: Map[Int, Int])
+        val to = WeePickle.macroTo[Bar]
+        val toNullable = WeePickle.macroNullableTo[Bar]
+      }
+      val e = intercept[Exception] {
+        FromJson("""{}""").transform(NoDefaultContainerTypes.to)
+      }
+      assert(e.getCause.getClass == classOf[Abort])
+
+      val fromMissing = FromJson("""{}""").transform(NoDefaultContainerTypes.toNullable)
+      assert(fromMissing.option == None)
+      assert(fromMissing.seq == Seq.empty)
+      assert(fromMissing.list == List.empty)
+      assert(fromMissing.array.toSeq == Array.empty.toSeq)
+      assert(fromMissing.map == Map.empty)
     }
 
     test("either") {
