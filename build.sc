@@ -18,13 +18,14 @@ import mill.scalalib.publish.Artifact
 import os.Path
 
 
-val scalaVersions = Seq("2.11.12", "2.12.8", "2.13.0")
+val scalaVersions = Seq("2.11.12", "2.12.12", "2.13.3")
 val scalaPlayVersions = Seq(
   ("2.11.12", "2.5.19"),
   ("2.11.12", "2.7.4"),
-  ("2.12.8", "2.7.4"),
-  ("2.13.0", "2.7.4"),
-  ("2.13.0", "2.8.1"),
+  ("2.12.12", "2.7.4"),
+  ("2.13.3", "2.7.4"),
+  ("2.13.3", "2.8.1"),
+  ("2.13.3", "2.9.0"),
 )
 
 trait CommonModule extends ScalaModule with ScalafmtModule {
@@ -207,7 +208,7 @@ object weejson extends Module{
     def artifactName = shade("weejson-argonaut")
     def platformSegment = "jvm"
     def moduleDeps = Seq(weejson.jvm())
-    def ivyDeps = Agg(ivy"io.argonaut::argonaut:6.2.3")
+    def ivyDeps = Agg(ivy"io.argonaut::argonaut:6.2.5")
   }
 
   object yaml extends Cross[YamlModule](scalaVersions: _*)
@@ -216,7 +217,7 @@ object weejson extends Module{
     def platformSegment = "jvm"
     def moduleDeps = Seq(jackson())
     def ivyDeps = Agg(
-      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson().jacksonVersion}"
+      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
     )
 
     object test extends Tests with ScalaTestModule {
@@ -232,8 +233,8 @@ object weejson extends Module{
     def platformSegment = "jvm"
     def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = Agg(
-      ivy"org.json4s::json4s-ast:3.6.7",
-      ivy"org.json4s::json4s-native:3.6.7"
+      ivy"org.json4s::json4s-ast:3.6.9",
+      ivy"org.json4s::json4s-native:3.6.9"
     )
   }
 
@@ -243,7 +244,7 @@ object weejson extends Module{
     def platformSegment = "jvm"
     def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = T{
-      Agg(ivy"io.circe::circe-parser:${if (isScalaOld()) "0.11.1" else "0.12.1"}")
+      Agg(ivy"io.circe::circe-parser:${if (isScalaOld()) "0.11.1" else "0.13.0"}")
     }
   }
 
@@ -270,9 +271,9 @@ object weejson extends Module{
     }
   }
 
+  val jacksonVersion = "2.11.1"
   object jackson extends Cross[JacksonModule](scalaVersions:_*)
   class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
-    val jacksonVersion = "2.10.4"
     object test extends Tests with ScalaTestModule {
       def platformSegment = "jvm"
       def moduleDeps = Seq(weejson.jvm().test)
@@ -326,15 +327,15 @@ object weepickle extends Module{
 }
 
 trait BenchModule extends CommonModule {
-  def scalaVersion = "2.12.8"
+  def scalaVersion = "2.12.12"
   def millSourcePath = build.millSourcePath / "bench"
   def ivyDeps = Agg(
-    ivy"io.circe::circe-core::0.12.1",
-    ivy"io.circe::circe-generic::0.12.1",
-    ivy"io.circe::circe-parser::0.12.1",
+    ivy"io.circe::circe-core::0.13.0",
+    ivy"io.circe::circe-generic::0.13.0",
+    ivy"io.circe::circe-parser::0.13.0",
     ivy"com.typesafe.play::play-json::2.7.4",
-    ivy"io.argonaut::argonaut:6.2.3",
-    ivy"org.json4s::json4s-ast:3.6.7",
+    ivy"io.argonaut::argonaut:6.2.5",
+    ivy"org.json4s::json4s-ast:3.6.9",
     ivy"com.lihaoyi::sourcecode::0.1.7",
   )
 }
@@ -343,13 +344,13 @@ object bench extends Module {
 
   object jvm extends BenchModule with Jmh{
     def platformSegment = "jvm"
-    def moduleDeps = Seq(weepickle.jvm("2.12.8").test)
+    def moduleDeps = Seq(weepickle.jvm("2.12.12").test)
     def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"com.fasterxml.jackson.module::jackson-module-scala:2.9.10",
       ivy"com.fasterxml.jackson.core:jackson-databind:2.9.4",
       ivy"com.lihaoyi::upickle:0.9.8",
       ivy"org.msgpack:jackson-dataformat-msgpack:0.8.20",
-      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.10.2",
+      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${weejson.jacksonVersion}",
     )
   }
 }

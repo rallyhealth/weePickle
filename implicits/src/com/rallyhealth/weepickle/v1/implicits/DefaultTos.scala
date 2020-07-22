@@ -185,7 +185,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     else
       new SimpleTo[M[K, V]] {
 
-        override def visitNull: M[K, V] = make(Nil)
+        override def visitNull(): M[K, V] = make(Nil)
 
         override def visitObject(length: Int): ObjVisitor[Any, M[K, V]] = new ObjVisitor[Any, M[K, V]] {
           val strings = mutable.Buffer.empty[K]
@@ -244,7 +244,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
   implicit def ToArray[T: To: ClassTag]: To[Array[T]] =
     if (implicitly[To[T]] == ToByte) new SimpleTo[Array[T]] {
 
-      override def visitNull: Array[T] = Array.empty
+      override def visitNull(): Array[T] = Array.empty
 
       override def expectedMsg = "expected sequence"
 
@@ -269,7 +269,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
       new SimpleTo[Array[T]] {
         override def expectedMsg = "expected sequence"
 
-        override def visitNull: Array[T] = Array.empty
+        override def visitNull(): Array[T] = Array.empty
 
         override def visitArray(length: Int): ArrVisitor[Any, Array[T]] = new ArrVisitor[Any, Array[T]] {
           val b = mutable.ArrayBuilder.make[T]
@@ -287,7 +287,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     new SimpleTo[C[T]] {
       override def expectedMsg = "expected sequence"
 
-      override def visitNull: C[T] = factory.newBuilder.result()
+      override def visitNull(): C[T] = factory.newBuilder.result()
 
       override def visitArray(length: Int): ArrVisitor[Any, C[T]] = new ArrVisitor[Any, C[T]] {
         val b = factory.newBuilder
