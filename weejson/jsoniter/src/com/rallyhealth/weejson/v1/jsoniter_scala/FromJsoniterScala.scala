@@ -68,6 +68,13 @@ object FromJsoniterScala {
 
     override val nullValue: J = v.visitNull()
 
-    override def encodeValue(x: J, out: JsonWriter): Unit = ???
+    override def encodeValue(x: J, out: JsonWriter): Unit = {
+      /**
+        * TODO
+        * For refrerence:
+        * @see https://github.com/plokhotnyuk/jsoniter-scala/pull/122/files#diff-ab5c009ed51da2b9de550d1d09a67260R73
+        */
+      ???
+    }
   }
 }
