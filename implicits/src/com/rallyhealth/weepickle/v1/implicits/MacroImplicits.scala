@@ -415,7 +415,7 @@ object MacroImplicits {
           val leaf = empties.map { case (_, t) => Leaf("", fullPrefix.length, fullPrefix, t) }
 
           val children = nonEmpties.groupBy(_._1.charAt(0)).toList.sortBy(_._1).map {
-            case (k, vs) => buildRadix(vs.map { case (s, t) => s.substring(1, s.length) -> t }, s"$fullPrefix$k") match {
+            case (k, vs) => buildRadix(vs.map { case (s, t) => s.drop(1) -> t }, s"$fullPrefix$k") match {
                 case Branch(prefix, start, end, children) :: Nil => Branch(s"$k$prefix", start - 1, end, children) // compress
                 case Leaf(suffix, start, fullKey, value) :: Nil => Leaf(s"$k$suffix", start - 1, fullKey, value) // compress
                 case many => Branch(s"$k", fullPrefix.length, fullPrefix.length + 1, many) // don't compress
