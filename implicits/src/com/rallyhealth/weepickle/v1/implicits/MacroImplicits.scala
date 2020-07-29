@@ -359,6 +359,7 @@ object MacroImplicits {
      * and "claimRemarkCd" (same length with common prefix "claim"), "icnSuffixCode" and "icnVersionNum" (also the same
      * length with common prefix "icn"), and "claimLevelAdjudicationAmt" (only 25 character field).
      *
+     *  import com.rallyhealth.weepickle.v1.core.Util.regionMatches
      *  val cs = WeePickle.objectAttributeKeyReadMap(s match {
      *     case alreadyCs: CharSequence => alreadyCs
      *     case force => force.toString
@@ -452,12 +453,12 @@ object MacroImplicits {
         .toList.sortBy(_._1).map {
         case (size, argsForSize) => size -> evalRadix(buildRadix(argsForSize.map(arg => (arg.mapped, arg.i)).toList))
       }
-
       // avoid string allocations by keeping a CharSequence a CharSequence
-      q"""val cs = ${c.prefix}.objectAttributeKeyReadMap(s match {
+      q"""import com.rallyhealth.weepickle.v1.core.Util.regionMatches
+          val cs = ${c.prefix}.objectAttributeKeyReadMap(s match {
             case alreadyCs: CharSequence => alreadyCs
             case force => force.toString
-          });
+          })
           (cs.length: @scala.annotation.switch) match {
             case ..${for ((size, tree) <- evalRadixBySize)
                        yield cq"$size => $tree"}

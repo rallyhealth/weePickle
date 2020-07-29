@@ -219,20 +219,6 @@ trait Types { types =>
         }
       }
     }
-
-    /*
-     * Used by Radix-based visitKeyValue. Excludes safety checks for speed's sake, since generated client ensures values are in range
-     * (otherOffset >= 0) && (csOffset >= 0) && (csOffset <= cs.length - compareLen) && (otherOffset <= other.length - compareLen) &&
-     */
-    protected def regionMatches(cs: CharSequence, csOffset: Int, other: CharSequence, otherOffset: Int, compareLen: Int): Boolean = {
-      var i = 0
-      while (i < compareLen) {
-        if (cs.charAt(csOffset + i) != other.charAt(otherOffset + i)) return false
-        i += 1
-      }
-      true
-    }
-
   }
   trait CaseW[In] extends From[In] {
     def length(v: In): Int
