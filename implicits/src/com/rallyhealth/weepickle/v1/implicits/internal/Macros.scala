@@ -394,7 +394,7 @@ object Macros {
         /**
           * @see [[shouldDropDefault()]]
           */
-        if (arg.writingCheckDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
+        if (arg.writingCheckDefault) q"""if (${arg.default} != v.${TermName(arg.raw)}) $snippet"""
         else snippet
       }
       q"""
@@ -404,7 +404,7 @@ object Macros {
             ..${for (arg <- args)
         yield {
           if (!arg.writingCheckDefault) q"n += 1"
-          else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
+          else q"""if (${arg.default} != v.${TermName(arg.raw)}) n += 1"""
         }}
             n
           }
