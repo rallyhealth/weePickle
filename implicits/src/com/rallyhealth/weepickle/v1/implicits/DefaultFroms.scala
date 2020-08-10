@@ -165,13 +165,10 @@ trait LowPriFroms extends com.rallyhealth.weepickle.v1.core.Types {
     new From[C[T]] {
       def transform0[R](v: C[T], out: Visitor[_, R]): R = {
         val ctx = out.visitArray(v.size).narrow
-        val x = v.iterator
-        while (x.nonEmpty) {
-          val next = x.next().asInstanceOf[T]
-          val written = r.transform(next, ctx.subVisitor)
+        v.asInstanceOf[Iterable[T]].foreach { t =>
+          val written = r.transform(t.asInstanceOf[T], ctx.subVisitor)
           ctx.visitValue(written)
         }
-
         ctx.visitEnd()
       }
     }
