@@ -343,6 +343,7 @@ object MacroImplicits {
         ..${for (arg <- args)
         yield q"private[this] lazy val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
         new ${c.prefix}.CaseR[$targetType]{
+          @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
           override def visitObject(length: Int) = new CaseObjectContext{
             ..${for (arg <- args)
         yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"}
@@ -359,6 +360,7 @@ object MacroImplicits {
               }
             }
 
+            @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
             def visitEnd() = {
               ..${applyDefaultsWhenMissing(args)}
 
@@ -481,6 +483,7 @@ object MacroImplicits {
       }
       q"""
         new ${c.prefix}.CaseW[$targetType]{
+          @SuppressWarnings(Array("org.wartremover.warts.Var"))
           def length(v: $targetType) = {
             var n = 0
             ..${for (arg <- args)
