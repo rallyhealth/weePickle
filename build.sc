@@ -227,6 +227,22 @@ object weejson extends Module{
     }
   }
 
+  object xml extends Cross[XmlModule](scalaVersions: _*)
+  class XmlModule(val crossScalaVersion: String) extends CommonPublishModule {
+    def artifactName = shade("weexml")
+    def platformSegment = "jvm"
+    def moduleDeps = Seq(jackson())
+    def ivyDeps = Agg(
+      ivy"com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}"
+    )
+
+    object test extends Tests with ScalaTestModule {
+      def platformSegment = "jvm"
+
+      override def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm())
+    }
+  }
+
   object json4s extends Cross[Json4sModule](scalaVersions: _*)
   class Json4sModule(val crossScalaVersion: String) extends CommonPublishModule{
     def artifactName = shade("weejson-json4s")
@@ -314,6 +330,7 @@ object weepickle extends Module{
       def moduleDeps = {
         super.moduleDeps ++ Seq(
           weejson.yaml(),
+          weejson.xml(),
           weejson.argonaut(),
           weejson.circe(),
           weejson.json4s(),
