@@ -12,7 +12,7 @@ object TestApp extends App {
   //               |- Mango
   //               |...""".stripMargin
 
-  val xml = """<employeeRecords>
+  val xml = """<root>
               |  <employee><key>martin</key>
               |    <name>Martin D'vloper</name>
               |    <job>Developer</job>
@@ -31,16 +31,13 @@ object TestApp extends App {
               |      <skill name="erlang"/>
               |    </skills>
               |  </employee>
-              |</employeeRecords>
+              |</root>
               |""".stripMargin //.replaceAll("\\n", " ")
 
   println(xml)
   val json = FromXml(xml).transform(ToPrettyJson.string)
   println(json)
 
-  // dies with:
-  // Exception in thread "main" com.rallyhealth.weepickle.v1.core.TransformException: Parser or Visitor failure jsonPointer= index=1 line=1 col=2 token=START_OBJECT
-  // Caused by: java.lang.IllegalStateException: No element/attribute name specified when trying to output element
   val xmlAgain: String = FromJson(json).transform(ToXml.string)
   println(xmlAgain)
 
