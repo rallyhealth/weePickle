@@ -4,7 +4,6 @@ import com.rallyhealth.weepickle.v1.core.Visitor
 import com.rallyhealth.weepickle.v1.WeePickle._
 import play.api.libs.json._
 
-import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /**
