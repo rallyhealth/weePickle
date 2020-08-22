@@ -203,14 +203,14 @@ object FailureTests extends TestSuite {
         com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
       implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Big64] =
         com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+      implicit val b65rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Big65] =
+        com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
       val written63 = FromScala(b63).transform(ToJson.string)
       assert(FromJson(written63).transform(ToScala[Big63]) == b63)
       val written64 = FromScala(b64).transform(ToJson.string)
       assert(FromJson(written64).transform(ToScala[Big64]) == b64)
-      val err = compileError(
-        "{implicit val b64rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Big65] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo}"
-      )
-      assert(err.msg.contains("weepickle does not support serializing case classes with >64 fields"))
+      val written65 = FromScala(b65).transform(ToJson.string)
+      assert(FromJson(written65).transform(ToScala[Big65]) == b65)
     }
   }
 }
