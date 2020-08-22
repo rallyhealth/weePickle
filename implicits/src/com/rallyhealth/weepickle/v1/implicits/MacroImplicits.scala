@@ -341,7 +341,7 @@ object MacroImplicits {
       }
       q"""
         ..${for (arg <- args)
-        yield q"private[this] lazy val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
+        yield q"private[this] val ${arg.localTo} = implicitly[${c.prefix}.To[${arg.argType}]]"}
         new ${c.prefix}.CaseR[$targetType]{
           @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
           override def visitObject(length: Int) = new CaseObjectContext{
