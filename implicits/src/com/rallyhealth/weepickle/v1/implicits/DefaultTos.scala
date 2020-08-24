@@ -29,6 +29,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
   }
   implicit val ToBoolean: To[Boolean] = new SimpleTo[Boolean] {
     override def expectedMsg = "expected boolean"
+    override def visitString(cs: CharSequence) = cs.toString.toBoolean
     override def visitTrue() = true
     override def visitFalse() = false
   }
@@ -48,6 +49,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
 
   implicit val ToInt: To[Int] = new NumericTo[Int] {
     override def expectedMsg = "expected number"
+    override def visitString(cs: CharSequence) = cs.toString.toInt
     override def visitInt32(d: Int): Int = d
     override def visitInt64(d: Long): Int = d.toInt
     override def visitUInt64(d: Long): Int = d.toInt
@@ -71,6 +73,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
   }
   implicit val ToShort: To[Short] = new NumericTo[Short] {
     override def expectedMsg = "expected number"
+    override def visitString(cs: CharSequence) = cs.toString.toShort
     override def visitInt32(d: Int): Short = d.toShort
     override def visitInt64(d: Long): Short = d.toShort
     override def visitUInt64(d: Long): Short = d.toShort
@@ -81,6 +84,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
   }
   implicit val ToByte: To[Byte] = new NumericTo[Byte] {
     override def expectedMsg = "expected number"
+    override def visitString(cs: CharSequence) = cs.toString.toByte
     override def visitInt32(d: Int): Byte = d.toByte
     override def visitInt64(d: Long): Byte = d.toByte
     override def visitUInt64(d: Long): Byte = d.toByte

@@ -35,7 +35,7 @@ object JsonPointerVisitorTests extends TestSuite {
       test - assertPathFailure("""{"foo": ["", -666], "s": "", "i": 5, "b": true}""", "/foo/1")
       test - assertPathFailure("""{"foo": ["", -666, ""], "s": "", "i": 5, "b": true}""", "/foo/1")
       test - assertPathFailure("""{"foo": [], "s": -666, "i": 5, "b": true}""", "/s")
-      test - assertPathFailure("""{"foo": [], "s": "", "i": "-666", "b": true}""", "/i")
+      test - assertPathFailure("""{"foo": [], "s": "", "i": "-666NAN", "b": true}""", "/i")
       test - assertPathFailure("""{"foo": [], "s": "", "i": 5, "b": -666}""", "/b")
       test - assertPathFailure("""{"foo": [], "s": "", "i": 5}""", "")
     }

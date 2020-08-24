@@ -8,6 +8,7 @@ import utest._
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala, macroFromTo, FromTo => RW}
 import com.rallyhealth.weejson.v1._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
+import com.rallyhealth.weejson.v1.xml.{FromXml, ToXml}
 import com.rallyhealth.weejson.v1.yaml.{FromYaml, ToYaml}
 import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack, WeePack}
 import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
@@ -224,23 +225,32 @@ object ExampleTests extends TestSuite {
         FromJson(""""Spades"""").transform(ToScala[Suit.Value]) ==> Suit.Spades
       }
       test("caseClass") {
-        import com.rallyhealth.weepickle.v1._
-        FromScala(Thing(1, "gg")).transform(ToJson.string) ==> """{"myFieldA":1,"myFieldB":"gg"}"""
-        FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(ToScala[Thing]) ==> Thing(1, "gg")
-        FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToJson.string) ==>
-          """{"i":1,"b":true,"str":"lol","c":"Z","t":{"myFieldA":7,"myFieldB":""}}"""
+        test("JSON") {
+          import com.rallyhealth.weepickle.v1._
+          FromScala(Thing(1, "gg")).transform(ToJson.string) ==> """{"myFieldA":1,"myFieldB":"gg"}"""
+          FromJson("""{"myFieldA":1,"myFieldB":"gg"}""").transform(ToScala[Thing]) ==> Thing(1, "gg")
+          FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToJson.string) ==>
+            """{"i":1,"b":true,"str":"lol","c":"Z","t":{"myFieldA":7,"myFieldB":""}}"""
 
-        FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToPrettyJson.string) ==>
-          """{
-            |  "i": 1,
-            |  "b": true,
-            |  "str": "lol",
-            |  "c": "Z",
-            |  "t": {
-            |    "myFieldA": 7,
-            |    "myFieldB": ""
-            |  }
-            |}""".stripMargin
+          FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToPrettyJson.string) ==>
+            """{
+              |  "i": 1,
+              |  "b": true,
+              |  "str": "lol",
+              |  "c": "Z",
+              |  "t": {
+              |    "myFieldA": 7,
+              |    "myFieldB": ""
+              |  }
+              |}""".stripMargin
+        }
+
+        test("XML") {
+          FromScala(Thing(1, "gg")).transform(ToXml.string) ==> """<root><myFieldA>1</myFieldA><myFieldB>gg</myFieldB></root>"""
+          FromXml("""<root><myFieldA>1</myFieldA><myFieldB>gg</myFieldB></root>""").transform(ToScala[Thing]) ==> Thing(1, "gg")
+          FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToXml.string) ==>
+            """<root><i>1</i><b>true</b><str>lol</str><c>Z</c><t><myFieldA>7</myFieldA><myFieldB></myFieldB></t></root>"""
+        }
       }
 
       test("sealed") {
