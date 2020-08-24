@@ -32,9 +32,31 @@ trait CommonModule extends ScalaModule with ScalafmtModule {
 
   protected def shade(name: String) = name + "-v1"
 
-  def scalacOptions = T {
-    // Not ready to deal with 2.13 collection deprecations.
-    (if (scalaVersion() startsWith "2.12") Seq("-opt:l:method", "-Xfatal-warnings", "-deprecation", "-feature", "-language:higherKinds", "-language:implicitConversions") else Nil)
+  override def scalacOptions = T{
+    val builder = Seq.newBuilder[String]
+    builder ++= super.scalacOptions()
+    builder ++= Seq(
+      "-deprecation",
+      "-language:higherKinds",
+      "-language:implicitConversions",
+      "-Xfatal-warnings",
+      "-encoding", "utf8",
+      "-feature"
+    )
+
+    if (!scalaVersion().startsWith("2.11")) {
+      builder += "-opt:l:method"
+    }
+
+    if (scalaVersion().startsWith("2.13.")) {
+      builder ++= Seq(
+        // See: https://github.com/scala/scala/pull/8373
+        """-Wconf:any:warning-verbose""",
+        """-Wconf:cat=deprecation:info-summary""" // Not ready to deal with 2.13 collection deprecations.
+      )
+    }
+
+    builder.result()
   }
 
   def platformSegment: String
@@ -48,7 +70,7 @@ trait CommonModule extends ScalaModule with ScalafmtModule {
 }
 
 trait CommonPublishModule extends CommonModule with PublishM2Module with CrossScalaModule{
-  def publishVersion = "1.2.1-SNAPSHOT"
+  def publishVersion = "1.2.2-SNAPSHOT"
 
   def pomSettings = PomSettings(
     description = artifactName(),
@@ -164,6 +186,12 @@ object implicits extends Module {
   class JvmModule(val crossScalaVersion: String) extends ImplicitsModule with CommonJvmModule{
     def moduleDeps = Seq(core.jvm())
     def artifactName = shade("weepickle-implicits")
+
+    override def mimaBinaryIssueFilters = Seq[ProblemFilter](
+      // Macros are used at compile time only:
+      ProblemFilters.exclude[MissingClassProblem]("com.rallyhealth.weepickle.v1.implicits.internal.Macros*"),
+      ProblemFilters.exclude[Problem]("com.rallyhealth.weepickle.v1.implicits.MacroImplicits#*"),
+    )
     object test extends Tests {
       def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm().test, core.jvm().test)
     }
@@ -313,12 +341,6 @@ trait weepickleModule extends CommonPublishModule{
     ivy"org.scala-lang:scala-reflect:${scalaVersion()}",
     ivy"org.scala-lang:scala-compiler:${scalaVersion()}"
   )
-  def scalacOptions = Seq(
-    "-unchecked",
-    "-deprecation",
-    "-encoding", "utf8",
-    "-feature",
-  )
 }
 
 object weepickle extends Module{
@@ -374,7 +396,7 @@ object bench extends Module {
 
 trait MiMa extends ScalaModule with PublishModule {
   def previousVersions = T {
-    Seq("1.0.1")
+    Seq("1.2.1")
   }
 
   override def repositories = super.repositories ++ Seq(

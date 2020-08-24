@@ -5,7 +5,7 @@ import java.time.Instant
 import com.rallyhealth.weepickle.v1.core.Visitor.{ArrDelegate, ObjDelegate}
 
 /**
-  * Notifies the `callback` of top-level results returned by the [[delegate]] visitor.
+  * Notifies the `callback` of top-level results returned by the delegate visitor.
   *
   * Useful from extracting return values from visitors that are used in side-effecting positions.
   */

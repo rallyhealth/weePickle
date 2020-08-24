@@ -139,4 +139,19 @@ object Util {
     ns('f') = 15
     ns
   }
+
+  /*
+   * Used by Radix-based visitKeyValue. Excludes safety checks for speed's sake, since generated client ensures values are in range.
+   * If you need one, you can add a safe version like is implemented in String.regionMatches that includes:
+   * (otherOffset >= 0) && (csOffset >= 0) && (csOffset <= cs.length - compareLen) && (otherOffset <= other.length - compareLen) &&
+   */
+  def regionMatches(cs: CharSequence, csOffset: Int, other: CharSequence, otherOffset: Int, compareLen: Int): Boolean = {
+    var i = 0
+    while (i < compareLen) {
+      if (cs.charAt(csOffset + i) != other.charAt(otherOffset + i)) return false
+      i += 1
+    }
+    true
+  }
+
 }
