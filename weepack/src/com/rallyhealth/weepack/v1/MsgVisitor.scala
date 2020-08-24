@@ -3,7 +3,7 @@ package com.rallyhealth.weepack.v1
 import com.rallyhealth.weepickle.v1.core.Visitor
 
 /**
-  * A [[Visitor]] specialized to work with msgpack types. Forwards the
+  * A Visitor specialized to work with msgpack types. Forwards the
   * not-msgpack-related methods to their msgpack equivalents.
   */
 trait MsgVisitor[-T, +J] extends Visitor[T, J] {
