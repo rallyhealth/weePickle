@@ -4,7 +4,6 @@ import com.rallyhealth.weejson.v1.BufferedValue
 import com.rallyhealth.weepickle.v1.core._
 
 import scala.language.experimental.macros
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**

@@ -4,6 +4,7 @@ import com.rallyhealth.weejson.v1.jackson.FromJson
 import com.rallyhealth.weepickle.v1.core._
 
 import scala.collection.compat._
+import scala.language.{higherKinds, implicitConversions}
 
 trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I] {
   def apply(s: String): I = FromJson(s).transform(this)
@@ -33,7 +34,7 @@ trait AstTransformer[I] extends Transformer[I] with JsVisitor[I, I] {
 
     override def visitValue(v: I): Unit = vs += (key -> v)
 
-    override def visitEnd(): I = build(vs.result)
+    override def visitEnd(): I = build(vs.result())
   }
   class AstArrVisitor[T[_]](build: T[I] => I)(implicit factory: Factory[I, T[I]]) extends ArrVisitor[I, I] {
     override def subVisitor: Visitor[_, _] = AstTransformer.this

@@ -2,8 +2,8 @@ package com.rallyhealth.weepickle.v1.implicits
 
 import java.net.URI
 import java.time.Instant
-import java.util.{Base64, UUID}
 import java.util.concurrent.TimeUnit
+import java.util.{Base64, UUID}
 
 import com.rallyhealth.weepickle.v1.core._
 
@@ -38,8 +38,8 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def expectedMsg = "expected number"
     override def visitString(cs: CharSequence): Double = cs.toString.toDouble
     override def visitInt32(d: Int): Double = d
-    override def visitInt64(d: Long): Double = d
-    override def visitUInt64(d: Long): Double = d
+    override def visitInt64(d: Long): Double = d.toDouble
+    override def visitUInt64(d: Long): Double = d.toDouble
     override def visitFloat64(d: Double): Double = d
     override def visitFloat64String(s: String): Double = s.toDouble
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Double = {

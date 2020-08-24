@@ -22,7 +22,7 @@ weePickle combines some of the best parts of the serialization ecosystem.
 
 - [Zero-overhead conversion of uPickle](http://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html)
 - [jackson-core](https://github.com/FasterXML/jackson#active-jackson-projects): async parsing and broad format support (JSON, YAML, XML, CBOR, SMILE, Ion, etc.)
-- `case class` support through customizable macros
+- `case class` support (any number of fields) through customizable macros
 - scala json AST interop (circe, json4s, play-json, argonaut)
 - Fast serialization to/from [MessagePack](#messagepack)
 
@@ -95,7 +95,7 @@ The following is a non-exhaustive map of type support:
 - `UUID`s
 - `null`
 
-Readability/writability is recursive: a container such as a Tuple or case class is only readable if all its contents are readable, and only writable if all its contents are writable. That means that you cannot serialize a `List[Any]`, since weePickle doesn't provide a generic way of serializing `Any`. Case classes are only serializable up to 64 fields.
+Readability/writability is recursive: a container such as a Tuple or case class is only readable if all its contents are readable, and only writable if all its contents are writable. That means that you cannot serialize a `List[Any]`, since weePickle doesn't provide a generic way of serializing `Any`.
 
 Case classes are serialized using the `apply` and `unapply` methods on their companion objects. This means that you can make your own classes serializable by giving them companions `apply` and `unapply`. `sealed` hierarchies are serialized as tagged unions: whatever the serialization of the actual object, together with the fully-qualified name of its class, so the correct class in the sealed hierarchy can be reconstituted later.
 

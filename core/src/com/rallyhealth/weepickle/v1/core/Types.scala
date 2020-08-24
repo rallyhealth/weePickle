@@ -61,7 +61,7 @@ trait Types { types =>
   trait SimpleTo[T] extends To[T] with com.rallyhealth.weepickle.v1.core.SimpleVisitor[Any, T]
 
   /**
-    * Represents the ability to read a value of type [[T]].
+    * Represents the ability to read a value of type `T`.
     *
     * A thin wrapper around [[Visitor]], but needs to be it's own class in order
     * to make type inference automatically pick up it's implicit values.
@@ -106,9 +106,9 @@ trait Types { types =>
   }
 
   /**
-    * Represents the ability to write a value of type [[In]].
+    * Represents the ability to write a value of type `In`.
     *
-    * Generally nothing more than a way of applying the [[In]] to
+    * Generally nothing more than a way of applying the `In` to
     * a [[Visitor]], along with some utility methods
     */
   trait From[In] {
