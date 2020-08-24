@@ -335,8 +335,8 @@ private object MacroImplicits {
 
     def applyDefaultsWhenMissing(args: Seq[Argument]): Tree =
       q"""..${
-        for (arg <- args; default <- arg.maybeDefault) yield
-          q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${default})}"
+        for (arg <- args; default <- arg.maybeDefault)
+          yield q"if (isMissing(${arg.i})) {setFound(${arg.i}); storeAggregatedValue(${arg.i}, ${default})}"
       }"""
 
     /*
@@ -475,9 +475,13 @@ private object MacroImplicits {
 
     override def wrapObject(t: Tree) = q"new ${c.prefix}.SingletonR($t)"
 
-    override def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: Type, varargs: Boolean): Tree = {
-      if (args.size > 64) {
-        c.abort(c.enclosingPosition, "weepickle does not support serializing case classes with >64 fields")
+    def wrapCaseN(companion: c.Tree, args: Seq[Argument], targetType: c.Type, varargs: Boolean): Tree = {
+
+      val addlBitSets = math.max(0, (args.size - 1) / 64) // number of additional bitsets, excluding `CaseR.found`
+
+      def foundBitSet(i: Int) = i match {
+        case 0 => TermName("found")
+        case i => TermName(s"found$i")
       }
       q"""
         ..${for (arg <- args)
@@ -487,6 +491,8 @@ private object MacroImplicits {
           override def visitObject(length: Int) = new CaseObjectContext{
             ..${for (arg <- args)
         yield q"private[this] var ${arg.aggregate}: ${arg.argType} = _"}
+            ..${for (i <- 1 to addlBitSets)
+        yield q"private[this] var ${foundBitSet(i)}: Long = 0L"}
             def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
               case ..${for (arg <- args)
         yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"}
@@ -496,17 +502,51 @@ private object MacroImplicits {
               currentIndex = ${getKeyIndexUsingRadix(args)}
             }
 
+            private[this] def isMissing(idx: Int): Boolean = {${
+        if (args.length <= 64) q"(found & (1L << idx)) == 0L"
+        else
+          q"""val mask = (1L << idx % 64)
+              val bit = idx / 64 match {
+                case ..${for (i <- 0 to addlBitSets) yield cq"$i => ${foundBitSet(i)} & mask"}
+              }
+              bit == 0L"""}
+             }
+
+            private[this] def setFound(idx: Int): Unit = {
+              ${
+        if (args.length <= 64) q"found |= (1L << idx)"
+        else
+          q"""val mask = 1L << (idx % 64)
+              (idx / 64) match {
+                case ..${for (i <- 0 to addlBitSets) yield cq"$i => ${foundBitSet(i)} |= mask"}
+              }"""}
+            }
+
+            ..${
+        if (args.length <= 64) q"" // parent is fine
+        else
+          q"""override def visitValue(v: Any): Unit = {
+            if (currentIndex != -1 && isMissing(currentIndex)) {
+              storeAggregatedValue(currentIndex, v)
+              setFound(currentIndex)
+            }
+          }"""}
+
             @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
             def visitEnd() = {
               ..${applyDefaultsWhenMissing(args)}
 
               // Special-case 64 because java bit shifting ignores any RHS values above 63
               // https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.19
-              if (found != ${if (args.length == 64) -1 else (1L << args.length) - 1}){
+              if (${
+        (0 to addlBitSets)
+          .map(i => q"${foundBitSet(i)} != ${if (i < addlBitSets || args.length > 0 && args.length % 64 == 0) -1 else (1L << args.length) - 1}")
+          .reduce((a, b) => q"$a || $b")
+      }){
                 var i = 0
                 val keys = for{
                   i <- 0 until ${args.length}
-                  if (found & (1L << i)) == 0
+                  if isMissing(i)
                 } yield i match{
                   case ..${for (arg <- args)
         yield cq"${arg.i} => ${arg.mapped}"}
@@ -565,9 +605,9 @@ private object MacroImplicits {
       q"""..${
         for (arg <- args) yield arg.maybeDefault match {
           case Some(default) =>
-            q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${default})}"
+            q"if (isMissing(${arg.i})) {setFound(${arg.i}); storeAggregatedValue(${arg.i}, ${default})}"
           case None if (nullableContainerTypes contains arg.typeConstructor.toString) =>
-            q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.localTo}.visitNull())}"
+            q"if (isMissing(${arg.i})) {setFound(${arg.i}); storeAggregatedValue(${arg.i}, ${arg.localTo}.visitNull())}"
           case _ =>
             q""
         }
