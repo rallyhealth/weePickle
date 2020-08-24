@@ -377,7 +377,7 @@ object bench extends Module {
 
 trait MiMa extends ScalaModule with PublishModule {
   def previousVersions = T {
-    Seq("1.0.1")
+    Seq("1.0.1", "1.2.0")
   }
 
   override def repositories = super.repositories ++ Seq(
