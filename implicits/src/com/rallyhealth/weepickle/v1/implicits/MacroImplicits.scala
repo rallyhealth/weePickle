@@ -118,12 +118,19 @@ object MacroImplicits {
       mapped: String,
       argType: Type,
       typeConstructor: Type,
-      hasDefault: Boolean,
       omitDefault: Boolean,
-      default: Tree,
+      maybeDefault: Option[Tree],
       localTo: TermName,
       aggregate: TermName
-    )
+    ) {
+      if (omitDefault && !hasDefault) throw noDefault
+
+      def default: Tree = maybeDefault.getOrElse(throw noDefault)
+
+      def hasDefault: Boolean = maybeDefault.nonEmpty
+
+      private def noDefault = new AssertionError("programming error in macros: default is not defined")
+    }
 
     protected object Argument {
 
@@ -156,13 +163,13 @@ object MacroImplicits {
         index: Int,
         isParamWithDefault: Boolean,
         assumeDefaultNone: Boolean
-      ): Tree = {
+      ): Option[Tree] = {
         val defaultName = TermName("apply$default$" + (index + 1))
-        if (!isParamWithDefault) {
-          if (assumeDefaultNone) q"${TermName("None")}"
-          else q"null"
+        if (isParamWithDefault) {
+          Some(q"$companion.$defaultName")
         } else {
-          q"$companion.$defaultName"
+          if (assumeDefaultNone) Some(q"${TermName("None")}")
+          else None
         }
       }
 
@@ -182,7 +189,7 @@ object MacroImplicits {
         // include .erasure to represent varargs as "Seq", not "Whatever*"
         val typeConstructor = argSym.typeSignature.erasure.typeConstructor
         val isOptionWithoutDefault = !isParamWithDefault && typeConstructor.toString == "Option"
-        val hasDefault = isParamWithDefault || isOptionWithoutDefault
+        val maybeDefault = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault)
 
         Argument(
           i = index,
@@ -190,9 +197,8 @@ object MacroImplicits {
           mapped = customKey(argSym).getOrElse(argSym.name.toString),
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
           typeConstructor = typeConstructor,
-          hasDefault = hasDefault,
-          omitDefault = shouldDropDefault(tpe.typeSymbol, argSym),
-          default = deriveDefault(companion, index, isParamWithDefault, isOptionWithoutDefault),
+          omitDefault = maybeDefault.isDefined && shouldDropDefault(tpe.typeSymbol, argSym),
+          maybeDefault = maybeDefault,
           localTo = TermName("localTo" + index),
           aggregate = TermName("aggregated" + index)
         )
@@ -329,8 +335,8 @@ object MacroImplicits {
 
     def applyDefaultsWhenMissing(args: Seq[Argument]): Tree =
       q"""..${
-        for (arg <- args if arg.hasDefault) yield
-          q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
+        for (arg <- args; default <- arg.maybeDefault) yield
+          q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${default})}"
       }"""
 
     /*
@@ -557,13 +563,14 @@ object MacroImplicits {
 
     override def applyDefaultsWhenMissing(args: Seq[Argument]): Tree =
       q"""..${
-        for (arg <- args) yield
-          if (arg.hasDefault)
-            q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
-          else if (nullableContainerTypes contains arg.typeConstructor.toString)
+        for (arg <- args) yield arg.maybeDefault match {
+          case Some(default) =>
+            q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${default})}"
+          case None if (nullableContainerTypes contains arg.typeConstructor.toString) =>
             q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.localTo}.visitNull())}"
-          else
+          case _ =>
             q""
+        }
       }"""
   }
 
@@ -606,9 +613,9 @@ object MacroImplicits {
         """
 
         /**
-          * @see [[shouldDropDefault()]]
+          * @see [[Argument.shouldDropDefault()]]
           */
-        if (arg.omitDefault) q"""if (v.${TermName(arg.raw)} != ${arg.default}) $snippet"""
+        if (arg.omitDefault) q"""if (${arg.default} != v.${TermName(arg.raw)}) $snippet"""
         else snippet
       }
       q"""
@@ -618,8 +625,8 @@ object MacroImplicits {
             var n = 0
             ..${for (arg <- args)
         yield {
-          if (!arg.omitDefault) q"n += 1"
-          else q"""if (v.${TermName(arg.raw)} != ${arg.default}) n += 1"""
+          if (arg.omitDefault) q"if (${arg.default} != v.${TermName(arg.raw)}) n += 1"
+          else q"n += 1"
         }}
             n
           }

@@ -131,7 +131,7 @@ private class JsonPointerVisitor[T, J](
       }
 
       override def pathComponent: Option[String] =
-        Option(key).map(_.replaceAllLiterally("~", "~0").replaceAllLiterally("/", "~1"))
+        Option(key).map(_.replace("~", "~0").replace("/", "~1"))
 
       override def parent: Option[HasPath] = Some(JsonPointerVisitor.this.parentPath)
     }
