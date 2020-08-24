@@ -70,7 +70,7 @@ trait CommonModule extends ScalaModule with ScalafmtModule {
 }
 
 trait CommonPublishModule extends CommonModule with PublishM2Module with CrossScalaModule{
-  def publishVersion = "1.2.1-SNAPSHOT"
+  def publishVersion = "1.2.2-SNAPSHOT"
 
   def pomSettings = PomSettings(
     description = artifactName(),
@@ -379,7 +379,7 @@ object bench extends Module {
 
 trait MiMa extends ScalaModule with PublishModule {
   def previousVersions = T {
-    Seq("1.0.1", "1.2.0")
+    Seq("1.2.1")
   }
 
   override def repositories = super.repositories ++ Seq(

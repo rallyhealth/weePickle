@@ -21,7 +21,7 @@ import java.time.Instant
   *           a [[ArrVisitor]] and [[ObjVisitor]] via [[ObjArrVisitor.visitValue()]].
   *           For example, this might be a weejson.Str that gets passed into an
   *           [[ObjVisitor]] that's building up a weejson.Obj to be returned on [[ObjVisitor.visitEnd()]].
-  *           Often `T` will be the same type as J` for visitors that return things,
+  *           Often `T` will be the same type as `J` for visitors that return things,
   *           or else [[Any]] by visitors that do their work by side-effecting instead of returning [[J]].
   * @tparam J the result of visiting elements (e.g. a json AST or side-effecting writer)
   */
