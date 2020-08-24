@@ -188,7 +188,9 @@ object implicits extends Module {
     def artifactName = shade("weepickle-implicits")
 
     override def mimaBinaryIssueFilters = Seq[ProblemFilter](
-      ProblemFilters.exclude[MissingClassProblem]("com.rallyhealth.weepickle.v1.implicits.internal.Macros*")
+      // Macros are used at compile time only:
+      ProblemFilters.exclude[MissingClassProblem]("com.rallyhealth.weepickle.v1.implicits.internal.Macros*"),
+      ProblemFilters.exclude[Problem]("com.rallyhealth.weepickle.v1.implicits.MacroImplicits#*"),
     )
     object test extends Tests {
       def moduleDeps = super.moduleDeps ++ Seq(weejson.jvm().test, core.jvm().test)
@@ -377,7 +379,7 @@ object bench extends Module {
 
 trait MiMa extends ScalaModule with PublishModule {
   def previousVersions = T {
-    Seq("1.0.1")
+    Seq("1.0.1", "1.2.0")
   }
 
   override def repositories = super.repositories ++ Seq(

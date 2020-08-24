@@ -6,7 +6,7 @@ import scala.language.{existentials, higherKinds}
 /**
   * Stupid hacks to work around scalac not forwarding macro type params properly
   */
-object MacroImplicits {
+private object MacroImplicits {
   def dieIfNothing[T: c.WeakTypeTag](c: scala.reflect.macros.blackbox.Context)(name: String) = {
     if (c.weakTypeOf[T] =:= c.weakTypeOf[Nothing]) {
       c.abort(
