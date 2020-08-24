@@ -333,6 +333,140 @@ object MacroImplicits {
           q"if ((found & (1L << ${arg.i})) == 0) {found |= (1L << ${arg.i}); storeAggregatedValue(${arg.i}, ${arg.default})}"
       }"""
 
+    /*
+     * Original pattern-match based method (not used, here more for documentation)
+     */
+    def getKeyIndexUsingPatternMatch(args: Seq[Argument]): Tree =
+      q"""${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
+                case ..${
+        for (arg <- args) yield cq"${arg.mapped} => ${arg.i}"
+      }
+                case _ => -1
+      }"""
+
+
+    /*
+     * https://en.wikipedia.org/wiki/Radix_tree -- performance is better than just pattern matching by 20% - 60%
+     * depending of the size of the case class. Fewer gains for case classes with 5 - 8 fields, more gains for
+     * (weirdly) both smaller and larger case classes.
+     *
+     * Assigns currentIndex within visitKeyValue using the key value length as the primary driver. Within each
+     * length, Radix logic compares common string prefixes only once. In fact, any character will only be compared
+     * with a positive match at most once -- there may be multiple mismatches per character, but these are minimized
+     * by having logic in regionMatches to return mismatch at the first mismatching character in a region.
+     *
+     * For example, the following shows the matching logic for fields "icn" (only three-character field), "claimFacility"
+     * and "claimRemarkCd" (same length with common prefix "claim"), "icnSuffixCode" and "icnVersionNum" (also the same
+     * length with common prefix "icn"), and "claimLevelAdjudicationAmt" (only 25 character field).
+     *
+     *  import com.rallyhealth.weepickle.v1.core.Util.regionMatches
+     *  val cs = WeePickle.objectAttributeKeyReadMap(s match {
+     *     case alreadyCs: CharSequence => alreadyCs
+     *     case force => force.toString
+     *   });
+     *   cs.length: @scala.annotation.switch match {
+     *     case 3 =>
+     *       if (regionMatches(cs, 0, "icn", 0, 3)) 21 else -1
+     *
+     *     case 7 =>
+     *       if ...
+     *
+     *     case 13 =>
+     *       if (regionMatches(cs, 0, "claim", 0, 5)) {
+     *         if (regionMatches(cs, 5, "Facility", 0, 8)) 31
+     *         else if (regionMatches(cs, 5, "RemarkCd", 0, 8)) 41
+     *         else -1
+     *       }
+     *       else if (regionMatches(cs, 0, "icn", 0, 3)) {
+     *         if (regionMatches(cs, 3, "SuffixCode", 0, 10)) 25
+     *         else if (regionMatches(cs, 3, "VersionNum", 0, 10)) 26
+     *         else -1
+     *       }
+     *       else -1
+     * ...
+     *
+     *     case 25 =>
+     *       if (regionMatches(cs, 0, "claimLevelAdjudicationAmt", 0, 25)) 36
+     *       else -1
+     *
+     *     case _ => -1
+     *  }
+     */
+    def getKeyIndexUsingRadix(args: Seq[Argument]): Tree = {
+
+      sealed trait Node
+
+      case class Branch(prefix: String, start: Int, end: Int, children: List[Node]) extends Node
+
+      case class Leaf(suffix: String, start: Int, fullKey: String, value: Int) extends Node
+
+      val leafGroupThreshold = 1 // increase if you want leaf piles
+
+      /*
+       * Each node in the returned list is its own Radix tree. Conceptually you can think of this as
+       * one Radix tree with the root node having an empty prefix.
+       */
+      def buildRadix(fields: List[(String, Int)], fullPrefix: String = ""): List[Node] = {
+        if (fields.length <= leafGroupThreshold)
+          fields.map { case (s, t) => Leaf(s, fullPrefix.length, s"$fullPrefix$s", t) }
+        else {
+          val (empties, nonEmpties) = fields.span(_._1.length == 0)
+
+          if (empties.length > 1) throw new AssertionError(s"duplicate field: $fullPrefix")
+          val leaf = empties.map { case (_, t) => Leaf("", fullPrefix.length, fullPrefix, t) }
+
+          val children = nonEmpties.groupBy(_._1.charAt(0)).toList.sortBy(_._1).map {
+            case (k, vs) => buildRadix(vs.map { case (s, t) => s.drop(1) -> t }, s"$fullPrefix$k") match {
+                case Branch(prefix, start, end, children) :: Nil => Branch(s"$k$prefix", start - 1, end, children) // compress
+                case Leaf(suffix, start, fullKey, value) :: Nil => Leaf(s"$k$suffix", start - 1, fullKey, value) // compress
+                case many => Branch(s"$k", fullPrefix.length, fullPrefix.length + 1, many) // don't compress
+              }
+          }
+
+          children ++ leaf
+        }
+      }
+
+      def evalRadix(nodes: List[Node]): Tree = {
+        // assemble chained if/else if/else if/.../else statement recursively
+        def chainConditions(conditionActions: List[(Tree, Tree)], otherwise: Tree): Tree = conditionActions match {
+          case (condition, action) :: tail => q"if ($condition) $action else ${chainConditions(tail, otherwise)}"
+          case Nil => otherwise
+        }
+
+        def nodeCondition(n: Node): Tree = n match {
+          case Branch(prefix, start, end, _) => q"regionMatches(cs, $start, $prefix, 0, ${end - start})"
+          case Leaf(suffix, start, _, _) =>
+            if (suffix.isEmpty) q"true" // avoid compare when suffix is empty
+            else q"regionMatches(cs, $start, $suffix, 0, ${suffix.length})"
+        }
+
+        def nodeAction(n: Node): Tree = n match {
+          case b: Branch => evalRadix(b.children) // recursively evaluate children
+          case l: Leaf => q"${l.value}"
+        }
+
+        chainConditions(nodes.map(n => (nodeCondition(n), nodeAction(n))), q"-1")
+      }
+
+      val evalRadixBySize: List[(Int, Tree)] = args.groupBy(_.mapped.length)
+        .toList.sortBy(_._1).map {
+        case (size, argsForSize) => size -> evalRadix(buildRadix(argsForSize.map(arg => (arg.mapped, arg.i)).toList))
+      }
+      // avoid string allocations by keeping a CharSequence a CharSequence
+      q"""import com.rallyhealth.weepickle.v1.core.Util.regionMatches
+          val cs = ${c.prefix}.objectAttributeKeyReadMap(s match {
+            case alreadyCs: CharSequence => alreadyCs
+            case force => force.toString
+          })
+          (cs.length: @scala.annotation.switch) match {
+            case ..${for ((size, tree) <- evalRadixBySize)
+                       yield cq"$size => $tree"}
+            case _ => -1
+          }
+       """
+    }
+
     override def wrapObject(t: Tree) = q"new ${c.prefix}.SingletonR($t)"
 
     override def wrapCaseN(companion: Tree, args: Seq[Argument], targetType: Type, varargs: Boolean): Tree = {
@@ -353,11 +487,7 @@ object MacroImplicits {
             }
             def visitKey() = com.rallyhealth.weepickle.v1.core.StringVisitor
             def visitKeyValue(s: Any) = {
-              currentIndex = ${c.prefix}.objectAttributeKeyReadMap(s.toString).toString match {
-                case ..${for (arg <- args)
-        yield cq"${arg.mapped} => ${arg.i}"}
-                case _ => -1
-              }
+              currentIndex = ${getKeyIndexUsingRadix(args)}
             }
 
             @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
