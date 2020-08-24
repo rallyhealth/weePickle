@@ -10,7 +10,7 @@ import scala.collection.mutable
   * A version of [[com.rallyhealth.weejson.v1.Value]] used to buffer data in raw form.
   *
   * This is used by the case class macros to buffer data for polymorphic types
-  * when the discriminator is not the first element, e.g. {"foo": 1, "$type": "discriminator"}.
+  * when the discriminator is not the first element, e.g. `{"foo": 1, "$type": "discriminator"}`.
   * It is important that all types be immutable.
   */
 sealed trait BufferedValue

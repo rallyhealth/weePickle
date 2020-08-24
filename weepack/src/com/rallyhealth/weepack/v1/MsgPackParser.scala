@@ -111,9 +111,11 @@ abstract class BaseMsgPackParser {
         /**
           * timestamp 32 stores the number of seconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in an 32-bit unsigned integer:
+          * {{{
           * +--------+--------+--------+--------+--------+--------+
           * |  0xd6  |   -1   |   seconds in 32-bit unsigned int  |
           * +--------+--------+--------+--------+--------+--------+
+          * }}}
           */
         val seconds = Integer.toUnsignedLong(parseUInt32(index))
         val instant = Instant.ofEpochSecond(seconds)
@@ -123,9 +125,11 @@ abstract class BaseMsgPackParser {
         /**
           * timestamp 64 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in 32-bit unsigned integers:
+          * {{{
           * +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
           * |  0xd7  |   -1   |nanoseconds in 30-bit unsigned int |  seconds in 34-bit unsigned int   |
           * +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+          * }}}
           */
         val nano30seconds34 = parseUInt64(index)
         val nanos = nano30seconds34 >>> 34
@@ -137,12 +141,14 @@ abstract class BaseMsgPackParser {
         /**
           * timestamp 96 stores the number of seconds and nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC
           * in 64-bit signed integer and 32-bit unsigned integer:
+          * {{{
           * +--------+--------+--------+--------+--------+--------+--------+
           * |  0xc7  |   12   |   -1   |nanoseconds in 32-bit unsigned int |
           * +--------+--------+--------+--------+--------+--------+--------+
           * +--------+--------+--------+--------+--------+--------+--------+--------+
-          * seconds in 64-bit signed int                        |
+          * seconds in 64-bit signed int                                            |
           * +--------+--------+--------+--------+--------+--------+--------+--------+
+          * }}}
           */
         val nanos = parseUInt32(index)
         val seconds = parseUInt64(index)
