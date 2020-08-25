@@ -3,15 +3,6 @@ package com.rallyhealth.weejson.v1.xml
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToPrettyJson}
 
 object TestApp extends App {
-  //
-  //  val xml = """---
-  //               |# A list of tasty fruits
-  //               |- Apple
-  //               |- Orange
-  //               |- Strawberry
-  //               |- Mango
-  //               |...""".stripMargin
-
   val xml = """<root>
               |  <employee><key>martin</key>
               |    <name>Martin D'vloper</name>
