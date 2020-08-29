@@ -73,6 +73,7 @@ object Foo {
 }
 
 FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
+FromScala(Foo(1)).transform(ToXml.string)            ==> """<root><i>1</i></root>"""
 FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
 ```
 
@@ -316,6 +317,7 @@ GeneratorBench.smile           thrpt   15  306.462 ±  3.134  ops/s
 ## Limitations
 - ScalaJS is not supported (jackson-core is java-only)
 - Same macro limitations as [uPickle](http://www.lihaoyi.com/upickle/#Limitations)
+- XML support is still rudimentary and contributions are welcome.
 
 ## Developing
 See [developing.md](developing.md) for building, testing, and IDE support.
