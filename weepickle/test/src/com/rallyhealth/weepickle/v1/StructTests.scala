@@ -14,6 +14,7 @@ import com.rallyhealth.weepack.v1.ToMsgPack
 import com.rallyhealth.weepickle.v1.TestUtil._
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import com.rallyhealth.weepickle.v1.core.Abort
+import com.rallyhealth.weepickle.v1.example.Suit
 
 import scala.reflect.ClassTag
 import language.postfixOps
@@ -108,6 +109,16 @@ object StructTests extends TestSuite {
         test("non-string key") - {
           TestUtil.rw(Map(new StringAnyVal("a") -> 1),
             """{"a":1}"""
+          )
+        }
+        test("enum key") - {
+          TestUtil.rw(Map(Suit.Spades -> "king"),
+            """{"Spades":"king"}"""
+          )
+        }
+        test("enum value") - {
+          TestUtil.rw(Map("king" -> Suit.Spades),
+            """{"king":"Spades"}"""
           )
         }
       }
