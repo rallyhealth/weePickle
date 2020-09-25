@@ -85,20 +85,18 @@ trait DefaultFroms
     implicit kw: From[K],
     vw: From[V]
   ): From[M[K, V]] = {
-    if (kw eq FromString) new From[M[String, V]] {
-      def transform0[R](v: M[String, V], out: Visitor[_, R]): R = {
+    new From[M[K, V]] {
+      def transform0[R](v: M[K, V], out: Visitor[_, R]): R = {
         val ctx = out.visitObject(v.size).narrow
         for (pair <- v) {
           val (k1, v1) = pair
           val keyVisitor = ctx.visitKey()
-          ctx.visitKeyValue(keyVisitor.visitString(k1))
+          ctx.visitKeyValue(kw.transform(k1, keyVisitor))
           ctx.visitValue(vw.transform(v1, ctx.subVisitor))
-
         }
         ctx.visitEnd()
       }
     }.asInstanceOf[From[M[K, V]]]
-    else SeqLikeFrom[Seq, (K, V)].comap[M[K, V]](_.toSeq)
   }
   implicit def MapFrom1[K, V](
     implicit kw: From[K],
