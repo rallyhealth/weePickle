@@ -1,5 +1,7 @@
 package com.rallyhealth.weepickle.v1.core
 
+import java.util.Base64
+
 import com.rallyhealth.weepickle.v1.core.JsonPointerVisitor._
 
 import scala.annotation.tailrec
@@ -109,6 +111,73 @@ private class JsonPointerVisitor[T, J](
         override def visitString(cs: CharSequence): Any = {
           key = cs.toString
           wrap(this.delegate.visitString(key))
+        }
+
+        override def visitInt32(i: Int): Any = {
+          key = i.toString
+          wrap(this.delegate.visitInt32(i))
+        }
+
+        override def visitInt64(l: Long): Any = {
+          key = l.toString
+          wrap(this.delegate.visitInt64(l))
+        }
+
+        override def visitNull(): Any = {
+          key = "null"
+          wrap(this.delegate.visitNull())
+        }
+
+        override def visitTrue(): Any = {
+          key = "true"
+          wrap(this.delegate.visitTrue())
+        }
+
+        override def visitFalse(): Any = {
+          key = "false"
+          wrap(this.delegate.visitFalse())
+        }
+
+        override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Any = {
+          key = cs.toString
+          wrap(this.delegate.visitFloat64StringParts(cs, decIndex, expIndex))
+        }
+
+        override def visitFloat64(d: Double): Any = {
+          key = d.toString
+          wrap(this.delegate.visitFloat64(d))
+        }
+
+        override def visitFloat32(d: Float): Any = {
+          key = d.toString
+          wrap(this.delegate.visitFloat32(d))
+        }
+
+        override def visitUInt64(ul: Long): Any = {
+          key = java.lang.Long.toUnsignedString(ul)
+          wrap(this.delegate.visitUInt64(ul))
+        }
+
+        override def visitFloat64String(s: String): Any = {
+          key = s.toString
+          wrap(this.delegate.visitFloat64String(s))
+        }
+
+        override def visitChar(c: Char): Any = {
+          key = c.toString
+          wrap(this.delegate.visitChar(c))
+        }
+
+        override def visitBinary(bytes: Array[Byte], offset: Int, len: Int): Any = {
+          key = {
+            val arr = if (offset > 0 || len < bytes.length) {
+              bytes.slice(offset, offset + len)
+            } else {
+              bytes
+            }
+            Base64.getEncoder.encodeToString(arr)
+          }
+          wrap(this.delegate.visitBinary(bytes, offset, len))
         }
       }
 

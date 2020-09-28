@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v1
 
 import java.io.ByteArrayOutputStream
+import java.time.Instant
 
 import utest._
 
@@ -106,7 +107,45 @@ object StructTests extends TestSuite {
           Map[String, List[Int]](),
           "{}"
         )
-        test("non-string key") - {
+        test("Int key") - rw(
+          Map[Int, Boolean](1 -> true),
+          """{"1":true}"""
+        )
+        test("Long key") - rw(
+          Map[Long, Boolean](1L -> true),
+          """{"1":true}"""
+        )
+        test("Double key") - rw(
+          Map[Double, Boolean](1d -> true),
+          """{"1.0":true}"""
+        )
+        test("Float key") - rw(
+          Map[Float, Boolean](1f -> true),
+          """{"1.0":true}"""
+        )
+        test("Binary key") - {
+          // rw() tests .equals() which fails for Array.
+          val scala = Map[Array[Byte], Boolean]("pony".getBytes() -> true)
+          val json = """{"cG9ueQ==":true}"""
+          FromScala(scala).transform(ToJson.string) ==> json
+
+          val scala2 = FromJson(json).transform(ToScala[Map[Array[Byte], Boolean]])
+          scala2.head._1 ==> scala.head._1
+          scala2.head._2 ==> scala.head._2
+        }
+        test("Boolean key") - rw(
+          Map[Boolean, Boolean](true -> true),
+          """{"true":true}"""
+        )
+        test("Timestamp key") - rw(
+          Map[Instant, Boolean](Instant.EPOCH -> true),
+          """{"1970-01-01T00:00:00Z":true}"""
+        )
+        test("Char key") - rw(
+          Map[Char, Boolean]('a' -> true),
+          """{"a":true}"""
+        )
+        test("AnyVal key") - {
           TestUtil.rw(Map(new StringAnyVal("a") -> 1),
             """{"a":1}"""
           )

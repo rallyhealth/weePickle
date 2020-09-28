@@ -1,7 +1,10 @@
 package com.rallyhealth.weejson.v1.jackson
 
+import java.time.Instant
+import java.util.Base64
+
 import com.fasterxml.jackson.core.JsonGenerator
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, SimpleVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core._
 
 /**
   * See [[JsonRenderer]] for high level use.
@@ -27,6 +30,84 @@ class JsonGeneratorVisitor(
 
     override def visitString(cs: CharSequence): JsonGenerator = {
       generator.writeFieldName(cs.toString)
+      generator
+    }
+
+    override def visitInt32(i: Int): JsonGenerator = {
+      generator.writeFieldId(i)
+      generator
+    }
+
+    override def visitInt64(l: Long): JsonGenerator = {
+      generator.writeFieldId(l)
+      generator
+    }
+
+    override def visitFloat64StringParts(
+      cs: CharSequence,
+      decIndex: Int,
+      expIndex: Int
+    ): JsonGenerator = {
+      generator.writeFieldName(cs.toString)
+      generator
+    }
+
+    override def visitTrue(): JsonGenerator = {
+      generator.writeFieldName("true")
+      generator
+    }
+
+    override def visitFalse(): JsonGenerator = {
+      generator.writeFieldName("false")
+      generator
+    }
+
+    override def visitFloat64(d: Double): JsonGenerator = {
+      generator.writeFieldName(d.toString)
+      generator
+    }
+
+    override def visitFloat32(d: Float): JsonGenerator = {
+      generator.writeFieldName(d.toString)
+      generator
+    }
+
+    override def visitUInt64(ul: Long): JsonGenerator = {
+      if (ul < 0) {
+        generator.writeFieldName(java.lang.Long.toUnsignedString(ul))
+      } else {
+        generator.writeFieldId(ul)
+      }
+      generator
+    }
+
+    override def visitFloat64String(s: String): JsonGenerator = {
+      generator.writeFieldName(s)
+      generator
+    }
+
+    override def visitTimestamp(instant: Instant): JsonGenerator = {
+      generator.writeFieldName(instant.toString)
+      generator
+    }
+
+    override def visitChar(c: Char): JsonGenerator = {
+      generator.writeFieldName(c.toString)
+      generator
+    }
+
+    override def visitBinary(
+      bytes: Array[Byte],
+      offset: Int,
+      len: Int
+    ): JsonGenerator = {
+      val arr = if (offset > 0 || len < bytes.length) {
+        bytes.slice(offset, offset + len)
+      } else {
+        bytes
+      }
+      val base64 = Base64.getEncoder.encodeToString(arr)
+      generator.writeFieldName(base64)
       generator
     }
   }
