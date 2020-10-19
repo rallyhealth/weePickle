@@ -203,7 +203,7 @@ class VisitorJsonGenerator[J](
 
   override def writeTree(rootNode: TreeNode): Unit = objectCodec.writeValue(this, rootNode)
 
-  override def getOutputContext: JsonStreamContext = throw notSupported
+  override def getOutputContext: JsonStreamContext = null
 
   override def flush(): Unit = ()
 
