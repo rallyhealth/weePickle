@@ -3,8 +3,9 @@ package com.rallyhealth.weejson.v1.jackson
 import java.io.{File, InputStream, Reader}
 import java.nio.file.Path
 
-import com.fasterxml.jackson.core.{JsonFactory, JsonParser}
-import com.rallyhealth.weepickle.v1.core.{CallbackVisitor, FromInput, Visitor, TransformException}
+import com.fasterxml.jackson.core.io.JsonEOFException
+import com.fasterxml.jackson.core.{JsonFactory, JsonParseException, JsonParser}
+import com.rallyhealth.weepickle.v1.core.{CallbackVisitor, FromInput, TransformException, Visitor}
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -50,7 +51,8 @@ class JsonFromInput(parser: JsonParser) extends FromInput {
 
   override def transform[T](to: Visitor[_, T]): T = {
     if (parser.nextToken() == null) {
-      return to.visitNull()
+      // There are no tokens at all
+      throw new JsonEOFException(parser, null, "There were no tokens to parse")
     }
 
     val builder = List.newBuilder[T]

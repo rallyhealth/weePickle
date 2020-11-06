@@ -1,7 +1,8 @@
 package com.rallyhealth.weejson.v1.jackson
 
-import java.io.StringWriter
+import java.io.{File, StringWriter}
 
+import com.fasterxml.jackson.core.io.JsonEOFException
 import com.rallyhealth.weejson.v1._
 import com.rallyhealth.weejson.v1.jackson.DefaultJsonFactory.Instance
 import org.scalactic.TypeCheckedTripleEquals
@@ -31,6 +32,15 @@ class WeeJacksonSpec
         val writer = new StringWriter()
         value.transform(JsonRenderer(Instance.createGenerator(writer)))
         writer.toString should ===(value.transform(StringRenderer()).toString)
+      }
+    }
+  }
+
+  "empty file input" - {
+    "to required" in {
+      val file = new File(getClass.getResource("/empty.json").getPath)
+      intercept[JsonEOFException] {
+        FromJson(file).transform(Value)
       }
     }
   }
