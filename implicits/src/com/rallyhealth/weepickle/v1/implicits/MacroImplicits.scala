@@ -544,12 +544,14 @@ private object MacroImplicits {
           .reduce((a, b) => q"$a || $b")
       }){
                 var i = 0
-                val keys = for{
-                  i <- 0 until ${args.length}
-                  if isMissing(i)
-                } yield i match{
-                  case ..${for (arg <- args)
-        yield cq"${arg.i} => ${arg.mapped}"}
+                val keys = while(i < ${args.length}){
+                  if(!isMissing(i)){
+                    i match{
+                      case ..${for (arg <- args)
+                  yield cq"${arg.i} => ${arg.mapped}"}
+                    }
+                  }
+                  i = i + 1
                 }
                 throw new com.rallyhealth.weepickle.v1.core.Abort(
                   "missing keys in dictionary: " + keys.mkString(", ")
