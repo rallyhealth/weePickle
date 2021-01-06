@@ -543,15 +543,9 @@ private object MacroImplicits {
           .map(i => q"${foundBitSet(i)} != ${if (i < addlBitSets || args.length > 0 && args.length % 64 == 0) -1 else (1L << args.length) - 1}")
           .reduce((a, b) => q"$a || $b")
       }){
-                var i = 0
-                val keys = while(i < ${args.length}){
-                  if(!isMissing(i)){
-                    i match{
-                      case ..${for (arg <- args)
+                val keys = (0 until ${args.length}).withFilter(!isMissing(_)).map{
+                  case ..${for (arg <- args)
                   yield cq"${arg.i} => ${arg.mapped}"}
-                    }
-                  }
-                  i = i + 1
                 }
                 throw new com.rallyhealth.weepickle.v1.core.Abort(
                   "missing keys in dictionary: " + keys.mkString(", ")
