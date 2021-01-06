@@ -543,7 +543,7 @@ private object MacroImplicits {
           .map(i => q"${foundBitSet(i)} != ${if (i < addlBitSets || args.length > 0 && args.length % 64 == 0) -1 else (1L << args.length) - 1}")
           .reduce((a, b) => q"$a || $b")
       }){
-                val keys = (0 until ${args.length}).withFilter(!isMissing(_)).map{
+                val keys = (0 until ${args.length}).withFilter(isMissing).map{
                   case ..${for (arg <- args)
                   yield cq"${arg.i} => ${arg.mapped}"}
                 }
