@@ -114,8 +114,8 @@ trait Types { types =>
   trait From[In] {
     def narrow[K] = this.asInstanceOf[From[K]]
     def transform[Out](in: In, out: Visitor[_, Out]): Out = {
-      if (in == null) out.visitNull()
-      else transform0(in, out)
+      if (in == null) throw new NullPointerException()
+      transform0(in, out)
     }
     def transform0[Out](in: In, out: Visitor[_, Out]): Out
     def comapNulls[U](f: U => In) = new From.MapFromNulls[U, In](this, f)

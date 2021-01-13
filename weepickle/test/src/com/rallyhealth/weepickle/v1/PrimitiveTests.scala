@@ -29,7 +29,7 @@ object PrimitiveTests extends TestSuite {
         FromJson("\"\\u53c9\\u70e7\\u5305\"").transform(ToScala[String]) ==> "叉烧包"
         FromJson("\"叉烧包\"").transform(ToScala[String]) ==> "叉烧包"
       }
-      test("null") - rw(null: String, "null")
+      test("null") - rwNull(null: String, "null")
       test("chars") {
         for (i <- Char.MinValue until 55296 /*Char.MaxValue*/ ) {
           rw(i.toString)
@@ -42,7 +42,7 @@ object PrimitiveTests extends TestSuite {
         com.rallyhealth.weepickle.v1.WeePickle.FromSymbol
       )
       test("unicode") - rw('叉烧包, """ "叉烧包" """)
-      test("null") - rw(null: Symbol, "null")
+      test("null") - rwNull(null: Symbol, "null")
     }
     test("Long") {
       test("small") - rw(1: Long, """ "1" """)
@@ -61,7 +61,7 @@ object PrimitiveTests extends TestSuite {
         BigInt("23420744098430230498023841234712512315423127402740234"),
         """ "23420744098430230498023841234712512315423127402740234" """
       )
-      test("null") - rw(null: BigInt, "null")
+      test("null") - rwNull(null: BigInt, "null")
       test("abuse cases") {
         test("10k digits") - parses[BigInt](s""" "1${"0" * 9999}" """)
         test("100k digits") - assertNumberFormatException[BigInt](s""" "1${"0" * 99999}" """)
@@ -75,7 +75,7 @@ object PrimitiveTests extends TestSuite {
         BigDecimal("234207440984302304980238412.15423127402740234"),
         """ "234207440984302304980238412.15423127402740234" """
       )
-      test("null") - rw(null: BigDecimal, "null")
+      test("null") - rwNull(null: BigDecimal, "null")
       test("json integer") - {
         FromJson("123").transform(ToScala[BigDecimal]) ==> BigDecimal(123)
       }

@@ -5,6 +5,8 @@ import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.{FromMsgPack, ToMsgPack}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 
+import scala.util.Try
+
 /**
   * Created by haoyi on 4/22/14.
   */
@@ -56,6 +58,15 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api) {
       val writtenBinaryStr = com.rallyhealth.weepickle.v1.core.TestUtil.bytesToString(writtenBinary)
       val rewrittenBinaryStr = com.rallyhealth.weepickle.v1.core.TestUtil.bytesToString(rewrittenBinary)
       assert(writtenBinaryStr == rewrittenBinaryStr)
+    }
+  }
+
+  def rwNull[T: api.To: api.From](t: T, s: String) = {
+    intercept[Exception] {
+      FromJson(s).transform(api.to[T])
+    }
+    intercept[Exception] {
+      api.from[T].transform(t, ToJson.string)
     }
   }
 
