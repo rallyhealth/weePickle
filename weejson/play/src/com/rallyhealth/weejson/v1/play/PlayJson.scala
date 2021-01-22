@@ -97,7 +97,7 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
   def visitString(cs: CharSequence): JsValue = JsString(cs.toString)
 
   implicit val FromJsValue: From[JsValue] = new From[JsValue] {
-    def transform0[Out](in: JsValue, out: Visitor[_, Out]): Out = PlayJson.transform(in, out)
+    def transform0[Out](in: JsValue, out: Visitor[_, Out]): Out = PlayJson.this.transform(in, out)
   }
 
   implicit val ToJsValue: To[JsValue] = new To.Delegate[JsValue, JsValue](this)
