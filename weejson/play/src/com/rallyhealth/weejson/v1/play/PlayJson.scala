@@ -13,14 +13,16 @@ import scala.jdk.CollectionConverters._
 object PlayJson extends PlayJson
 
 class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
+
   def transform[T](i: JsValue, to: Visitor[_, T]): T = i match {
-    case JsArray(xs)   => transformArray(to, xs)
-    case JsBoolean(b)  => if (b) to.visitTrue() else to.visitFalse()
-    case JsNull        => to.visitNull()
-    case JsNumber(d)   => to.visitFloat64String(d.toString)
+    case JsArray(xs) => transformArray(to, xs)
+    case JsBoolean(b) => if (b) to.visitTrue() else to.visitFalse()
+    case JsNull => to.visitNull()
+    case JsNumber(d) => to.visitFloat64String(d.toString)
     case JsObject(kvs) => transformObject(to, kvs)
-    case JsString(s)   => to.visitString(s)
+    case JsString(s) => to.visitString(s)
   }
+
   def visitArray(length: Int): ArrVisitor[JsValue, JsValue] = new AstArrVisitor[Array](JsArray(_))
 
   def visitObject(
@@ -41,7 +43,8 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
           /**
             * ordered and optimal up to size 4
-            * https://github.com/AudaxHealthInc/lib-stream-util/pull/19
+            *
+            * @see https://github.com/AudaxHealthInc/lib-stream-util/pull/19
             */
           buf.toMap
         } else if (size < 100) {
@@ -49,9 +52,9 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
           /**
             * scala.LHM is decent up to size 100, but then DoS collisions become painful.
             *
-            * https://github.com/scala/bug/issues/11203
-            * https://github.com/playframework/play-json/issues/186
-            * https://github.com/spray/spray-json/issues/277
+            * @see https://github.com/scala/bug/issues/11203
+            * @see https://github.com/playframework/play-json/issues/186
+            * @see https://github.com/spray/spray-json/issues/277
             */
           val lhm = mutable.LinkedHashMap[String, JsValue]()
           lhm.sizeHint(buf.length)
@@ -60,7 +63,8 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
           /**
             * java.LHM has the DoS mitigations, but uses most heap.
-            * https://github.com/AudaxHealthInc/lib-stream-util/pull/19
+            *
+            * @see https://github.com/AudaxHealthInc/lib-stream-util/pull/19
             */
           val jlhm = new JLinkedHashMap[String, JsValue](size).asScala
           jlhm ++= buf
@@ -69,7 +73,6 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
         new JsObject(map)
       }
     )
-
 
   def visitNull(): JsValue = JsNull
 
@@ -93,7 +96,6 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
     JsNumber(WeePickle.ToBigDecimal.visitInt64(l))
   }
 
-
   def visitString(cs: CharSequence): JsValue = JsString(cs.toString)
 
   implicit val FromJsValue: From[JsValue] = new From[JsValue] {
@@ -101,5 +103,4 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
   }
 
   implicit val ToJsValue: To[JsValue] = new To.Delegate[JsValue, JsValue](this)
-
 }
