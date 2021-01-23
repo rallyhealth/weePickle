@@ -2,12 +2,10 @@ package com.rallyhealth.weejson.v1.play
 
 import com.rallyhealth.weepickle.v1.WeePickle
 import com.rallyhealth.weepickle.v1.WeePickle._
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, StringVisitor, Visitor}
 import play.api.libs.json._
 
 import java.util.{LinkedHashMap => JLinkedHashMap}
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 
 object PlayJson extends PlayJson
@@ -28,51 +26,20 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
   def visitObject(
     length: Int
   ): ObjVisitor[JsValue, JsValue] =
-    new AstObjVisitor[ArrayBuffer[(String, JsValue)]](
-      buf => {
-        // Goals:
-        // 1. resist DoS.
-        // 2. preserve ordering like JsObject does
-        // 3. minimize heap usage.
+    new ObjVisitor[JsValue, JsValue] {
+      private[this] var key: String = null
+      private[this] val vs = new JLinkedHashMap[String, JsValue](math.max(length, 2)).asScala
 
-        // ignore length because it's probably -1 for JSON.
-        // Intermediate ArrayBuffer is slightly wasteful, but simple for determining length upfront.
-        // Future optimization: handle all this incrementally in a Factory?
-        val size = buf.size
-        val map = if (size <= 4) {
+      override def visitKey(): Visitor[_, _] = StringVisitor
 
-          /**
-            * ordered and optimal up to size 4
-            *
-            * @see https://github.com/AudaxHealthInc/lib-stream-util/pull/19
-            */
-          buf.toMap
-        } else if (size < 100) {
+      override def visitKeyValue(v: Any): Unit = key = v.toString
 
-          /**
-            * scala.LHM is decent up to size 100, but then DoS collisions become painful.
-            *
-            * @see https://github.com/scala/bug/issues/11203
-            * @see https://github.com/playframework/play-json/issues/186
-            * @see https://github.com/spray/spray-json/issues/277
-            */
-          val lhm = mutable.LinkedHashMap[String, JsValue]()
-          lhm.sizeHint(buf.length)
-          lhm ++= buf
-        } else {
+      override def subVisitor: Visitor[_, _] = PlayJson.this
 
-          /**
-            * java.LHM has the DoS mitigations, but uses most heap.
-            *
-            * @see https://github.com/AudaxHealthInc/lib-stream-util/pull/19
-            */
-          val jlhm = new JLinkedHashMap[String, JsValue](size).asScala
-          jlhm ++= buf
-          jlhm
-        }
-        new JsObject(map)
-      }
-    )
+      override def visitValue(v: JsValue): Unit = vs.put(key, v)
+
+      override def visitEnd(): JsValue = JsObject(vs)
+    }
 
   def visitNull(): JsValue = JsNull
 
