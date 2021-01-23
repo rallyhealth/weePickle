@@ -11,16 +11,14 @@ import scala.jdk.CollectionConverters._
 object PlayJson extends PlayJson
 
 class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
-
   def transform[T](i: JsValue, to: Visitor[_, T]): T = i match {
-    case JsArray(xs) => transformArray(to, xs)
-    case JsBoolean(b) => if (b) to.visitTrue() else to.visitFalse()
-    case JsNull => to.visitNull()
-    case JsNumber(d) => to.visitFloat64String(d.toString)
+    case JsArray(xs)   => transformArray(to, xs)
+    case JsBoolean(b)  => if (b) to.visitTrue() else to.visitFalse()
+    case JsNull        => to.visitNull()
+    case JsNumber(d)   => to.visitFloat64String(d.toString)
     case JsObject(kvs) => transformObject(to, kvs)
-    case JsString(s) => to.visitString(s)
+    case JsString(s)   => to.visitString(s)
   }
-
   def visitArray(length: Int): ArrVisitor[JsValue, JsValue] = new AstArrVisitor[Array](JsArray(_))
 
   def visitObject(
@@ -51,15 +49,11 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
     JsNumber(BigDecimal(cs.toString))
   }
 
-  override def visitFloat64(
-    d: Double
-  ): JsValue = {
+  override def visitFloat64(d: Double): JsValue = {
     JsNumber(WeePickle.ToBigDecimal.visitFloat64(d))
   }
 
-  override def visitInt64(
-    l: Long
-  ): JsValue = {
+  override def visitInt64(l: Long): JsValue = {
     JsNumber(WeePickle.ToBigDecimal.visitInt64(l))
   }
 
