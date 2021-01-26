@@ -78,7 +78,7 @@ class XmlTests extends FreeSpec with Matchers with Inside with TypeCheckedTriple
 
     val parsed = FromXml(ugly).transform(Value)
 
-    "correctness" - {
+    "correctness" in {
       val unparsed = parsed.transform(ToXml.string)
       val reparsed = FromXml(unparsed).transform(Value)
       for (json <- Seq(parsed, reparsed)) {
@@ -91,7 +91,7 @@ class XmlTests extends FreeSpec with Matchers with Inside with TypeCheckedTriple
       }
       assert(parsed("element18") == reparsed("element18"))
     }
-    "inputs" - {
+    "inputs" in {
       val unparsed = parsed.transform(ToXml.string)
       val fromString = FromXml(unparsed).transform(Value)
       val fromBytes = FromXml(unparsed.getBytes).transform(Value)
@@ -101,21 +101,25 @@ class XmlTests extends FreeSpec with Matchers with Inside with TypeCheckedTriple
       assert(fromBytes == fromInputStream)
     }
     "shortcuts" - {
-      "positive" - {
+      "positive" in {
         assertResult(Map("a" -> Str("1")))(readXml("<a>1</a>").obj) // everything's a string
         assertResult(1)(readXml("<a>1</a>")("a").str.toInt) // everything's a string
       }
-      "negative" - {
-        intercept[Exception] {
-          val x = readXml("1") // parses as object with nameless attribute - {"":"1"}
-          val y = x.transform(ToXml.string) // puts data in an empty tag - <root><>1</></root>
-          FromXml(y).transform(Value) // cant parse empty tag - // WstxUnexpectedCharException: Unexpected character '>' (code 62) in content after '<' (malformed start element?).
-        }
-        intercept[Exception] {
-          val x = readXml("\"1\"") // parses as object with nameless attribute - {"":"\"1\""}
-          val y = x.transform(ToXml.string) // puts data in an empty tag - <root><>"1"</></root>
-          FromXml(y).transform(Value) // cant parse empty tag - // WstxUnexpectedCharException: Unexpected character '>' (code 62) in content after '<' (malformed start element?).
-        }
+      "int" in {
+        val x = readXml("1")
+        assert(x === Str("1"))
+        val y = x.transform(ToXml.string)
+        assert(y == "<root>1</root>")
+        val v = FromXml(y).transform(Value)
+        assert(v === Str("1"))
+      }
+      "string" in {
+        val x = readXml("\"1\"") // parses as object with nameless attribute in {"":"\"1\""}
+        assert(x === Str("\"1\""))
+        val y = x.transform(ToXml.string)
+        assert(y === "<root>\"1\"</root>")
+        val v2 = FromXml(y).transform(Value)
+        assert(v2 === Str("\"1\""))
       }
     }
   }

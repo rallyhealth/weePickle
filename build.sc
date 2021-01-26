@@ -25,7 +25,7 @@ val scalaPlayVersions = Seq(
   ("2.12.12", "2.7.4"),
   ("2.13.3", "2.7.4"),
   ("2.13.3", "2.8.1"),
-  ("2.13.3", "2.9.0"),
+  ("2.13.3", "2.9.2"),
 )
 
 trait CommonModule extends ScalaModule with ScalafmtModule {
@@ -277,8 +277,8 @@ object weejson extends Module{
     def platformSegment = "jvm"
     def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = Agg(
-      ivy"org.json4s::json4s-ast:3.6.9",
-      ivy"org.json4s::json4s-native:3.6.9"
+      ivy"org.json4s::json4s-ast:3.6.10",
+      ivy"org.json4s::json4s-native:3.6.10"
     )
   }
 
@@ -315,7 +315,7 @@ object weejson extends Module{
     }
   }
 
-  val jacksonVersion = "2.11.1"
+  val jacksonVersion = "2.12.1"
   object jackson extends Cross[JacksonModule](scalaVersions:_*)
   class JacksonModule(val crossScalaVersion: String) extends CommonPublishModule {
     object test extends Tests with ScalaTestModule {
@@ -374,7 +374,7 @@ trait BenchModule extends CommonModule {
     ivy"io.circe::circe-parser::0.13.0",
     ivy"com.typesafe.play::play-json::2.7.4",
     ivy"io.argonaut::argonaut:6.2.5",
-    ivy"org.json4s::json4s-ast:3.6.9",
+    ivy"org.json4s::json4s-ast:3.6.10",
     ivy"com.lihaoyi::sourcecode::0.1.7",
   )
 }
