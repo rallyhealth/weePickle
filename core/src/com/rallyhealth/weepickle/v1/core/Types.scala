@@ -16,13 +16,7 @@ trait Types { types =>
   trait FromTo[T] extends From[T] with To[T] {
     override def narrow[K]: FromTo[K] = this.asInstanceOf[FromTo[K]]
     def bimap[In](f: In => T, g: T => In): FromTo[In] = {
-      new Visitor.MapTo[Any, T, In](FromTo.this) with FromTo[In] {
-        def transform0[Out](in: In, out: Visitor[_, Out]): Out = {
-          FromTo.this.transform(f(in.asInstanceOf[In]), out)
-        }
-
-        override def mapNonNullsFunction(t: T): In = g(t)
-      }
+      FromTo.join[In](map(g), comap(f))
     }
   }
 
@@ -285,10 +279,14 @@ trait Types { types =>
   object TaggedTo {
     class Leaf[T](override val tagName: String, tag: String, r: To[T]) extends TaggedTo[T] {
       def findTo(s: String) = if (s == tag) r else null
+      override def map[Z](f: T => Z): TaggedTo[Z] = new Leaf(tagName, tag, r.map(f))
+      override def mapNulls[Z](f: T => Z): TaggedTo[Z] = new Leaf(tagName, tag, r.mapNulls(f))
     }
     class Node[T](rs: TaggedTo[_ <: T]*) extends TaggedTo[T] {
       override val tagName: String = findTagName(rs)
       def findTo(s: String) = scanChildren(rs)(_.findTo(s)).asInstanceOf[To[T]]
+      override def map[Z](f: T => Z): TaggedTo[Z] = new Node[Z](rs.map(_.map(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def mapNulls[Z](f: T => Z): TaggedTo[Z] = new Node(rs.map(_.mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
     }
   }
 
@@ -297,7 +295,6 @@ trait Types { types =>
     override def transform0[Out](in: In, out: Visitor[_, Out]): Out = {
       val (tag, w) = findFrom(in)
       taggedWrite(w, tagName, tag, out, in)
-
     }
   }
   object TaggedFrom {
