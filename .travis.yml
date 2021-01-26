@@ -1,6 +1,0 @@
-sudo: false
-language: scala
-
-script:
-- ./mill -i __.test
-- ./mill -i __.docJar
