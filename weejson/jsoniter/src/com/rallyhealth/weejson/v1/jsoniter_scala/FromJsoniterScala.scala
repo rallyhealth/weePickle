@@ -3,26 +3,33 @@ package com.rallyhealth.weejson.v1.jsoniter_scala
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import com.rallyhealth.weepickle.v1.core.{FromInput, ObjArrVisitor, RootArrVisitor, Visitor}
 
+import java.io.InputStream
+import java.nio.ByteBuffer
+
 /**
   * @see https://github.com/plokhotnyuk/jsoniter-scala
   */
 object FromJsoniterScala {
 
   def apply(s: Array[Byte]): FromInput = new FromInput {
-    override def transform[T](to: Visitor[_, T]): T = readFromArray(s)(codec(to))
+    override def transform[T](to: Visitor[_, T]): T = readFromArray(s)(readerCodec(to))
   }
 
-  def apply(s: String): FromInput = new FromInput {
-    override def transform[T](to: Visitor[_, T]): T = readFromString(s)(codec(to))
+  def apply(in: InputStream): FromInput = new FromInput {
+    override def transform[T](to: Visitor[_, T]): T = readFromStream(in)(readerCodec(to))
   }
 
-  implicit def codec[J](v: Visitor[_, J]): JsonValueCodec[J] = new JsonValueCodec[J] {
+  def apply(buf: ByteBuffer): FromInput = new FromInput {
+    override def transform[T](to: Visitor[_, T]): T = readFromByteBuffer(buf)(readerCodec(to))
+  }
+
+  private def readerCodec[J](v: Visitor[_, J]): JsonValueCodec[J] = new JsonValueCodec[J] {
 
     override def decodeValue(in: JsonReader, default: J): J = {
       decodeValue(in, default, new RootArrVisitor(v) :: Nil)
     }
 
-    def decodeValue(in: JsonReader, default: J, stack: List[ObjArrVisitor[Any, _]]): J = {
+    private def decodeValue(in: JsonReader, default: J, stack: List[ObjArrVisitor[Any, _]]): J = {
       def facade: Visitor[_, J] = stack.head.subVisitor.asInstanceOf[Visitor[_, J]]
 
       val b = in.nextToken()
@@ -69,12 +76,7 @@ object FromJsoniterScala {
     override val nullValue: J = v.visitNull()
 
     override def encodeValue(x: J, out: JsonWriter): Unit = {
-      /**
-        * TODO
-        * For refrerence:
-        * @see https://github.com/plokhotnyuk/jsoniter-scala/pull/122/files#diff-ab5c009ed51da2b9de550d1d09a67260R73
-        */
-      ???
+      throw new UnsupportedOperationException("only supports decoding")
     }
   }
 }

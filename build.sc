@@ -297,7 +297,7 @@ object weejson extends Module{
     def platformSegment = "jvm"
     def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = T{
-      Agg(ivy"com.github.plokhotnyuk.jsoniter-scala::jsoniter-scala-core:2.6.0")
+      Agg(ivy"com.github.plokhotnyuk.jsoniter-scala::jsoniter-scala-core:2.6.2")
     }
   }
 
@@ -307,7 +307,7 @@ object weejson extends Module{
     def platformSegment = "jvm"
     def moduleDeps = Seq(weejson.jvm())
     def ivyDeps = T{
-      Agg(ivy"com.github.pathikrit::dijon:0.3.0")
+      Agg(ivy"me.vican.jorge::dijon:0.4.0")
     }
 
     override def scalacOptions = T{
