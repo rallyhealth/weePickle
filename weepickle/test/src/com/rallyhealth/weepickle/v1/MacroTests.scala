@@ -5,6 +5,7 @@ import utest._
 import com.rallyhealth.weepickle.v1.TestUtil._
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import com.rallyhealth.weepickle.v1.core.MutableCharSequenceVisitor
+import com.rallyhealth.weepickle.v1.implicits.key
 
 object Custom {
   trait ThingBase {
@@ -54,6 +55,16 @@ object TypedFoo {
   case class Quz(b: Boolean) extends TypedFoo
 }
 // End TypedFoo
+
+sealed trait Pony
+@key("twi") case class Twilight() extends Pony
+object Twilight {
+  implicit val fromTwi = WeePickle.macroFrom[Twilight] // supporting comap requires breaking changes.
+  implicit val toTwi = WeePickle.macroTo[Twilight].map(identity)
+}
+object Pony {
+  implicit val pickler = WeePickle.macroFromTo[Pony]
+}
 
 object MacroTests extends TestSuite {
 
@@ -298,6 +309,10 @@ object MacroTests extends TestSuite {
       assert(FromJson(written64).transform(ToScala[Big64]) == b64)
       val written65 = FromScala(b65).transform(ToJson.string)
       assert(FromJson(written65).transform(ToScala[Big65]) == b65)
+    }
+
+    test("map") {
+      rw[Pony](Twilight(), """{"$type": "twi"}""")
     }
   }
 }
