@@ -18,7 +18,7 @@ import mill.scalalib.publish.Artifact
 import os.Path
 
 
-val scalaVersions = Seq("2.11.12", "2.12.12", "2.13.3")
+val scalaVersions = Seq("2.11.12", "2.12.12", "2.13.4")
 val scalaPlayVersions = Seq(
   ("2.11.12", "2.5.19"),
   ("2.11.12", "2.7.4"),
