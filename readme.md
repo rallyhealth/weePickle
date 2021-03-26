@@ -316,7 +316,7 @@ GeneratorBench.smile           thrpt   15  306.462 ±  3.134  ops/s
 
 ## Limitations
 - ScalaJS is not supported (jackson-core is java-only)
-- Same macro limitations as [uPickle](http://www.lihaoyi.com/upickle/#Limitations)
+- Same macro limitations as [uPickle](https://com-lihaoyi.github.io/upickle/#Limitations)
 - XML support is still rudimentary and contributions are welcome.
 
 ## Developing
