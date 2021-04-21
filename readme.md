@@ -56,7 +56,20 @@ FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 ```
 
 Files & YAML:
+#### sbt
 ```scala
+resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
+libraryDependencies ++= Seq(
+  "com.rallyhealth" %% "weepickle-v1" % "version",
+  "com.rallyhealth" %% "weeyaml-v1" % "version"
+)
+```
+```scala
+import com.rallyhealth.weejson.v1.yaml.{FromYaml, ToYaml}
+import com.rallyhealth.weejson.v1.jackson.FromJson
+import java.nio.file.Files
+import java.nio.file.Paths
+
 val jsonFile = Files.newInputStream(Paths.get("file.json"))
 val yamlFile = Files.newOutputStream(Paths.get("file.yml"))
 
