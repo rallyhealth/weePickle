@@ -1,6 +1,6 @@
 # weePickle [![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle) [![sbt instructions](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg)](#sbt)
 
-A *stable* JSON, YAML, MsgPack, XML, etc. serialization framework based on [uPickle](https://lihaoyi.github.io/upickle).
+A *stable* JSON, YAML, MsgPack, XML, etc. serialization framework based on [uPickle](https://com-lihaoyi.github.io/upickle/).
 
 ## We're tired of dependency hell!
 weePickle exists to fulfill two promises:
