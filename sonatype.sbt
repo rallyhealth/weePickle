@@ -2,7 +2,6 @@
 sonatypeProfileName := "com.rallyhealth"
 
 // publish to Maven Central
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / publishTo := sonatypePublishToBundle.value
 
 // add SNAPSHOT to non-release versions so they are not published to the main repo
