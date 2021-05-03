@@ -65,9 +65,10 @@ object WeePicklePlugin extends AutoPlugin {
       acyclic.value % "provided"
     ),
     mimaPreviousArtifacts ++= {
-      previousStableVersion.value
-        .map(organization.value %% moduleName.value % _.toString)
-        .toSet
+//      previousStableVersion.value
+//        .map(organization.value %% moduleName.value % _.toString)
+//        .toSet
+      Set.empty
     },
     moduleName := s"${moduleName.value}-v${version.value.split('.').head}",
     scalacOptions ++= {
