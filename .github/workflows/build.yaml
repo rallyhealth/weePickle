@@ -19,4 +19,4 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: 'Compile, test, and check binary compatibility'
-        run: "sbt clean +test +mimaReportBinaryIssues"
+        run: "sbt clean +compile +test +mimaReportBinaryIssues"
