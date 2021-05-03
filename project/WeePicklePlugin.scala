@@ -1,4 +1,4 @@
-import com.typesafe.tools.mima.plugin.MimaKeys.mimaPreviousArtifacts
+import com.typesafe.tools.mima.plugin.MimaKeys.{mimaFailOnNoPrevious, mimaPreviousArtifacts}
 import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin
@@ -64,6 +64,7 @@ object WeePicklePlugin extends AutoPlugin {
       compilerPlugin(acyclic.value),
       acyclic.value % "provided"
     ),
+    mimaFailOnNoPrevious := false, // bintray is gone.
     mimaPreviousArtifacts ++= {
 //      previousStableVersion.value
 //        .map(organization.value %% moduleName.value % _.toString)
