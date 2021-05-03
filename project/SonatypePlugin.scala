@@ -1,5 +1,5 @@
 import sbt.Keys.publishTo
-import sbt.{AutoPlugin, Def}
+import sbt.{AutoPlugin, Def, Plugins}
 import sbtdynver.DynVerPlugin.autoImport.{dynverSeparator, dynverSonatypeSnapshots}
 import xerial.sbt.Sonatype
 import xerial.sbt.Sonatype.GitHubHosting
@@ -16,7 +16,7 @@ object SonatypePlugin extends AutoPlugin {
 
   override def trigger = allRequirements
 
-  override def requires = Sonatype
+  override def requires: Plugins = Sonatype
 
   override def buildSettings: Seq[Def.Setting[_]] = Seq(
     // Use '-' instead of '+' for simpler snapshot URLs
