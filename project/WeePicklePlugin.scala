@@ -3,7 +3,6 @@ import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin
 import sbtdynver.DynVerPlugin.autoImport.previousStableVersion
-import xerial.sbt.Sonatype.autoImport.sonatypeCredentialHost
 
 object WeePicklePlugin extends AutoPlugin {
 
@@ -55,7 +54,6 @@ object WeePicklePlugin extends AutoPlugin {
   )
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
     acyclic := "com.lihaoyi" %% "acyclic" % (if (scalaBinaryVersion.value == "2.11") "0.1.8" else "0.2.0"),
     autoCompilerPlugins := true,
     crossScalaVersions := autoImport.supportedScalaVersions,
