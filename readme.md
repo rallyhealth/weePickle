@@ -1,4 +1,4 @@
-# weePickle [![Build Status](https://travis-ci.org/rallyhealth/weePickle.svg)](https://travis-ci.org/rallyhealth/weePickle) [![sbt instructions](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg)](#sbt)
+# weePickle ![version](https://img.shields.io/github/v/release/rallyhealth/weepickle)
 
 A *stable* JSON, YAML, MsgPack, XML, etc. serialization framework based on [uPickle](https://com-lihaoyi.github.io/upickle/).
 
