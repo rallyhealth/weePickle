@@ -73,7 +73,7 @@ lazy val `weepickle-implicits` = project
       }
       """
 
-      val file = (Compile / sourceManaged).value / pkg.replaceAllLiterally(".", "/") / "Generated.scala"
+      val file = pkg.split('.').foldLeft((Compile / sourceManaged).value)(_ / _) / "Generated.scala"
       IO.write(file, contents)
       Seq(file)
     }
