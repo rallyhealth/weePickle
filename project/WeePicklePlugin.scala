@@ -1,4 +1,4 @@
-import com.typesafe.tools.mima.plugin.MimaKeys.{mimaFailOnNoPrevious, mimaPreviousArtifacts}
+import com.typesafe.tools.mima.plugin.MimaKeys.{mimaPreviousArtifacts, mimaReportBinaryIssues}
 import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin
@@ -64,12 +64,14 @@ object WeePicklePlugin extends AutoPlugin {
       compilerPlugin(acyclic.value),
       acyclic.value % "provided"
     ),
-    mimaFailOnNoPrevious := false, // bintray is gone.
     mimaPreviousArtifacts ++= {
-//      previousStableVersion.value
-//        .map(organization.value %% moduleName.value % _.toString)
-//        .toSet
-      Set.empty
+      previousStableVersion.value
+        .map(organization.value %% moduleName.value % _)
+        .toSet
+    },
+    (Test / test) := {
+      mimaReportBinaryIssues.value
+      (Test / test).value
     },
     moduleName := s"${moduleName.value}-v${version.value.split('.').head}",
     scalacOptions ++= {
