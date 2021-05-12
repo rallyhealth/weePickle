@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 100
       - name: 'Fetch tags'
-        run: 'git fetch --depth=100 origin +refs/tags/*:refs/tags/*'
+        run: 'git fetch --depth=100 origin +refs/tags/*:refs/tags/* && git tag'
       - uses: 'coursier/cache-action@v5'
       - uses: 'olafurpg/setup-scala@v10'
         with:
