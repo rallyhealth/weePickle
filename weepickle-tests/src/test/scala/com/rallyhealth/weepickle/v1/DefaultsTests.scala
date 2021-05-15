@@ -2,6 +2,7 @@ package com.rallyhealth.weepickle.v1
 
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
+import com.rallyhealth.weepickle.v1.core.FromInput
 import com.rallyhealth.weepickle.v1.implicits.dropDefault
 import utest._
 
@@ -111,3 +112,27 @@ object OptionTopDropDefaultTests extends TestSuite {
   }
 }
 
+// Exercises com.rallyhealth.weepickle.v1.LowPriorityImplicits.FromFromInput
+object FromInputStringTests extends TestSuite {
+
+  case class A(d: String)
+  implicit val pickler = WeePickle.macroFromTo[A]
+
+  override val tests: Tests = Tests {
+    test("write default FromInput")(
+      {
+        val fromInput: FromInput = FromScala(A(null))
+        FromScala(fromInput).transform(ToJson.string)
+      } ==> """{"d":null}""")
+    test("write non-default FromInput")(
+      {
+        val fromInput: FromInput = FromScala(A("omg"))
+        FromScala(fromInput).transform(ToJson.string)
+      } ==> """{"d":"omg"}""")
+    test("write null FromInput")(
+      {
+        val fromInput: FromInput = FromScala(A(null))
+        FromScala(fromInput).transform(ToJson.string)
+      } ==> """{"d":null}""")
+  }
+}

@@ -1,10 +1,16 @@
 package com.rallyhealth.weepickle.v1
 
+import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
+
 import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class LowPriorityImplicits
   extends AttributeTagged {
+
+  implicit val FromFromInput = new From[FromInput] {
+    override def transform0[Out](in: FromInput, out: Visitor[_, Out]): Out = in.transform(out)
+  }
 
   implicit val FromZonedDateTime: From[ZonedDateTime] = FromString.comap[ZonedDateTime](_.toString)
   implicit val ToZonedDateTime: To[ZonedDateTime] = new MapStringTo(s => ZonedDateTime.parse(s.toString))
