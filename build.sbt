@@ -6,8 +6,6 @@ name := "weePickle-root"
 noPublish
 crossScalaVersions := Nil // crossScalaVersions must be set to Nil on the aggregating project
 
-ThisBuild / resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven" // mima only
-
 lazy val bench = project
   .dependsOn(`weepickle-tests` % "compile;test")
   .enablePlugins(JmhPlugin)
