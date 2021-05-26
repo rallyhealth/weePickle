@@ -22,7 +22,7 @@ abstract class LowPriorityImplicits
     var lastVset: E#ValueSet = null
 
     ToString.map { s =>
-      val vset = e.values // exploit that e.values returns a cached instance unless changed
+      val vset = e.values // exploit that e.values returns a cached instance unless new values are added
       if (vset ne lastVset) {
         // add any new values since last time
         vset.foreach(v => cache.put(v.toString, v))
