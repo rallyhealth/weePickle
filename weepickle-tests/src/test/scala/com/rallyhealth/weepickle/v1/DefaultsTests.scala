@@ -63,11 +63,11 @@ object StringTests extends TestSuite {
   implicit val pickler = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
-    test("write default")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
+    test("write default")(FromScala(A("")).transform(ToJson.string) ==> """{"d":""}""")
     test("write non-default")(FromScala(A("omg")).transform(ToJson.string) ==> """{"d":"omg"}""")
-    test("write null")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
+    test("write null")(intercept[Exception](FromScala(A(null)).transform(ToJson.string)))
     test("read missing")(intercept[Exception](FromJson("{}").transform(ToScala[A])))
-    test("read null")(FromJson("""{"d":null}""").transform(ToScala[A]) ==> A(null))
+    test("read null")(intercept[Exception](FromJson("""{"d":null}""").transform(ToScala[A])))
   }
 }
 object StringTopDropDefaultTests extends TestSuite {
