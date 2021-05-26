@@ -38,7 +38,7 @@ abstract class LowPriorityImplicits
   }
 
   private def fromEnumerationName[E <: scala.Enumeration](e: E): From[E#Value] = {
-    val cache = new ConcurrentHashMap[E#Value, String].asScala // mitigate withName() slowness.
+    val cache = new ConcurrentHashMap[E#Value, String].asScala // mitigate toString() slowness.
     FromString.comap(v => cache.getOrElseUpdate(v, v.toString))
   }
 
