@@ -4,11 +4,13 @@ import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 
 import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentHashMap
+import scala.jdk.CollectionConverters._
+import scala.util.control.NoStackTrace
 
 abstract class LowPriorityImplicits
   extends AttributeTagged {
 
-  implicit val FromFromInput = new From[FromInput] {
+  implicit val FromFromInput: From[FromInput] = new From[FromInput] {
     override def transform0[Out](in: FromInput, out: Visitor[_, Out]): Out = in.transform(out)
   }
 
@@ -17,19 +19,27 @@ abstract class LowPriorityImplicits
 
   private def toEnumerationName[E <: scala.Enumeration](e: E): To[E#Value] = {
     val cache = new ConcurrentHashMap[String, E#Value] // mitigate withName() slowness.
+    var lastVset: E#ValueSet = null
 
     ToString.map { s =>
-      var enum = cache.get(s) // 68x faster than withName()
+      val vset = e.values // exploit that e.values returns a cached instance unless changed
+      if (vset ne lastVset) {
+        // add any new values since last time
+        vset.foreach(v => cache.put(v.toString, v))
+        lastVset = vset
+      }
+
+      val enum = cache.get(s) // 68x faster than withName()
       if (enum eq null) {
-        enum = e.withName(s) // slow! throws on miss.
-        cache.put(s, enum)
+        throw new NoSuchElementException(s"'$s' is not a valid value of $e") with NoStackTrace
       }
       enum
     }
   }
 
   private def fromEnumerationName[E <: scala.Enumeration](e: E): From[E#Value] = {
-    FromString.comap(_.toString)
+    val cache = new ConcurrentHashMap[E#Value, String].asScala // mitigate withName() slowness.
+    FromString.comap(v => cache.getOrElseUpdate(v, v.toString))
   }
 
   def fromToEnumerationName[E <: scala.Enumeration](e: E): FromTo[E#Value] = {
