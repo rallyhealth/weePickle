@@ -20,14 +20,14 @@ object FastSuit extends Enumeration {
 
 /**
   * ==Run with==
-  * mill bench.jvm.runJmh FastEnumBench
+  * bench / Jmh / run .*FastEnumBench
   *
   * java 8:
   * {{{
-  * Benchmark             Mode  Cnt     Score    Error  Units
-  * FastEnumBench.from    avgt    3     9.455 ±  2.638  ns/op
-  * FastEnumBench.toHit   avgt    3     7.935 ±  0.641  ns/op
-  * FastEnumBench.toMiss  avgt    3  1780.004 ± 91.908  ns/op
+  * [info] Benchmark             Mode  Cnt    Score    Error  Units
+  * [info] FastEnumBench.from    avgt    3   12.936 ±  1.386  ns/op
+  * [info] FastEnumBench.toHit   avgt    3   10.402 ±  3.830  ns/op
+  * [info] FastEnumBench.toMiss  avgt    3  441.950 ± 72.002  ns/op
   * }}}
   */
 class FastEnumBench extends EnumBench(FastSuit.Diamonds)
@@ -46,14 +46,14 @@ object SlowSuit extends Enumeration {
 
 /**
   * ==Run with==
-  * * mill bench.jvm.runJmh SlowEnumBench
+  * bench / Jmh / run .*SlowEnumBench
   *
   * java 8:
   * {{{
-  * Benchmark             Mode  Cnt     Score    Error  Units
-  * SlowEnumBench.from    avgt    3    93.727 ±  6.155  ns/op
-  * SlowEnumBench.toHit   avgt    3     7.693 ±  0.864  ns/op
-  * SlowEnumBench.toMiss  avgt    3  1830.540 ± 10.293  ns/op
+  * [info] Benchmark             Mode  Cnt    Score    Error  Units
+  * [info] SlowEnumBench.from    avgt    3   12.764 ±  0.808  ns/op
+  * [info] SlowEnumBench.toHit   avgt    3   10.262 ±  6.775  ns/op
+  * [info] SlowEnumBench.toMiss  avgt    3  421.431 ± 34.023  ns/op
   * }}}
   */
 class SlowEnumBench extends EnumBench(SlowSuit.Diamonds)
