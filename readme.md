@@ -262,7 +262,7 @@ Internally, jackson-core uses buffer pooling to achieve some of its performance.
 `FromJson` doesn't trust you and calls `close()` automatically after writing a single [json text](https://tools.ietf.org/html/rfc7159#section-2), which covers the vast majority of use cases. If you're working with multiple json texts separated by whitespace, jackson can handle it, but you have to drop down below the high level API and remember to close the parser/generator yourself.
 
 ## Value AST
-WeePickle includes its own AST named `Value`, largely unchanged from the upstream [uJson](http://www.lihaoyi.com/upickle/#uJson).
+WeePickle includes its own AST named `Value`, largely unchanged from the upstream [uJson](https://com-lihaoyi.github.io/upickle/#uJson).
 
 ```scala
 val obj = Obj(
@@ -289,11 +289,11 @@ FromJson("""{"foo":[42,"omg",true]}""").transform(Value) ==> obj
 ```
 
 See:
-- http://www.lihaoyi.com/upickle/#uJson
+- https://com-lihaoyi.github.io/upickle/#uJson
 - http://www.lihaoyi.com/post/uJsonfastflexibleandintuitiveJSONforScala.html
 
 ## MessagePack
-weePack is weePickle's [MessagePack](https://msgpack.org/index.html) implementation, largely unchanged from the upstream [uPack](http://www.lihaoyi.com/upickle/#uPack).
+weePack is weePickle's [MessagePack](https://msgpack.org/index.html) implementation, largely unchanged from the upstream [uPack](https://com-lihaoyi.github.io/upickle/#uPack).
 
 ### sbt
 ```scala

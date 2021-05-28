@@ -16,7 +16,7 @@ case class Dflt(i: Int = 0)
 
 play-json always writes a `"key":"value"` pair regardless of whether it's the case class default value or not.
 
-weepickle works [differently](http://www.lihaoyi.com/upickle/#Defaults). If a field is missing upon deserialization, weepickle uses the default value if one exists. If a field at serialization time has the same value as the default, weepickle leaves it out of the serialized blob.
+weepickle works [differently](https://com-lihaoyi.github.io/upickle/#Defaults). If a field is missing upon deserialization, weepickle uses the default value if one exists. If a field at serialization time has the same value as the default, weepickle leaves it out of the serialized blob.
 
 OpenAPI 3 [has support](https://swagger.io/specification/#schemaObject) for dropping defaults:
 

@@ -218,7 +218,7 @@ private object MacroImplicits {
           s"The referenced trait [[${clsSymbol.name}]] does not have any sub-classes. This may " +
             "happen due to a limitation of scalac (SI-7046). To work around this, " +
             "try manually specifying the sealed trait picklers as described in " +
-            "http://www.lihaoyi.com/upickle/#ManualSealedTraitPicklers"
+            "https://com-lihaoyi.github.io/upickle/#ManualSealedTraitPicklers"
         fail(tpe, msg)
       } else {
         val subTypes = fleshedOutSubtypes(tpe).toSeq
