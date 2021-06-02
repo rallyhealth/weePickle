@@ -63,11 +63,9 @@ object StringTests extends TestSuite {
   implicit val pickler = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
-    test("write default")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
     test("write non-default")(FromScala(A("omg")).transform(ToJson.string) ==> """{"d":"omg"}""")
-    test("write null")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
     test("read missing")(intercept[Exception](FromJson("{}").transform(ToScala[A])))
-    test("read null")(FromJson("""{"d":null}""").transform(ToScala[A]) ==> A(null))
+    test("read null")(intercept[Exception](FromJson("""{"d":null}""").transform(ToScala[A])))
   }
 }
 object StringTopDropDefaultTests extends TestSuite {
@@ -77,9 +75,8 @@ object StringTopDropDefaultTests extends TestSuite {
 
   override val tests: Tests = Tests {
     test("write non-default")(FromScala(A("omg")).transform(ToJson.string) ==> """{"d":"omg"}""")
-    test("write null")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
     test("read missing")(intercept[Exception](FromJson("{}").transform(ToScala[A])))
-    test("read null")(FromJson("""{"d":null}""").transform(ToScala[A]) ==> A(null))
+    test("read null")(intercept[Exception](FromJson("""{"d":null}""").transform(ToScala[A])))
   }
 }
 
@@ -91,10 +88,9 @@ object DefaultStringTopDropDefaultTests extends TestSuite {
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{}""")
     test("write non-default")(FromScala(A("omg")).transform(ToJson.string) ==> """{"d":"omg"}""")
-    test("write null")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
     test("read missing")(FromJson("""{}""").transform(ToScala[A]) ==> A("lol"))
     test("read present")(FromJson("""{"d":"omg"}""").transform(ToScala[A]) ==> A("omg"))
-    test("read null")(FromJson("""{"d":null}""").transform(ToScala[A]) ==> A(null))
+    test("read null")(intercept[Exception](FromJson("""{"d":null}""").transform(ToScala[A])))
   }
 }
 
@@ -106,7 +102,7 @@ object OptionTopDropDefaultTests extends TestSuite {
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{}""")
     test("write non-default")(FromScala(A(Some("omg"))).transform(ToJson.string) ==> """{"d":"omg"}""")
-    test("write null")(FromScala(A(null)).transform(ToJson.string) ==> """{"d":null}""")
+    test("write empty")(FromScala(A(None)).transform(ToJson.string) ==> """{}""")
     test("read missing")(FromJson("{}").transform(ToScala[A]) ==> A(None))
     test("read null")(FromJson("""{"d":null}""").transform(ToScala[A]) ==> A(None))
   }

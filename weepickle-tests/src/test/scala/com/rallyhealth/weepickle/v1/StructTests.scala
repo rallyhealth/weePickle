@@ -28,12 +28,12 @@ object StructTests extends TestSuite {
       test("Boolean") - rwk(Array(true, false), "[true,false]")(_.toSeq)
       test("Int") - rwk(Array(1, 2, 3, 4, 5), "[1,2,3,4,5]")(_.toSeq)
       test("String") - rwk(Array("omg", "i am", "cow"), """["omg","i am","cow"]""")(_.toSeq)
-      test("Nulls") - rwk(Array(null, "i am", null), """[null,"i am",null]""")(_.toSeq)
+      test("Nulls") - rwNull(Array(null, "i am", null), """[null,"i am",null]""")
 
     }
 
     test("tuples") {
-      test("null") - rw(null: Tuple2[Int, Int], "null")
+      test("null") - rwNull(null: Tuple2[Int, Int], "null")
       "2" - rw((1, 2, 3.0), "[1,2,3.0]", "[1,2,3]")
       "2-1" - rw((false, 1), "[false,1]")
       "3" - rw(("omg", 1, "bbq"), """["omg",1,"bbq"]""")
