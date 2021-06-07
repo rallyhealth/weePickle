@@ -293,19 +293,15 @@ See:
 - http://www.lihaoyi.com/post/uJsonfastflexibleandintuitiveJSONforScala.html
 
 ## Null Handling
+
 In JSON, `null` ["represents the intentional absence of any object value"](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null).
 This value is regularly used and must be supported.
 Scala also has a `null` value, but the usage is strongly discouraged, in part because it subverts the type system
 For example,
-```bash
-@ case class User(name: String)
-defined class User
-
-@ val user = User(null)
-user: User = User(null)
-
-@ user.name
-res6: String = null
+```scala
+case class User(name: String)
+val user = User(null)
+user.name // value is null
 ```
 The more equivalent value in Scala is `None`.
 Therefore, to support reading in JSON `nulls`, set the type to `Option`.
