@@ -62,8 +62,8 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api) {
   def rwNull[T: api.To: api.From](t: T, s: String) = {
     intercept[Exception] {
       FromJson(s).transform(api.to[T])
-      api.from[T].transform(t, ToJson.string)
     }
+    api.from[T].transform(t, ToJson.string)
   }
 
   def roundTripMsgPack[T: WeePickle.From: WeePickle.To](in: T) = {
