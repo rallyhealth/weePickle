@@ -78,11 +78,11 @@ FromJson(jsonFile).transform(ToYaml.outputStream(yamlFile))
 
 Case Classes:
 ```scala
-import com.rallyhealth.weepickle.v1.WeePickle
+import com.rallyhealth.weepickle.v1.WeePickle.{macroFromTo, FromTo}
 case class Foo(i: Int)
 
 object Foo {
-  implicit val rw = WeePickle.macroFromTo[Foo]
+  implicit val rw: FromTo[Foo] = macroFromTo
 }
 
 FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
@@ -148,7 +148,7 @@ FromScala(Dflt2(42, 43, 0)).transform(ToJson.string)        ==> """{"k": 0}"""
 ```scala
 case class Maybe1(i: Option[Int])
 object Maybe1 {
-  implicit val rw = WeePickle.macroFromTo[Maybe1]
+  implicit val rw: FromTo[Maybe1] = macroFromTo
 }
 
 FromScala(Maybe1(Some(42))).transform(ToJson.string) ==> """{"i":42}"""
@@ -185,7 +185,7 @@ weePickle allows you to specify the key with which a field is serialized via a `
 ```scala
 case class KeyBar(@key("hehehe") kekeke: Int)
 object KeyBar{
-  implicit val rw = WeePickle.macroFromTo[KeyBar]
+  implicit val rw: FromTo[KeyBar] = macroFromTo
 }
 
 FromScala(KeyBar(10)).transform(ToJson.string)             ==> """{"hehehe":10}"""
@@ -201,14 +201,14 @@ case class Success(value: Int) extends Outcome
 case class DeferredVictory(excuses: Seq[String]) extends Outcome
 
 object Success {
-  implicit val rw = WeePickle.macroFromTo[Success]
+  implicit val rw: FromTo[Success] = macroFromTo
 }
 object DeferredVictory {
-  implicit val rw = WeePickle.macroFromTo[DeferredVictory]
+  implicit val rw: FromTo[DeferredVictory] = macroFromTo
 }
 // order matters: the trait's companion object must come at the end for implicit resolution to work
 object Outcome {
-  implicit val rw = WeePickle.macroFromTo[Outcome]
+  implicit val rw: FromTo[Outcome] = macroFromTo
 }
 
 FromScala(DeferredVictory(Seq("My json AST is too slow."))).transform(ToJson.string))  ==>
