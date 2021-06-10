@@ -52,7 +52,7 @@ object Api {
       * Transforms object keys.
       * e.g. {"food_group": "vegetable"} => {"FoodGroup": "vegetable"}
       *
-      * @see http://www.lihaoyi.com/upickle/#CustomConfiguration
+      * @see https://com-lihaoyi.github.io/upickle/#CustomConfiguration
       */
     def objectAttributeKeyReadMap(s: CharSequence): CharSequence = s
     def objectAttributeKeyWriteMap(s: CharSequence): CharSequence = s
@@ -63,7 +63,7 @@ object Api {
       *    {"\$type": "com.rallyhealth.Bee"} => {"\$type": "com-rallyhealth-bee"}
       * }}}
       *
-      * @see http://www.lihaoyi.com/upickle/#CustomConfiguration
+      * @see https://com-lihaoyi.github.io/upickle/#CustomConfiguration
       */
     def objectTypeKeyReadMap(s: CharSequence): CharSequence = s
     def objectTypeKeyWriteMap(s: CharSequence): CharSequence = s
