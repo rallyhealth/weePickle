@@ -4,4 +4,4 @@ out/
 .idea
 .DS_Store
 # cloning the repo generates an IDE specific file, `.bsp/.sbt.json`. (https://users.scala-lang.org/t/solved-should-i-add-bsp-directory-in-gitignore/6921)
-.bsp%
+.bsp
