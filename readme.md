@@ -115,81 +115,184 @@ Case classes are serialized using the `apply` and `unapply` methods on their com
 Anything else is not supported by default, but you can add support using Custom Picklers.
 
 ## Defaults
-If a field is missing upon deserialization, weePickle uses the default value if one exists.
+If a field is missing upon **deserialization**, weePickle uses the default value if one exists:
 
 ```scala
 case class Dflt(i: Int = 42)
-
-FromJson("""{}""").transform(ToScala[Dflt])          ==> Dflt(42)
-FromJson("""{"i": 999}""").transform(ToScala[Dflt])  ==> Dflt(999)
-```
-
-If a field at serialization time has the same value as the default, it will be written unless annotated with `@dropDefault`.
-
-```scala
-FromScala(Dflt(42)).transform(ToJson.string)         ==> """{"i": 42}"""
-```
-
-```scala
-case class Dflt2(@dropDefault i: Int = 42)
-FromScala(Dflt2(42)).transform(ToJson.string)        ==> """{}"""
-```
-
-If a class is annotated with `@dropDefault`, all fields with default values will not be written.
-
-```scala
-@dropDefault case class Dflt3(i: Int = 42, j: Int = 43, k: Int = 45)
-FromScala(Dflt2(42, 43, 0)).transform(ToJson.string)        ==> """{"k": 0}"""
-```
-
-## Options
-`Option[T]` is unwrapped when the Option is `Some` ([rationale](differences.md#options)):
-
-```scala
-case class Maybe1(i: Option[Int])
-object Maybe1 {
-  implicit val rw: FromTo[Maybe1] = macroFromTo
+object Dflt {
+  implicit val rw: FromTo[Dflt] = macroFromTo
 }
 
-FromScala(Maybe1(Some(42))).transform(ToJson.string) ==> """{"i":42}"""
-FromJson("""{"i":42}""").transform(ToScala[Maybe1])  ==> Maybe1(Some(42))
+FromJson("""{}""").transform(ToScala[Dflt])            ==> Dflt(42)
+FromJson("""{"i": null}""").transform(ToScala[Dflt])   ==> Dflt(42)
+FromJson("""{"i": 999}""").transform(ToScala[Dflt])    ==> Dflt(999)
 ```
 
-`None` is translated as `null` ([rationale](differences.md#re-null)):
+If a field at **serialization** time has the same value as the default, it will be written unless annotated with `@dropDefault`:
 
 ```scala
-FromScala(Maybe1(None)).transform(ToJson.string) ==> """{"i":null}"""
-FromJson("""{"i":null}""").transform(ToScala[Maybe1]) ==> Maybe1(None)
-FromJson("""{}""").transform(ToScala[Maybe1]) ==> Maybe1(None)
+FromScala(Dflt(42)).transform(ToJson.string)    ==> """{"i": 42}"""
+FromScala(Dflt(999)).transform(ToJson.string)   ==> """{"i": 999}"""
 ```
 
-If you want to suppress the field entirely on `None`, you can use [Defaults](#Defaults).
-```scala
-case class Maybe2(@dropDefault i: Option[Int] = None)
+### using `@dropDefault`
 
-FromScala(Maybe2(None)).transform(ToJson.string)     ==> """{}"""
-```
-
-But `Option` types are a special case where `None` is an assumed default if a default is not provided explicitly.
-So putting `@dropDefault` at the class level will apply to all `Option` types in the class, whether a default is provided explicitly or not.
+When **serializing**, any field annotated `@dropDefault` and a value equal to their default will be dropped from the JSON:
 
 ```scala
-@dropDefault case class Maybe3(i: Option[Int], j: Option[Int], k: Option[Int] = Some(0))
+case class DropDflt(@dropDefault i: Int = 42)
+object DropDflt {
+  implicit val rw: FromTo[DropDflt] = macroFromTo
+}
 
-FromScala(Maybe3(None, None, Some(0))).transform(ToJson.string)     ==> """{}"""
+FromScala(DropDflt(42)).transform(ToJson.string)    ==> """{}"""
+FromScala(DropDflt(999)).transform(ToJson.string)   ==> """{"i": 999}"""
 ```
+
+If a ***class*** is annotated with `@dropDefault`, all fields with the same value as their default will not be written:
+
+```scala
+@dropDefault case class DropMultiDflts(i: Int = 42, j: Int = 43, k: Int = 44)
+object DropMultiDflts {
+  implicit val rw: FromTo[DropMultiDflts] = macroFromTo
+}
+
+FromScala(DropMultiDflts(i = 42, j = 43, k = 999)).transform(ToJson.string)   ==> """{"k": 999}"""
+```
+
+If attempting to deserialize JSON to a field that has no defaults, and the JSON value is invalid (e.g. missing, or `null`), the operation will throw an Abort Exception.
+
+### Option Defaults
+
+`Option` works the same way, except there is always an assumed implicit `None` default, if an explicit default is not provided. See [Option Defaults & Nulls](#Option-Defaults-&-Nulls).
+
+## Options
+
+If your JSON input field could be valid, `null`, or missing from the JSON, then use an `Option[T]` to catch these cases. An `Option` field will be unwrapped when serialized to JSON (unless excluded from the JSON via `@dropDefaults`), and wrapped when deserialized. ([rationale](differences.md#options)):
+
+```scala
+case class DfltOpt(i: Option[Int]) // equivalent to 'i: Option[Int] = None` for weepickling
+object DfltOpt {
+  implicit val rw: FromTo[DfltOpt] = macroFromTo
+}
+
+FromScala(DfltOpt(Some(42))).transform(ToJson.string)    ==> """{"i":42}"""
+FromScala(DfltOpt(None)).transform(ToJson.string)        ==> """{"i":null}"""
+
+FromJson("""{"i":42}""").transform(ToScala[DfltOpt])     ==> DfltOpt(Some(42))
+FromJson("""{"i":null}""").transform(ToScala[DfltOpt])   ==> DfltOpt(None)
+FromJson("""{}""").transform(ToScala[DfltOpt])           ==> DfltOpt(None)
+```
+
+### Implicit Default None & Null Handling
+
+In JSON, `null` ["represents the intentional absence of any object value"](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null). This value is regularly used in JSON and must be supported. Scala also has a `null` value, but the usage is *strongly discouraged*, in part because it subverts the type system. Note JSON can represent an absent value by `null`, or excluding the field from the JSON entirely.
+
+The more idiomatic value in Scala is `None`. To support parsing JSON's `null` or `{}`, set the field type to `Option`.
+
+An `Option` starts with an implicit default of `None` if an explicit default is not provided. Setting an explicit default to `None` (e.g. `case class DfltOpt(i: Option[Int] = None)`) is effectively equivalent for weepickle formatting (you may want to declare `None` explicitly for other non-weepickle reasons):
+
+```scala
+case class DfltOpt(i: Option[Int]) // equivalent to 'i: Option[Int] = None` for weepickling
+object DfltOpt {
+  implicit val rw: FromTo[DfltOpt] = macroFromTo
+}
+```
+
+When **deserializing** a JSON's `null` or `{}`, this implicit default will translate to `None`. ([rationale](differences.md#re-null)):
+
+```scala
+FromJson("""{}""").transform(ToScala[DfltOpt])          ==> DfltOpt(None)
+FromJson("""{i: null}""").transform(ToScala[DfltOpt])   ==> DfltOpt(None)
+FromJson("""{"i": 42}""").transform(ToScala[DfltOpt])   ==> DfltOpt(Some(42))
+```
+
+When **serializing** a `None`, it will translate to a JSON `null`:
+
+```scala
+FromScala(DfltOpt(None)).transform(ToJson.string)       ==> """{"i": null}"""
+FromScala(DfltOpt(Some(42))).transform(ToJson.string)   ==> """{"i": 42}"""
+```
+
+### using `@dropDefault`
+
+When **serializing** a `None` with `@dropDefault`, and the field's default is `None` (implicit or explicit), then the field is excluded from the JSON results:
+
+```scala
+case class DropDfltOpt(@dropDefault i: Option[Int]) // equivalent to 'i: Option[Int] = None` for weepickling
+object DropDfltOpt {
+  implicit val rw: FromTo[DropDfltOpt] = macroFromTo
+}
+
+FromScala(DropDfltOpt(None)).transform(ToJson.string)   ==> """{}"""
+FromScala(DropDfltOpt(42)).transform(ToJson.string)     ==> """{"i": 42}"""
+```
+
+When **serializing** a ***class*** that's annotated with `@dropDefault`, all fields with default values will not be written to the JSON. Remember that any `Option` without an explicit default will use the implicit default to drop `None`:
+
+```scala
+@dropDefault case class DropMultiDfltOpt(i: Option[Int] = Some(42), j: Option[Int] = Some(42), k: Option[Int], l: Option[Int])
+object DropMultiDfltOpt {
+  implicit val rw: FromTo[DropMultiDfltOpt] = macroFromTo
+}
+
+FromScala(DropMultiDfltOpt(i = Some(42), j = None, k = Some(999), l = None)).transform(ToJson.string)   ==> """{"j": null, "k": 999}"""
+// matching defaults and values are dropped: 
+// i(42 == 42), j(42 != None), k(999 != None), l(None == None) 
+```
+
+### Explicit Defaults
+
+An `Option` will have an [implicit default of `None`](#Nones-&-Nulls), unless you provide an explicit default ([Defaults](#Defaults)):
+
+```scala
+case class DfltOpt42(i: Option[Int] = Some(42)) // overrides implicit default `None`
+object DfltOpt42 {
+  implicit val rw: FromTo[DfltOpt42] = macroFromTo
+}
+```
+
+When **deserializing**:
+
+```scala
+FromJson("""{}""").transform(ToScala[DfltOpt42])           ==> DfltOpt42(Some(42))
+FromJson("""{i: null}""").transform(ToScala[DfltOpt42])    ==> DfltOpt42(Some(42))
+FromJson("""{"i": 42}""").transform(ToScala[DfltOpt42])    ==> DfltOpt42(Some(42))
+FromJson("""{"i": 999}""").transform(ToScala[DfltOpt42])   ==> DfltOpt42(Some(999))
+```
+
+When **serializing**:
+
+```scala
+FromScala(DfltOpt42(None)).transform(ToJson.string)        ==> """{"i": 42}"""
+FromScala(DfltOpt42(Some(42))).transform(ToJson.string)    ==> """{"i": 42}"""
+FromScala(DfltOpt42(Some(999))).transform(ToJson.string)   ==> """{"i": 999}"""
+````
+
+When **serializing** with `@dropDefaults`:
+
+```scala
+case class DropDfltOpt42(@dropDefault i: Int = 42)
+object DropDfltOpt42 {
+  implicit val rw: FromTo[DropDfltOpt42] = macroFromTo
+}
+
+FromScala(DropDfltOpt42(None)).transform(ToJson.string)        ==> """{"i": null}"""
+FromScala(DropDfltOpt42(Some(42))).transform(ToJson.string)    ==> """{}"""
+FromScala(DropDfltOpt42(Some(999))).transform(ToJson.string)   ==> """{"i": 999}"""
+````
 
 ## Custom Keys
-weePickle allows you to specify the key with which a field is serialized via a `@key` annotation.
+weePickle allows you to specify the key with which a field is serialized via a `@key` annotation:
 
 ```scala
 case class KeyBar(@key("hehehe") kekeke: Int)
-object KeyBar{
+object KeyBar {
   implicit val rw: FromTo[KeyBar] = macroFromTo
 }
 
-FromScala(KeyBar(10)).transform(ToJson.string)             ==> """{"hehehe":10}"""
-FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar])  ==> KeyBar(10)
+FromScala(KeyBar(10)).transform(ToJson.string)              ==> """{"hehehe":10}"""
+FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar])   ==> KeyBar(10)
 ```
 
 ## Sealed Hierarchies
@@ -211,7 +314,7 @@ object Outcome {
   implicit val rw: FromTo[Outcome] = macroFromTo
 }
 
-FromScala(DeferredVictory(Seq("My json AST is too slow."))).transform(ToJson.string))  ==>
+FromScala(DeferredVictory(Seq("My json AST is too slow."))).transform(ToJson.string)  ==>
   """{"$type":"com.example.DeferredVictory","excuses":["My json AST is too slow."]}"""
 
 // You can read tagged value without knowing its
@@ -262,7 +365,7 @@ Internally, jackson-core uses buffer pooling to achieve some of its performance.
 `FromJson` doesn't trust you and calls `close()` automatically after writing a single [json text](https://tools.ietf.org/html/rfc7159#section-2), which covers the vast majority of use cases. If you're working with multiple json texts separated by whitespace, jackson can handle it, but you have to drop down below the high level API and remember to close the parser/generator yourself.
 
 ## Value AST
-WeePickle includes its own AST named `Value`, largely unchanged from the upstream [uJson](https://com-lihaoyi.github.io/upickle/#uJson).
+WeePickle includes its own AST named `Value`, largely unchanged from the upstream [uJson](https://com-lihaoyi.github.io/upickle/#uJson):
 
 ```scala
 val obj = Obj(
@@ -291,31 +394,6 @@ FromJson("""{"foo":[42,"omg",true]}""").transform(Value) ==> obj
 See:
 - https://com-lihaoyi.github.io/upickle/#uJson
 - http://www.lihaoyi.com/post/uJsonfastflexibleandintuitiveJSONforScala.html
-
-## Null Handling
-
-In JSON, `null` ["represents the intentional absence of any object value"](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null).
-This value is regularly used and must be supported.
-Scala also has a `null` value, but the usage is strongly discouraged, in part because it subverts the type system
-For example,
-```scala
-case class User(name: String)
-val user = User(null)
-user.name // value is null
-```
-The more equivalent value in Scala is `None`.
-Therefore, to support reading in JSON `nulls`, set the type to `Option`.
-This implies that there are two ways for an `Option` field to result in a `None` value:
-1. The value was a JSON `null`
-1. The value was missing
-
-Writing a None to JSON will cause the field to be omitted, resulting in an asymmetric read/write.
-```scala
-case class User(name: Option[String])
-
-FromJson("""{"name": null}""").transform(ToScala[User]) ==> User(None)
-FromScala(User(None)).transform(ToJson.string) ==> "{}"
-```
 
 ## MessagePack
 weePack is weePickle's [MessagePack](https://msgpack.org/index.html) implementation, largely unchanged from the upstream [uPack](https://com-lihaoyi.github.io/upickle/#uPack).
