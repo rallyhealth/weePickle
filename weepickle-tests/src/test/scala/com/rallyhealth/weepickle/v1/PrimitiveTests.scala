@@ -24,7 +24,7 @@ object PrimitiveTests extends TestSuite {
       test("unicode") {
         rw("叉烧包")
         FromScala("叉烧包").transform(ToJson.string) ==> "\"叉烧包\""
-        // TODO moved to low level API.
+        // TODO moved to low level API. (Scala 2 comment)
 //        FromScala("叉烧包", escapeUnicode = true).transform(ToJson.string).toLowerCase ==> "\"\\u53c9\\u70e7\\u5305\""
         FromJson("\"\\u53c9\\u70e7\\u5305\"").transform(ToScala[String]) ==> "叉烧包"
         FromJson("\"叉烧包\"").transform(ToScala[String]) ==> "叉烧包"
@@ -37,11 +37,11 @@ object PrimitiveTests extends TestSuite {
       }
     }
     test("Symbol") {
-      test("plain") - rw('i_am_a_cow, """ "i_am_a_cow" """)(
+      test("plain") - rw(Symbol("i_am_a_cow"), """ "i_am_a_cow" """)(
         com.rallyhealth.weepickle.v1.WeePickle.ToSymbol,
         com.rallyhealth.weepickle.v1.WeePickle.FromSymbol
       )
-      test("unicode") - rw('叉烧包, """ "叉烧包" """)
+      test("unicode") - rw(Symbol("叉烧包"), """ "叉烧包" """)
       test("null") - rwNull(null: Symbol, "null")
     }
     test("Long") {

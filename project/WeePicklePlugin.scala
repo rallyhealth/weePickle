@@ -15,7 +15,8 @@ object WeePicklePlugin extends AutoPlugin {
     val scala211 = "2.11.12"
     val scala212 = "2.12.12"
     val scala213 = "2.13.5"
-    val supportedScalaVersions = Seq(scala211, scala212, scala213)
+    val scala3 = "3.0.0"
+    val supportedScalaVersions = Seq(scala211, scala212, scala213, scala3)
 
     lazy val ideSkipProject = SettingKey[Boolean]("ideSkipProject")
 
@@ -41,7 +42,7 @@ object WeePicklePlugin extends AutoPlugin {
     organization := "com.rallyhealth",
     organizationHomepage := Some(url("https://www.rallyhealth.com")),
     organizationName := "Rally Health",
-    scalaVersion := scala212, // for IDE
+    scalaVersion := scala213, // for IDE
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/rallyhealth/weePickle"),
@@ -54,20 +55,23 @@ object WeePicklePlugin extends AutoPlugin {
   )
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
-    acyclic := "com.lihaoyi" %% "acyclic" % (if (scalaBinaryVersion.value == "2.11") "0.1.8" else "0.2.0"),
+    acyclic := ("com.lihaoyi" %% "acyclic" % (if (scalaBinaryVersion.value == "2.11") "0.1.8" else "0.2.0")) cross CrossVersion.for3Use2_13,
     autoCompilerPlugins := true,
     crossScalaVersions := autoImport.supportedScalaVersions,
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "utest" % "0.7.9" % "test",
-      "org.scalatest" %% "scalatest" % "3.0.8" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.14.1" % "test",
+      "com.lihaoyi" %% "utest" % "0.7.10" % "test",
+      "org.scalatest" %% "scalatest" % "3.2.9" % "test",
+      "org.scalatestplus" %% "scalacheck-1-15" % (if (scalaBinaryVersion.value == "2.11") "3.2.3.0" else "3.2.9.0") % "test",
+      "org.scalacheck" %% "scalacheck" % (if (scalaBinaryVersion.value == "2.11") "1.15.2" else "1.15.4") % "test",
       compilerPlugin(acyclic.value),
       acyclic.value % "provided"
     ),
-    mimaPreviousArtifacts ++= {
-      previousStableVersion.value
-        .map(organization.value %% moduleName.value % _)
-        .toSet
+    mimaPreviousArtifacts := {
+      if (scalaBinaryVersion.value == "3") Set.empty // TODO: remove once there's a previous Scala 3 artifact
+      else
+        previousStableVersion.value
+          .map(organization.value %% moduleName.value % _)
+          .toSet
     },
     (Test / test) := {
       mimaReportBinaryIssues.value
@@ -86,16 +90,30 @@ object WeePicklePlugin extends AutoPlugin {
         "-feature"
       )
 
-      if (scalaBinaryVersion.value > "2.11") {
-        builder += "-opt:l:method"
-      }
+      CrossVersion.partialVersion(scalaVersion.value).foreach {
+        case (3, _) =>
+          builder ++= Seq(
+            "-Xmax-inlines",
+            "128" // MacroTests exceeds default of 32 inlines, 64 is still too small
+            //TODO: what new options should we add? See: https://docs.scala-lang.org/scala3/guides/migration/options-lookup.html
+          )
+          ()
 
-      if (scalaBinaryVersion.value == "2.13") {
-        builder ++= Seq(
-          // See: https://github.com/scala/scala/pull/8373
-          """-Wconf:any:warning-verbose""",
-          """-Wconf:cat=deprecation:info-summary""" // Not ready to deal with 2.13 collection deprecations.
-        )
+        case (2, 13) =>
+          builder ++= Seq(
+            "-opt:l:method",
+            // See: https://github.com/scala/scala/pull/8373
+            """-Wconf:any:warning-verbose""",
+            """-Wconf:cat=deprecation:info-summary""" // Not ready to deal with 2.13 collection deprecations.
+          )
+          ()
+
+        case (2, 12) =>
+          builder += "-opt:l:method"
+          ()
+
+        case _ => // 2.11 - nothing special
+          ()
       }
 
       builder.result()

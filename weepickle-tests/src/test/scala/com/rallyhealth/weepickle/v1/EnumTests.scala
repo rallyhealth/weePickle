@@ -16,7 +16,7 @@ object EnumTests extends TestSuite {
       }
 
       test("override") - {
-        implicit val pickler = WeePickle.fromToEnumerationId(Suit)
+        implicit val pickler: WeePickle.FromTo[Suit.Value] = WeePickle.fromToEnumerationId(Suit)
 
         FromScala(Suit.Spades).transform(ToJson.string) ==> "0"
         FromJson("0").transform(ToScala[Suit.Value]) ==> Suit.Spades
@@ -41,7 +41,7 @@ object EnumTests extends TestSuite {
 
           def addEntry(s: String): Horrible.Value = Value(s) // never do this!
 
-          implicit val pickler = WeePickle.fromToEnumerationName(this)
+          implicit val pickler: WeePickle.FromTo[Horrible.Value] = WeePickle.fromToEnumerationName(this)
 
           val One = Value("One")
         }
@@ -54,13 +54,21 @@ object EnumTests extends TestSuite {
         Horrible.pickler.visitString("Two") ==> Two
       }
 
+      /*
+       * TODO: Test fails in Scala 3, which does not support the .toString operation
+       * on a nameless enumeration value.
+       *
+       * java.lang.IllegalAccessException: Class scala.Enumeration can not access a member of class...
+       *
+       * (Only .id works.) May just be a new limitation we have to live with.
+       */
       test("nameless") - {
         object Nameless extends Enumeration {
 
           val One = Value
           val Two = Value
 
-          implicit val pickler = WeePickle.fromToEnumerationName(this)
+          implicit val pickler: WeePickle.FromTo[Nameless.Value] = WeePickle.fromToEnumerationName(this)
         }
 
         Nameless.pickler.visitString("One") ==> Nameless.One
@@ -78,7 +86,7 @@ object EnumTests extends TestSuite {
 
         def addEntry(s: Int): Value = Value(s) // never do this!
 
-        implicit val pickler = WeePickle.fromToEnumerationId(this)
+        implicit val pickler: WeePickle.FromTo[SpecialNums.Value] = WeePickle.fromToEnumerationId(this)
       }
 
       SpecialNums.pickler.visitInt32(Int.MinValue) ==> SpecialNums.Min

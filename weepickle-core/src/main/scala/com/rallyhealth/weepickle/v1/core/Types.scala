@@ -74,18 +74,14 @@ trait Types { types =>
   }
 
   object To {
-    class Delegate[T, J](delegatedTo: Visitor[T, J])
-        extends Visitor.Delegate[T, J](delegatedTo)
-        with To[J] {
+    class Delegate[T, J](delegatedTo: Visitor[T, J]) extends Visitor.Delegate[T, J](delegatedTo) with To[J] {
       override def visitObject(length: Int): ObjVisitor[Any, J] =
         super.visitObject(length).asInstanceOf[ObjVisitor[Any, J]]
       override def visitArray(length: Int): ArrVisitor[Any, J] =
         super.visitArray(length).asInstanceOf[ArrVisitor[Any, J]]
     }
 
-    abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V])
-        extends Visitor.MapTo[T, V, Z](delegatedTo)
-        with To[Z] {
+    abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V]) extends Visitor.MapTo[T, V, Z](delegatedTo) with To[Z] {
 
       def mapNonNullsFunction(t: V): Z
 
@@ -212,8 +208,63 @@ trait Types { types =>
           found |= (1L << currentIndex)
         }
       }
+      //+start-1 -- not added: bin compat issue
+//      def visitKey(index: Int) = StringVisitor
+//      protected def storeValueIfNotFound(i: Int, v: Any) = {
+//        if ((found & (1L << i)) == 0) {
+//          found |= (1L << i)
+//          storeAggregatedValue(i, v)
+//        }
+//      }
+//      protected def errorMissingKeys(rawArgsLength: Int, mappedArgs: Array[String]) = {
+//        val keys = for {
+//          i <- 0 until rawArgsLength
+//          if (found & (1L << i)) == 0
+//        } yield mappedArgs(i)
+//        throw new Abort(
+//          "missing keys in dictionary: " + keys.mkString(", ")
+//        )
+//      }
+//      protected def checkErrorMissingKeys(rawArgsBitset: Long) = {
+//        found != rawArgsBitset
+//      }
+      //+end-1
+    }
+    //+start-2 -- TBD if needed
+    abstract class HugeCaseObjectContext(fieldCount: Int) extends ObjVisitor[Any, V] {
+      def storeAggregatedValue(currentIndex: Int, v: Any): Unit
+      var found = new Array[Long](fieldCount / 64 + 1)
+      var currentIndex = -1
+      def visitValue(v: Any, index: Int): Unit = {
+        if (currentIndex != -1 && ((found(currentIndex / 64) & (1L << currentIndex)) == 0)) {
+          storeAggregatedValue(currentIndex, v)
+          found(currentIndex / 64) |= (1L << currentIndex)
+        }
+      }
+      def visitKey(index: Int) = StringVisitor
+      protected def storeValueIfNotFound(i: Int, v: Any) = {
+        if ((found(i / 64) & (1L << i)) == 0) {
+          found(i / 64) |= (1L << i)
+          storeAggregatedValue(i, v)
+        }
+      }
+      protected def errorMissingKeys(rawArgsLength: Int, mappedArgs: Array[String]) = {
+        val keys = for {
+          i <- 0 until rawArgsLength
+          if (found(i / 64) & (1L << i)) == 0
+        } yield mappedArgs(i)
+        throw new Abort(
+          "missing keys in dictionary: " + keys.mkString(", ")
+        )
+      }
+      protected def checkErrorMissingKeys(rawArgsLength: Int) = {
+        var bits = 0
+        for (v <- found) bits += java.lang.Long.bitCount(v)
+        bits != rawArgsLength
+      }
     }
   }
+  //+end-2
   trait CaseW[In] extends From[In] {
     def length(v: In): Int
     def writeToObject[R](ctx: ObjVisitor[_, R], v: In): Unit
@@ -225,6 +276,19 @@ trait Types { types =>
         ctx.visitEnd()
       }
     }
+    //+start-3 -- not added: bin compat issue
+//    protected def writeSnippet[R, V](objectAttributeKeyWriteMap: CharSequence => CharSequence,
+//                                     ctx: ObjVisitor[_, R],
+//                                     mappedArgsI: String,
+//                                     w: From[V],
+//                                     value: V) = {
+//      val keyVisitor = ctx.visitKey()
+//      ctx.visitKeyValue(
+//        keyVisitor.visitString(objectAttributeKeyWriteMap(mappedArgsI))
+//      )
+//      ctx.narrow.visitValue(w.transform(value, ctx.subVisitor), -1)
+//    }
+    //+end-3
   }
   class SingletonR[T](t: T) extends CaseR[T] {
     override def expectedMsg = "expected dictionary"
@@ -285,8 +349,10 @@ trait Types { types =>
     class Node[T](rs: TaggedTo[_ <: T]*) extends TaggedTo[T] {
       override val tagName: String = findTagName(rs)
       def findTo(s: String) = scanChildren(rs)(_.findTo(s)).asInstanceOf[To[T]]
-      override def map[Z](f: T => Z): TaggedTo[Z] = new Node[Z](rs.map(_.map(f).asInstanceOf[TaggedTo[Z]]): _*)
-      override def mapNulls[Z](f: T => Z): TaggedTo[Z] = new Node(rs.map(_.mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def map[Z](f: T => Z): TaggedTo[Z] =
+        new Node[Z](rs.map(_.asInstanceOf[To[T]].map(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def mapNulls[Z](f: T => Z): TaggedTo[Z] =
+        new Node(rs.map(_.asInstanceOf[To[T]].mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
     }
   }
 
@@ -310,11 +376,7 @@ trait Types { types =>
     }
   }
 
-  trait TaggedFromTo[T]
-      extends FromTo[T]
-      with TaggedTo[T]
-      with TaggedFrom[T]
-      with SimpleTo[T] {
+  trait TaggedFromTo[T] extends FromTo[T] with TaggedTo[T] with TaggedFrom[T] with SimpleTo[T] {
     override def visitArray(length: Int) = taggedArrayContext(this)
     override def visitObject(length: Int) = taggedObjectContext(this)
 

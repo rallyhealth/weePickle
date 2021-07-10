@@ -87,53 +87,53 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
-      test("playJson") {
-        import com.rallyhealth.weejson.v1.play.PlayJson
-        import play.api.libs.json._
-        val playJson: play.api.libs.json.JsValue = FromJson("""["hello", "world"]""").transform(PlayJson)
-
-        val updatedPlayJson = JsArray(
-          for (v <- playJson.as[JsArray].value)
-            yield JsString(v.as[String].toUpperCase())
-        )
-
-        val items: Seq[String] = PlayJson.transform(
-          updatedPlayJson,
-          com.rallyhealth.weepickle.v1.WeePickle.to[Seq[String]]
-        )
-
-        items ==> Seq("HELLO", "WORLD")
-
-        val rewritten = FromScala(items).transform(PlayJson)
-
-        val stringified = PlayJson.transform(rewritten, StringRenderer()).toString
-
-        stringified ==> """["HELLO","WORLD"]"""
-      }
-      test("crossAst") {
-        import com.rallyhealth.weejson.v1.circe.CirceJson
-        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
-
-        val updatedCirceJson =
-          circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
-
-        import com.rallyhealth.weejson.v1.play.PlayJson
-        import play.api.libs.json._
-
-        val playJson: play.api.libs.json.JsValue = CirceJson.transform(
-          updatedCirceJson,
-          PlayJson
-        )
-
-        val updatedPlayJson = JsArray(
-          for (v <- playJson.as[JsArray].value)
-            yield JsString(v.as[String].reverse)
-        )
-
-        val stringified = PlayJson.transform(updatedPlayJson, StringRenderer()).toString
-
-        stringified ==> """["OLLEH","DLROW"]"""
-      }
+//      test("playJson") {
+//        import com.rallyhealth.weejson.v1.play.PlayJson
+//        import play.api.libs.json._
+//        val playJson: play.api.libs.json.JsValue = FromJson("""["hello", "world"]""").transform(PlayJson)
+//
+//        val updatedPlayJson = JsArray(
+//          for (v <- playJson.as[JsArray].value)
+//            yield JsString(v.as[String].toUpperCase())
+//        )
+//
+//        val items: Seq[String] = PlayJson.transform(
+//          updatedPlayJson,
+//          com.rallyhealth.weepickle.v1.WeePickle.to[Seq[String]]
+//        )
+//
+//        items ==> Seq("HELLO", "WORLD")
+//
+//        val rewritten = FromScala(items).transform(PlayJson)
+//
+//        val stringified = PlayJson.transform(rewritten, StringRenderer()).toString
+//
+//        stringified ==> """["HELLO","WORLD"]"""
+//      }
+//      test("crossAst") {
+//        import com.rallyhealth.weejson.v1.circe.CirceJson
+//        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
+//
+//        val updatedCirceJson =
+//          circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
+//
+//        import com.rallyhealth.weejson.v1.play.PlayJson
+//        import play.api.libs.json._
+//
+//        val playJson: play.api.libs.json.JsValue = CirceJson.transform(
+//          updatedCirceJson,
+//          PlayJson
+//        )
+//
+//        val updatedPlayJson = JsArray(
+//          for (v <- playJson.as[JsArray].value)
+//            yield JsString(v.as[String].reverse)
+//        )
+//
+//        val stringified = PlayJson.transform(updatedPlayJson, StringRenderer()).toString
+//
+//        stringified ==> """["OLLEH","DLROW"]"""
+//      }
     }
 
   }

@@ -1,18 +1,20 @@
 package com.rallyhealth.weepickle.v1.implicits
 
+import com.rallyhealth.weepickle.v1.core._
+
 import java.net.URI
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.{Base64, UUID}
-
-import com.rallyhealth.weepickle.v1.core._
-
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated with MacroImplicits {
+trait DefaultTos
+    extends com.rallyhealth.weepickle.v1.core.Types
+//    with MacroImplicits // removing this in Scala 2 would break its bin compat
+    with Generated {
   implicit val ToUnit: To[Unit] = new SimpleTo[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {
@@ -302,8 +304,9 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
         def subVisitor = r
       }
     }
-
-  implicit val ToDuration = new MapStringTo(
+  // To[Duration] would be a better type for this, but old code inferred the type as
+  // MapStringTo[Duration], and changing it would be bin compat issue. Someday...
+  implicit val ToDuration: MapStringTo[Duration] = new MapStringTo(
     s =>
       if (s.charAt(0) == 'i' &&
           s.charAt(1) == 'n' &&
@@ -326,8 +329,8 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
       } else Duration(com.rallyhealth.weepickle.v1.core.Util.parseLong(s, 0, s.length()), TimeUnit.NANOSECONDS)
   )
 
-  implicit val ToInfiniteDuration = ToDuration.narrow[Duration.Infinite]
-  implicit val ToFiniteDuration = ToDuration.narrow[FiniteDuration]
+  implicit val ToInfiniteDuration: To[Duration.Infinite] = ToDuration.narrow[Duration.Infinite]
+  implicit val ToFiniteDuration: To[FiniteDuration] = ToDuration.narrow[FiniteDuration]
 
   implicit def ToEither[T1: To, T2: To]: SimpleTo[Either[T1, T2]] =
     new SimpleTo[Either[T1, T2]] {
@@ -354,8 +357,8 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
         }
       }
     }
-  implicit def ToRight[T1: To, T2: To] =
+  implicit def ToRight[T1: To, T2: To]: To[Right[T1, T2]] =
     ToEither[T1, T2].narrow[Right[T1, T2]]
-  implicit def ToLeft[T1: To, T2: To] =
+  implicit def ToLeft[T1: To, T2: To]: To[Left[T1, T2]] =
     ToEither[T1, T2].narrow[Left[T1, T2]]
 }

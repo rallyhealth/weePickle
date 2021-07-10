@@ -16,7 +16,7 @@ import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
   object Thing {
-    implicit val rw = macroFromTo[Thing]
+    implicit val rw: RW[Thing] = macroFromTo[Thing]
 //    implicit val format = Json.format[Thing]
   }
   case class Big(i: Int, b: Boolean, str: String, c: Char, t: Thing)
@@ -64,11 +64,11 @@ object Defaults {
 }
 case class Maybe1(i: Option[Int])
 object Maybe1 {
-  implicit val rw = WeePickle.macroFromTo[Maybe1]
+  implicit val rw: RW[Maybe1] = WeePickle.macroFromTo[Maybe1]
 }
 case class Maybe2(@dropDefault i: Option[Int] = None)
 object Maybe2 {
-  implicit val rw = WeePickle.macroFromTo[Maybe2]
+  implicit val rw: RW[Maybe2] = WeePickle.macroFromTo[Maybe2]
 }
 object Keyed {
   case class KeyBar(@com.rallyhealth.weepickle.v1.implicits.key("hehehe") kekeke: Int)
@@ -92,10 +92,10 @@ object KeyedTag {
 object Custom2 {
   class CustomThing2(val i: Int, val s: String)
   object CustomThing2 {
-    implicit val rw = com.rallyhealth.weepickle.v1.WeePickle
+    implicit val rw: RW[CustomThing2] = com.rallyhealth.weepickle.v1.WeePickle
       .fromTo[String]
       .bimap[CustomThing2](
-        x => x.i + " " + x.s,
+        x => s"${x.i} ${x.s}",
         str => {
           val Array(i, s) = str.split(" ", 2)
           new CustomThing2(i.toInt, s)
@@ -109,7 +109,7 @@ object Suit extends Enumeration {
   val Diamonds = Value("Diamonds")
   val Clubs = Value("Clubs")
 
-  implicit val pickler = WeePickle.fromToEnumerationName(this)
+  implicit val pickler: RW[Suit.Value] = WeePickle.fromToEnumerationName(this)
 }
 
 import KeyedTag._
@@ -246,8 +246,11 @@ object ExampleTests extends TestSuite {
         }
 
         test("XML") {
-          FromScala(Thing(1, "gg")).transform(ToXml.string) ==> """<root><myFieldA>1</myFieldA><myFieldB>gg</myFieldB></root>"""
-          FromXml("""<root><myFieldA>1</myFieldA><myFieldB>gg</myFieldB></root>""").transform(ToScala[Thing]) ==> Thing(1, "gg")
+          FromScala(Thing(1, "gg"))
+            .transform(ToXml.string) ==> """<root><myFieldA>1</myFieldA><myFieldB>gg</myFieldB></root>"""
+          FromXml("""<root><myFieldA>1</myFieldA><myFieldB>gg</myFieldB></root>""").transform(ToScala[Thing]) ==> Thing(
+            1,
+            "gg")
           FromScala(Big(1, true, "lol", 'Z', Thing(7, ""))).transform(ToXml.string) ==>
             """<root><i>1</i><b>true</b><str>lol</str><c>Z</c><t><myFieldA>7</myFieldA><myFieldB></myFieldB></t></root>"""
         }
@@ -314,6 +317,9 @@ object ExampleTests extends TestSuite {
           FromJson("{}").transform(ToScala[FooIncludeDefault]) ==> FooIncludeDefault(10, "lol")
           FromJson("""{"i": 123}""").transform(ToScala[FooIncludeDefault]) ==> FooIncludeDefault(123, "lol")
         }
+        /*
+         * TODO: fails in Scala 3 because copied upickle's dropDefault behavior has not yet been addressed.
+         */
         test("writing includes defaults") {
           FromScala(FooIncludeDefault(i = 11, s = "lol")).transform(ToJson.string) ==> """{"i":11,"s":"lol"}"""
           FromScala(FooIncludeDefault(i = 10, s = "lol")).transform(ToJson.string) ==> """{"i":10,"s":"lol"}"""
@@ -358,6 +364,9 @@ object ExampleTests extends TestSuite {
         FromScala(KeyBar(10)).transform(ToJson.string) ==> """{"hehehe":10}"""
         FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar]) ==> KeyBar(10)
       }
+      /*
+       * TODO: fails in Scala 3 because copied upickle's $type discriminator behavior has not yet been addressed.
+       */
       test("tag") {
         FromScala(B(10)).transform(ToJson.string) ==> """{"customDiscriminator":"Bee","i":10}"""
         FromJson("""{"customDiscriminator":"Bee","i":10}""").transform(ToScala[B]) ==> B(10)
@@ -368,8 +377,8 @@ object ExampleTests extends TestSuite {
             s.split("(?=[A-Z])", -1).map(_.toLowerCase).mkString("_")
           }
           def snakeToCamel(s: String) = {
-            val res = s.split("_", -1).map(x => x(0).toUpper + x.drop(1)).mkString
-            s(0).toLower + res.drop(1)
+            val res = s.split("_", -1).map(x => s"${x(0).toUpper}${x.drop(1)}").mkString
+            s"${s(0).toLower}${res.drop(1)}"
           }
 
           override def objectAttributeKeyReadMap(s: CharSequence) =
@@ -405,7 +414,7 @@ object ExampleTests extends TestSuite {
         FromScala(Long.MaxValue).transform(ToJson.string) ==> "9223372036854775807"
 
         object StringLongs extends com.rallyhealth.weepickle.v1.AttributeTagged {
-          override implicit val LongFrom = new From[Long] {
+          override implicit val LongFrom: StringLongs.From[Long] = new From[Long] {
             def transform0[V](v: Long, out: Visitor[_, V]): V = out.visitString(v.toString)
           }
         }
@@ -414,7 +423,7 @@ object ExampleTests extends TestSuite {
         StringLongs.from[Long].transform(Long.MaxValue, ToJson.string) ==> "\"9223372036854775807\""
 
         object NumLongs extends com.rallyhealth.weepickle.v1.AttributeTagged {
-          override implicit val LongFrom = new From[Long] {
+          override implicit val LongFrom: NumLongs.From[Long] = new From[Long] {
             def transform0[V](v: Long, out: Visitor[_, V]): V = out.visitFloat64String(v.toString)
           }
         }
@@ -467,6 +476,7 @@ object ExampleTests extends TestSuite {
 
     // TODO fix failing case. valid but we don't use msgpack, so we'll never encounter it.
     // TODO With jackson, I think we'd still have to encode the key as json, and add double quotes to the test's assertion.
+    // (Scala 2 comment)
 //    test("msgToValue"){
 //      val msg = com.rallyhealth.weepack.v1.Arr(
 //        com.rallyhealth.weepack.v1.Obj(com.rallyhealth.weepack.v1.Str("myFieldA") -> com.rallyhealth.weepack.v1.Int32(1), com.rallyhealth.weepack.v1.Str("myFieldB") -> com.rallyhealth.weepack.v1.Str("g")),

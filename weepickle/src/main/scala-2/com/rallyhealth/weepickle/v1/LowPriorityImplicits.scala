@@ -7,8 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters._
 import scala.util.control.NoStackTrace
 
-abstract class LowPriorityImplicits
-  extends AttributeTagged {
+abstract class LowPriorityImplicits extends AttributeTagged {
 
   implicit val FromFromInput: From[FromInput] = new From[FromInput] {
     override def transform0[Out](in: FromInput, out: Visitor[_, Out]): Out = in.transform(out)
@@ -29,11 +28,11 @@ abstract class LowPriorityImplicits
         lastVset = vset
       }
 
-      val enum = cache.get(s) // 68x faster than withName()
-      if (enum eq null) {
+      val enumValue = cache.get(s) // 68x faster than withName()
+      if (enumValue eq null) {
         throw new NoSuchElementException(s"'$s' is not a valid value of $e") with NoStackTrace
       }
-      enum
+      enumValue
     }
   }
 

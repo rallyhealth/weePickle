@@ -7,7 +7,7 @@ noPublish
 crossScalaVersions := Nil // crossScalaVersions must be set to Nil on the aggregating project
 
 lazy val bench = project
-  .dependsOn(`weepickle-tests` % "compile;test")
+  .dependsOn(`weepickle-tests` % "compile;test", `weejson-play27`)
   .enablePlugins(JmhPlugin)
   .settings(
     noPublish,
@@ -27,16 +27,16 @@ lazy val bench = project
 lazy val `weepickle-core` = project
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
+      "org.scala-lang.modules" %% "scala-collection-compat" % (if (scalaBinaryVersion.value == "3") "2.5.0" else "2.4.3")
     )
   )
 
 lazy val `weepickle-implicits` = project
   .dependsOn(weejson)
   .settings(
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
-    ),
+    libraryDependencies ++= {
+      if (scalaBinaryVersion.value == "3") Seq.empty else Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+    },
     Compile / sourceGenerators += Def.task[Seq[File]] {
       val pkg = s"com.rallyhealth.weepickle.${shadedVersion.value}.implicits"
       val contents =
@@ -92,13 +92,16 @@ lazy val `weepickle-tests` = project
     `weejson-argonaut`,
     `weejson-circe`,
     `weejson-json4s`,
-    `weejson-play27`,
+    //`weejson-play27`, // TODO: add back once 2.10.0 is available
     `weejson` % "compile;test->test",
     `weepack` % "compile;test->test",
     `weepickle`,
     `weexml`,
     `weeyaml`,
   )
+//  .dependsOn(
+//    (if (scalaBinaryVersion.value == "3") Seq.empty else Seq(`weejson-play27`)): _*
+//  )
   .settings(
     noPublish,
   )
@@ -139,7 +142,7 @@ lazy val `weejson-circe` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-parser" % (if (scalaBinaryVersion.value == "2.11") "0.11.2" else "0.13.0")
+      "io.circe" %% "circe-parser" % (if (scalaBinaryVersion.value == "2.11") "0.11.2" else "0.14.1")
     )
   )
 
@@ -147,22 +150,25 @@ lazy val `weejson-json4s` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-ast" % "3.6.10",
-      "org.json4s" %% "json4s-native" % "3.6.10",
+      "org.json4s" %% "json4s-ast" % (if (scalaBinaryVersion.value == "3") "4.0.1" else "3.6.10"),
+//      "org.json4s" %% "json4s-native" % (if (scalaBinaryVersion.value == "3") "4.0.1" else "3.6.10"),
     )
   )
 lazy val `weejson-argonaut` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "io.argonaut" %% "argonaut" % "6.2.5",
+      "io.argonaut" %% "argonaut" % (if (scalaBinaryVersion.value == "3") "6.3.6" else "6.2.5") ,
     )
   )
 
 lazy val `weejson-play27` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
+    crossScalaVersions := Seq(scala211, scala212, scala213), // TODO: 2.10.0-RCs still on Scala 3.0.0-RCs
     libraryDependencies ++= Seq(
+//      if (scalaBinaryVersion.value == "3")
+//        "com.typesafe.play" % "play-json_3.0.0-RC1" % "2.10.0-RC2" else
       "com.typesafe.play" %% "play-json" % "2.7.4",
     )
   )

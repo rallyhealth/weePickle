@@ -17,6 +17,7 @@ trait Api
     with implicits.Tos
     with implicits.Froms
     with Api.NoOpMappers
+    // with Annotator //+start/end -- don't know if Annotator is needed here
     with FromToValue {
 
   /**
@@ -76,7 +77,7 @@ object Api {
   * behavior of using an attribute, but allow you to control what the name
   * of the attribute is.
   */
-trait AttributeTagged extends Api {
+trait AttributeTagged extends Api with Annotator {
 
   /**
     * Default discriminator field name.
