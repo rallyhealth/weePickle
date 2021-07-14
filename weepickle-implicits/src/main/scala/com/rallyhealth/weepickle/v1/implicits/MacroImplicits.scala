@@ -496,6 +496,7 @@ private object MacroImplicits {
             def storeAggregatedValue(currentIndex: Int, v: Any): Unit = currentIndex match{
               case ..${for (arg <- args)
         yield cq"${arg.i} => ${arg.aggregate} = v.asInstanceOf[${arg.argType}]"}
+              case _ => throw new java.lang.IndexOutOfBoundsException(currentIndex.toString)
             }
             def visitKey() = com.rallyhealth.weepickle.v1.core.StringVisitor
             def visitKeyValue(s: Any) = {
@@ -550,6 +551,8 @@ private object MacroImplicits {
                 } yield i match{
                   case ..${for (arg <- args)
         yield cq"${arg.i} => ${arg.mapped}"}
+                  case _ => throw new java.lang.IndexOutOfBoundsException(i.toString)
+
                 }
                 throw new com.rallyhealth.weepickle.v1.core.Abort(
                   "missing keys in dictionary: " + keys.mkString(", ")

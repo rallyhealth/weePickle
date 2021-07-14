@@ -205,3 +205,9 @@ lazy val weexml = project
       "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % "2.12.3",
     )
   )
+
+lazy val `weepickle-macro-lint-tests` = project
+  .dependsOn(weepickle)
+  .settings(noPublish)
+  .settings(scalacOptions := (scalacOptions.value ++ Seq("-Xlint", "-Xfatal-warnings")).distinct)
+//  .settings(scalacOptions += "-Ymacro-debug-lite")
