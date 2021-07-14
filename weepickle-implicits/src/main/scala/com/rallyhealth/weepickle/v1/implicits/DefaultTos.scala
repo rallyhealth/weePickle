@@ -40,6 +40,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Double = d
     override def visitInt64(d: Long): Double = d.toDouble
     override def visitUInt64(d: Long): Double = d.toDouble
+    override def visitFloat32(d: Float): Double = d
     override def visitFloat64(d: Double): Double = d
     override def visitFloat64String(s: String): Double = s.toDouble
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Double = {
@@ -53,6 +54,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Int = d
     override def visitInt64(d: Long): Int = d.toInt
     override def visitUInt64(d: Long): Int = d.toInt
+    override def visitFloat32(d: Float): Int = d.toInt
     override def visitFloat64(d: Double): Int = d.toInt
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Int = {
       Util.parseIntegralNum(cs, decIndex, expIndex).toInt
@@ -65,6 +67,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Float = d.toFloat
     override def visitInt64(d: Long): Float = d.toFloat
     override def visitUInt64(d: Long): Float = d.toFloat
+    override def visitFloat32(d: Float): Float = d
     override def visitFloat64(d: Double): Float = d.toFloat
     override def visitFloat64String(s: String) = s.toFloat
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Float = {
@@ -77,6 +80,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Short = d.toShort
     override def visitInt64(d: Long): Short = d.toShort
     override def visitUInt64(d: Long): Short = d.toShort
+    override def visitFloat32(d: Float): Short = d.toShort
     override def visitFloat64(d: Double) = d.toShort
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Short = {
       Util.parseIntegralNum(cs, decIndex, expIndex).toShort
@@ -88,6 +92,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Byte = d.toByte
     override def visitInt64(d: Long): Byte = d.toByte
     override def visitUInt64(d: Long): Byte = d.toByte
+    override def visitFloat32(d: Float): Byte = d.toByte
     override def visitFloat64(d: Double): Byte = d.toByte
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Byte = {
       Util.parseIntegralNum(cs, decIndex, expIndex).toByte
@@ -125,6 +130,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Char = d.toChar
     override def visitInt64(d: Long): Char = d.toChar
     override def visitUInt64(d: Long): Char = d.toChar
+    override def visitFloat32(d: Float): Char = d.toChar
     override def visitFloat64(d: Double): Char = d.toChar
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Char = {
       Util.parseIntegralNum(cs, decIndex, expIndex).toChar
@@ -137,7 +143,8 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): Long = d.toLong
     override def visitInt64(d: Long): Long = d.toLong
     override def visitUInt64(d: Long): Long = d.toLong
-    override def visitFloat64(d: Double) = d.toLong
+    override def visitFloat32(d: Float): Long = d.toLong
+    override def visitFloat64(d: Double): Long = d.toLong
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): Long = {
       Util.parseIntegralNum(cs, decIndex, expIndex).toLong
     }
@@ -177,6 +184,7 @@ trait DefaultTos extends com.rallyhealth.weepickle.v1.core.Types with Generated 
     override def visitInt32(d: Int): BigDecimal = BigDecimal(d)
     override def visitInt64(d: Long): BigDecimal = BigDecimal(d)
     override def visitUInt64(d: Long): BigDecimal = BigDecimal(java.lang.Long.toUnsignedString(d))
+    override def visitFloat32(d: Float) = BigDecimal(d.toString)
     override def visitFloat64(d: Double): BigDecimal = BigDecimal(d)
   }
   implicit val ToSymbol: To[Symbol] = new MapStringTo(s => Symbol(s.toString))
