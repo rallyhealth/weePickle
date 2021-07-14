@@ -58,7 +58,7 @@ object WeePicklePlugin extends AutoPlugin {
     autoCompilerPlugins := true,
     crossScalaVersions := autoImport.supportedScalaVersions,
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "utest" % "0.7.9" % "test",
+      "com.lihaoyi" %% "utest" % "0.7.10" % "test",
       "org.scalatest" %% "scalatest" % "3.0.8" % "test",
       "org.scalacheck" %% "scalacheck" % "1.14.1" % "test",
       compilerPlugin(acyclic.value),
