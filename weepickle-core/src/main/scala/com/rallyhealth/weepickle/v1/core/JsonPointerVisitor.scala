@@ -37,7 +37,7 @@ object JsonPointerVisitor {
     * Compared to something like a List[String] or List[Object], this does not require
     * extra String allocation or boxing unless we actually ask for the path.
     */
-  trait HasPath { // Scala 3 needs this to be public -- doesn't seem to break bin compat
+  trait HasPath { // Scala 3 needs this to be public -- doesn't break bin compat
 
     /**
       * Forms a chain toward the root.

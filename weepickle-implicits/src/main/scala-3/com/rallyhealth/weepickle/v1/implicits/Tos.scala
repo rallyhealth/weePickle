@@ -3,14 +3,13 @@ package com.rallyhealth.weepickle.v1.implicits
 import java.time._
 import java.util.Date
 
-import com.rallyhealth.weepickle.v1.core._
+import com.rallyhealth.weepickle.v1.core.{Abort, Annotator}
 
 import scala.util.{Failure, Success, Try}
 
 trait Tos
   extends DefaultTos
-  with TosVersionSpecific {
-  this: Annotator =>
+  with TosVersionSpecific { this: Annotator =>
 
   implicit val ToLocalDate: To[LocalDate] = new MapStringTo(s => LocalDate.parse(s.toString))
   implicit val ToLocalTime: To[LocalTime] = new MapStringTo(s => LocalTime.parse(s.toString))
@@ -39,4 +38,3 @@ trait Tos
   }
   implicit val ToDate: To[Date] = ToInstant.map(i => new Date(i.toEpochMilli))
 }
-

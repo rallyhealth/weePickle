@@ -263,8 +263,8 @@ trait Types { types =>
         bits != rawArgsLength
       }
     }
+    //+end-2
   }
-  //+end-2
   trait CaseW[In] extends From[In] {
     def length(v: In): Int
     def writeToObject[R](ctx: ObjVisitor[_, R], v: In): Unit

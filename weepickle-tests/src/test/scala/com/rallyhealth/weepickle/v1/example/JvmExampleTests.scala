@@ -87,6 +87,7 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
+//TODO: put this somewhere else if the Scala 3 Play Json does not materialize
 //      test("playJson") {
 //        import com.rallyhealth.weejson.v1.play.PlayJson
 //        import play.api.libs.json._
@@ -110,30 +111,29 @@ object JvmExampleTests extends TestSuite {
 //
 //        stringified ==> """["HELLO","WORLD"]"""
 //      }
-//      test("crossAst") {
-//        import com.rallyhealth.weejson.v1.circe.CirceJson
-//        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
-//
-//        val updatedCirceJson =
-//          circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
-//
-//        import com.rallyhealth.weejson.v1.play.PlayJson
-//        import play.api.libs.json._
-//
-//        val playJson: play.api.libs.json.JsValue = CirceJson.transform(
-//          updatedCirceJson,
-//          PlayJson
-//        )
-//
-//        val updatedPlayJson = JsArray(
-//          for (v <- playJson.as[JsArray].value)
-//            yield JsString(v.as[String].reverse)
-//        )
-//
-//        val stringified = PlayJson.transform(updatedPlayJson, StringRenderer()).toString
-//
-//        stringified ==> """["OLLEH","DLROW"]"""
-//      }
+      test("crossAst") {
+        import com.rallyhealth.weejson.v1.circe.CirceJson
+        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
+
+        val updatedCirceJson =
+          circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
+
+        import org.json4s.JsonAST
+
+        val json4sJson: JsonAST.JValue = CirceJson.transform(
+          updatedCirceJson,
+          Json4sJson
+        )
+
+        val updatedJson4sJson = JsonAST.JArray(
+          for (v <- json4sJson.children)
+            yield JsonAST.JString(v.values.toString.reverse)
+        )
+
+        val stringified = Json4sJson.transform(updatedJson4sJson, StringRenderer()).toString
+
+        stringified ==> """["OLLEH","DLROW"]"""
+      }
     }
 
   }

@@ -85,7 +85,7 @@ object MacroTests extends TestSuite {
     }
 //
 //    /*
-//    // TODO Currently not supported (Scala 2 comment)
+//    // TODO Currently not supported
 //    test("declarationWithinFunction"){
 //      sealed trait Base
 //      case object Child extends Base

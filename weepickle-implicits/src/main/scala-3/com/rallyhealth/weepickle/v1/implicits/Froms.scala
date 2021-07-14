@@ -7,8 +7,7 @@ import com.rallyhealth.weepickle.v1.core.{Annotator, Visitor}
 
 trait Froms
   extends DefaultFroms
-  with FromsVersionSpecific {
-  this: Annotator =>
+  with FromsVersionSpecific { this: Annotator =>
 
   implicit val FromLocalDate: From[LocalDate] = FromString.comap[LocalDate](_.toString)
   implicit val FromLocalTime: From[LocalTime] = FromString.comap[LocalTime](_.toString)

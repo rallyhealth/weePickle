@@ -1,4 +1,5 @@
 package com.rallyhealth.weepickle.v1
+
 import utest._
 import acyclic.file
 import com.rallyhealth.weepickle.v1.TestUtil.rw
@@ -112,13 +113,12 @@ object AdvancedTests extends TestSuite {
       assert(reader != null)
       assert(writer != null)
     }
-    //TODO: all GenericDataTypes tests failing in Scala 3
     test("GenericDataTypes"){
       test("simple"){
         import Generic.A
         test - rw(A(1), """{"t":1}""")
         test - rw(A("1"), """{"t":"1"}""")
-        //TODO:compile test - rw(A(Seq("1", "2", "3")), """{"t":["1","2","3"]}""")
+        test - rw(A(Seq("1", "2", "3")), """{"t":["1","2","3"]}""")
         test - rw(A(A(A(A(A(A(A(1))))))), """{"t":{"t":{"t":{"t":{"t":{"t":{"t":1}}}}}}}""")
       }
       test("large"){
@@ -163,7 +163,6 @@ object AdvancedTests extends TestSuite {
       }
     }
 
-    //TODO: all recursiveDataTypes tests failing in Scala 3
     test("recursiveDataTypes"){
       import Recursive._
       rw(
@@ -234,29 +233,25 @@ object AdvancedTests extends TestSuite {
 
     }
     test("gadt"){
-      //TODO: the simple tests that compile also succeed in Scala 3, but the ones expressed with
-      // wildcard type parameters do not compile. Perhaps a new limitation.
       test("simple"){
         test - rw(Gadt.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.Exists","path":"hello"}""")
-        //TODO:compile test - rw(Gadt.Exists("hello"): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.Exists","path":"hello"}""")
+        test - rw(Gadt.Exists("hello"): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.Exists","path":"hello"}""")
         test - rw(Gadt.IsDir(" "), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.IsDir","path":" "}""")
-        //TODO:compile test - rw(Gadt.IsDir(" "): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.IsDir","path":" "}""")
+        test - rw(Gadt.IsDir(" "): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.IsDir","path":" "}""")
         test - rw(Gadt.ReadBytes("\""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
-        //TODO:compile test - rw(Gadt.ReadBytes("\""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
+        test - rw(Gadt.ReadBytes("\""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
         test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
-        //TODO:compile test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
+        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
       }
-      //TODO: the partial tests that compile also fail in Scala 3. The ones expressed with
-      // wildcard type parameters . Perhaps a new limitation.
       test("partial"){
         test - rw(Gadt2.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
-        //TODO:compile test - rw(Gadt2.Exists("hello"): Gadt2[_, String], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
+        test - rw(Gadt2.Exists("hello"): Gadt2[_, String], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
         test - rw(Gadt2.IsDir(123), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
-        //TODO:compile test - rw(Gadt2.IsDir(123): Gadt2[_, Int], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
+        test - rw(Gadt2.IsDir(123): Gadt2[_, Int], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
         test - rw(Gadt2.ReadBytes('h'), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
-        //TODO:compile test - rw(Gadt2.ReadBytes('h'): Gadt2[_, Char], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
+        test - rw(Gadt2.ReadBytes('h'): Gadt2[_, Char], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
         test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
-        //TODO:compile test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
+        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
       }
     }
     test("issues"){
@@ -275,7 +270,6 @@ object AdvancedTests extends TestSuite {
           """{"results": [{"name": "a", "whatever": "b", "types": ["c"]}], "status": "d"}"""
         )
       }
-      //TODO: scalatex fails in Scala 3 - java.lang.StackOverflowError
       test("scalatex"){
         val block = Ast.Block(1, Seq(Ast.Block.Text(2, "hello")))
         val blockText = """{
@@ -306,12 +300,12 @@ object AdvancedTests extends TestSuite {
         rw(header: Ast.Block.Sub, headerText)
         rw(header: Ast.Chain.Sub, headerText)
       }
-//TODO:compile      test("scala-issue-11768"){
-//        // Make sure this compiles
-//        class Thing[T: com.rallyhealth.weepickle.v1.WeePickle.From, V: com.rallyhealth.weepickle.v1.WeePickle.From](t: Option[(V, T)]){
-//          implicitly[com.rallyhealth.weepickle.v1.WeePickle.From[Option[(V, T)]]]
-//        }
-//      }
+      test("scala-issue-11768"){
+        // Make sure this compiles
+        class Thing[T: com.rallyhealth.weepickle.v1.WeePickle.From, V: com.rallyhealth.weepickle.v1.WeePickle.From](t: Option[(V, T)]){
+          implicitly[com.rallyhealth.weepickle.v1.WeePickle.From[Option[(V, T)]]]
+        }
+      }
       //      test("companionImplicitPickedUp"){
       //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.To[TypedFoo]] eq TypedFoo.readerFrom)
       //        assert(implicitly[com.rallyhealth.weepickle.v1.WeePickle.From[TypedFoo]] eq TypedFoo.readerFrom)

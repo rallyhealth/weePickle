@@ -55,12 +55,8 @@ object EnumTests extends TestSuite {
       }
 
       /*
-       * TODO: Test fails in Scala 3, which does not support the .toString operation
-       * on a nameless enumeration value.
-       *
-       * java.lang.IllegalAccessException: Class scala.Enumeration can not access a member of class...
-       *
-       * (Only .id works.) May just be a new limitation we have to live with.
+       * Only supported in Scala 2.
+       * TBD if supporting this corner case in Scala 3 is necessary.
        */
       test("nameless") - {
         object Nameless extends Enumeration {

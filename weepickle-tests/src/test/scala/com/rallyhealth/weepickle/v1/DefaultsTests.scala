@@ -12,10 +12,6 @@ object IntDefaultTests extends TestSuite {
   implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
-    /*
-     * TODO: write default fails in Scala 3 because copied upickle's dropDefault behavior
-     *  has not yet been addressed.
-     */
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{"a":0}""")
     test("write non-default")(FromScala(A(1)).transform(ToJson.string) ==> """{"a":1}""")
     test("read missing")(FromJson("""{}""").transform(ToScala[A]) ==> A())

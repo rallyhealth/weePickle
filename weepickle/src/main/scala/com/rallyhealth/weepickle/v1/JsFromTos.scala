@@ -3,7 +3,6 @@ import com.rallyhealth.weejson.v1.Value
 import com.rallyhealth.weepickle.v1.implicits.MacroImplicits
 import com.rallyhealth.weepickle.v1.core.Visitor
 
-// removing MacroImplicits would break bin compat
 trait FromToValue extends com.rallyhealth.weepickle.v1.core.Types with MacroImplicits {
 
   implicit val ToValue: To[com.rallyhealth.weejson.v1.Value] =

@@ -317,9 +317,6 @@ object ExampleTests extends TestSuite {
           FromJson("{}").transform(ToScala[FooIncludeDefault]) ==> FooIncludeDefault(10, "lol")
           FromJson("""{"i": 123}""").transform(ToScala[FooIncludeDefault]) ==> FooIncludeDefault(123, "lol")
         }
-        /*
-         * TODO: fails in Scala 3 because copied upickle's dropDefault behavior has not yet been addressed.
-         */
         test("writing includes defaults") {
           FromScala(FooIncludeDefault(i = 11, s = "lol")).transform(ToJson.string) ==> """{"i":11,"s":"lol"}"""
           FromScala(FooIncludeDefault(i = 10, s = "lol")).transform(ToJson.string) ==> """{"i":10,"s":"lol"}"""
@@ -364,9 +361,6 @@ object ExampleTests extends TestSuite {
         FromScala(KeyBar(10)).transform(ToJson.string) ==> """{"hehehe":10}"""
         FromJson("""{"hehehe": 10}""").transform(ToScala[KeyBar]) ==> KeyBar(10)
       }
-      /*
-       * TODO: fails in Scala 3 because copied upickle's $type discriminator behavior has not yet been addressed.
-       */
       test("tag") {
         FromScala(B(10)).transform(ToJson.string) ==> """{"customDiscriminator":"Bee","i":10}"""
         FromJson("""{"customDiscriminator":"Bee","i":10}""").transform(ToScala[B]) ==> B(10)
@@ -476,7 +470,6 @@ object ExampleTests extends TestSuite {
 
     // TODO fix failing case. valid but we don't use msgpack, so we'll never encounter it.
     // TODO With jackson, I think we'd still have to encode the key as json, and add double quotes to the test's assertion.
-    // (Scala 2 comment)
 //    test("msgToValue"){
 //      val msg = com.rallyhealth.weepack.v1.Arr(
 //        com.rallyhealth.weepack.v1.Obj(com.rallyhealth.weepack.v1.Str("myFieldA") -> com.rallyhealth.weepack.v1.Int32(1), com.rallyhealth.weepack.v1.Str("myFieldB") -> com.rallyhealth.weepack.v1.Str("g")),

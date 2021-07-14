@@ -24,7 +24,7 @@ object PrimitiveTests extends TestSuite {
       test("unicode") {
         rw("叉烧包")
         FromScala("叉烧包").transform(ToJson.string) ==> "\"叉烧包\""
-        // TODO moved to low level API. (Scala 2 comment)
+        // TODO moved to low level API.
 //        FromScala("叉烧包", escapeUnicode = true).transform(ToJson.string).toLowerCase ==> "\"\\u53c9\\u70e7\\u5305\""
         FromJson("\"\\u53c9\\u70e7\\u5305\"").transform(ToScala[String]) ==> "叉烧包"
         FromJson("\"叉烧包\"").transform(ToScala[String]) ==> "叉烧包"
