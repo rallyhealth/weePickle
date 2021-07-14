@@ -1,5 +1,6 @@
 package com.rallyhealth.weepickle.v1.core
 
+import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
@@ -13,6 +14,7 @@ trait Types { types =>
   /**
     * A combined [[To]] and [[From]], along with some utility methods.
     */
+  @implicitNotFound("Could not find an implicit WeePickle.FromTo[${T}]. Consider adding one with `object ${T} { implicit val pickler: WeePickle.FromTo[${T}] = macroFromTo }`")
   trait FromTo[T] extends From[T] with To[T] {
     override def narrow[K]: FromTo[K] = this.asInstanceOf[FromTo[K]]
     def bimap[In](f: In => T, g: T => In): FromTo[In] = {
@@ -60,6 +62,7 @@ trait Types { types =>
     * A thin wrapper around [[Visitor]], but needs to be it's own class in order
     * to make type inference automatically pick up it's implicit values.
     */
+  @implicitNotFound("Could not find an implicit WeePickle.To[${T}]. Consider adding one with `object ${T} { implicit val pickleTo: WeePickle.To[${T}] = macroTo }`")
   trait To[T] extends com.rallyhealth.weepickle.v1.core.Visitor[Any, T] {
 
     override def map[Z](f: T => Z): To[Z] = new To.MapTo[T, T, Z](To.this) {
@@ -101,6 +104,7 @@ trait Types { types =>
     * Generally nothing more than a way of applying the `In` to
     * a [[Visitor]], along with some utility methods
     */
+  @implicitNotFound("Could not find an implicit WeePickle.From[${In}]. Consider adding one with `object ${In} { implicit val pickleFrom: WeePickle.From[${In}] = macroFrom }`")
   trait From[In] {
     def narrow[K] = this.asInstanceOf[From[K]]
     def transform[Out](in: In, out: Visitor[_, Out]): Out = {
