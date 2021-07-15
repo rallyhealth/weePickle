@@ -1,9 +1,10 @@
 package com.rallyhealth.weepickle.v1.implicits
 
-import com.rallyhealth.weepickle.v1.core.Visitor
-
 import java.net.URI
 import java.util.UUID
+
+import com.rallyhealth.weepickle.v1.core.Visitor
+
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait DefaultFroms

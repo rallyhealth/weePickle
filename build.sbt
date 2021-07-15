@@ -6,23 +6,23 @@ name := "weePickle-root"
 noPublish
 crossScalaVersions := Nil // crossScalaVersions must be set to Nil on the aggregating project
 
-//lazy val bench = project
-//  .dependsOn(`weepickle-tests` % "compile;test", `weejson-play27`)
-//  .enablePlugins(JmhPlugin)
-//  .settings(
-//    noPublish,
-//    crossScalaVersions := Seq(scala212),
-//    libraryDependencies ++= Seq(
-//      "com.fasterxml.jackson.core" % "jackson-databind" % "2.12.3",
-//      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.12.3",
-//      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
-//      "com.lihaoyi" %% "upickle" % "1.3.8",
-//      "io.circe" %% "circe-generic" % "0.13.0",
-//      "io.circe" %% "circe-parser" % "0.13.0",
-//      "org.msgpack" % "jackson-dataformat-msgpack" % "0.8.22",
-//      "com.lihaoyi" %% "sourcecode" % "0.1.7",
-//    )
-//  )
+lazy val bench = project
+  .dependsOn(`weepickle-tests` % "compile;test", `weejson-play27`)
+  .enablePlugins(JmhPlugin)
+  .settings(
+    noPublish,
+    crossScalaVersions := Seq(scala212),
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.12.3",
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.12.3",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
+      "com.lihaoyi" %% "upickle" % "1.3.8",
+      "io.circe" %% "circe-generic" % "0.13.0",
+      "io.circe" %% "circe-parser" % "0.13.0",
+      "org.msgpack" % "jackson-dataformat-msgpack" % "0.8.22",
+      "com.lihaoyi" %% "sourcecode" % "0.1.7",
+    )
+  )
 
 lazy val `weepickle-core` = project
   .settings(
@@ -92,7 +92,7 @@ lazy val `weepickle-tests` = project
     `weejson-argonaut`,
     `weejson-circe`,
     `weejson-json4s`,
-    //`weejson-play27`, // TODO: add back once 2.10.0 is available
+    //`weejson-play2x`, // TODO: need a weejson-play project supporting all scala versions
     `weejson` % "compile;test->test",
     `weepack` % "compile;test->test",
     `weepickle`,
@@ -158,15 +158,12 @@ lazy val `weejson-argonaut` = project
     )
   )
 
-lazy val `weejson-play27` = (project in file("weejson-play"))
+lazy val `weejson-play28` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
-    crossScalaVersions := Seq(/*scala211, scala212,*/ scala213), // TODO: 2.10.0-RCs still on Scala 3.0.0-RCs
+    crossScalaVersions := Seq(scala213),
     libraryDependencies ++= Seq(
-//      if (scalaBinaryVersion.value == "3")
-//        "com.typesafe.play" % "play-json_3.0.0-RC1" % "2.10.0-RC2" else
-      "com.typesafe.play" %% "play-json" % "2.7.4",
-//      ("com.typesafe.play" %% "play-json" % "2.7.4") cross CrossVersion.for3Use2_13)
+      "com.typesafe.play" %% "play-json" % "2.8.1",
     )
   )
 
@@ -179,19 +176,29 @@ def playProject(playVersion: String, scalaVersions: Seq[String]) = {
         "com.typesafe.play" %% "play-json" % playVersion,
       )
       ,
-      Compile / unmanagedSourceDirectories ++= (`weejson-play27` / Compile / unmanagedSourceDirectories).value,
-      Test / unmanagedSourceDirectories ++= (`weejson-play27` / Test / unmanagedSourceDirectories).value,
+      Compile / unmanagedSourceDirectories ++= (`weejson-play28` / Compile / unmanagedSourceDirectories).value,
+      Test / unmanagedSourceDirectories ++= (`weejson-play28` / Test / unmanagedSourceDirectories).value,
       crossScalaVersions := scalaVersions,
       scalaVersion := scalaVersions.last,
       ideSkipProject := true
     )
 }
-//
-//lazy val `weejson-play25` = playProject("2.5.19", Seq(scala211))
-//
-//lazy val `weejson-play28` = playProject("2.8.1", Seq(scala213))
-//
-//lazy val `weejson-play29` = playProject("2.9.2", Seq(scala213))
+
+lazy val `weejson-play25` = playProject("2.5.19", Seq(scala211))
+
+lazy val `weejson-play27` = playProject("2.7.4", Seq(scala211, scala212, scala213))
+
+lazy val `weejson-play29` = playProject("2.9.2", Seq(scala213))
+
+// lazy val `weejson-play210` = playProject("2.10.0", Seq(scala3)) // TODO: 2.10.0-RCs are still on Scala 3.0.0-RCs
+
+// TODO - maybe need something like this for testing (if that's even possible)
+//lazy val `weejson-play2x` = CrossVersion.partialVersion(scalaVersion.value).foreach {
+//  case (3, _) => `weejson-play210`
+//  case (2, 13) => `weejson-play28`
+//  case (2, 12) => `weejson-play28`
+//  case _ => `weejson-play25` // 2.11
+//}
 
 lazy val weeyaml = project
   .dependsOn(`weejson-jackson`)
@@ -211,6 +218,9 @@ lazy val weexml = project
 
 lazy val `weepickle-macro-lint-tests` = project
   .dependsOn(weepickle)
-  .settings(noPublish)
-  .settings(scalacOptions := (scalacOptions.value ++ Seq("-Xlint", "-Xfatal-warnings")).distinct)
+  .settings(
+    noPublish,
+    crossScalaVersions := Seq(scala211, scala212, scala213), // TODO: Scala 3?
+    scalacOptions := (scalacOptions.value ++ Seq("-Xlint", "-Xfatal-warnings")).distinct
+  )
 //  .settings(scalacOptions += "-Ymacro-debug-lite")

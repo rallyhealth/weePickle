@@ -66,7 +66,6 @@ object Twilight {
 object Pony {
   implicit val pickler: WeePickle.FromTo[Pony] = WeePickle.macroFromTo[Pony]
 }
-case class MissingPicklers()
 
 object MacroTests extends TestSuite {
 
@@ -317,11 +316,6 @@ object MacroTests extends TestSuite {
       rw[Pony](Twilight(), """{"$type": "twi"}""")
     }
 
-    test("compile errors") {
-      compileError("implicitly[WeePickle.To[MissingPicklers]]").msg ==> """Could not find an implicit WeePickle.To[com.rallyhealth.weepickle.v1.MissingPicklers]. Consider adding one with `object com.rallyhealth.weepickle.v1.MissingPicklers { implicit val pickleTo: WeePickle.To[com.rallyhealth.weepickle.v1.MissingPicklers] = macroTo }`"""
-      compileError("implicitly[WeePickle.From[MissingPicklers]]").msg ==> """Could not find an implicit WeePickle.From[com.rallyhealth.weepickle.v1.MissingPicklers]. Consider adding one with `object com.rallyhealth.weepickle.v1.MissingPicklers { implicit val pickleFrom: WeePickle.From[com.rallyhealth.weepickle.v1.MissingPicklers] = macroFrom }`"""
-      compileError("implicitly[WeePickle.FromTo[MissingPicklers]]").msg ==> """Could not find an implicit WeePickle.FromTo[com.rallyhealth.weepickle.v1.MissingPicklers]. Consider adding one with `object com.rallyhealth.weepickle.v1.MissingPicklers { implicit val pickler: WeePickle.FromTo[com.rallyhealth.weepickle.v1.MissingPicklers] = macroFromTo }`"""
-    }
   }
 }
 
