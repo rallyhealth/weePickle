@@ -163,7 +163,7 @@ trait CaseClassToPiece extends MacrosCommon:
                         missingKeys += fieldName
                       case Some(v) =>
                         try {
-                          valuesArray (index) = v.visitNull ().asInstanceOf[AnyRef]
+                          valuesArray(index) = v.visitNull().asInstanceOf[AnyRef]
                         } catch {
                           case NonFatal(_) => missingKeys += fieldName
                         }

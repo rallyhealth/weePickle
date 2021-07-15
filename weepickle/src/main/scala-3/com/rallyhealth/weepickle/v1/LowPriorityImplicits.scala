@@ -1,14 +1,13 @@
 package com.rallyhealth.weepickle.v1
 
-import com.rallyhealth.weepickle.v1.core.{Annotator, FromInput, Visitor}
+import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 
 import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
 
-abstract class LowPriorityImplicits extends AttributeTagged with Annotator {
+abstract class LowPriorityImplicits extends AttributeTagged {
 
   implicit val FromFromInput: From[FromInput] = new From[FromInput] {
     override def transform0[Out](in: FromInput, out: Visitor[_, Out]): Out = in.transform(out)
