@@ -116,7 +116,7 @@ trait CaseClassToPiece extends MacrosCommon:
    * any custom To) would be invoked, which seems to be more in keeping with the name "Nullable".
    * Only the following default implicit Tos implement visitNull: ToMap, ToImmutableMap, and
    * ToMutableMap (all via MapTo0), as well as ToArray, ToSeqLike, and ToOption. However
-   * the "Nullable" actions for ToOption are really accomidated by have a None default by
+   * the "Nullable" actions for ToOption are really accomidated by having a None default by
    * default, so only the other default Tos (as well as anything custom) should be leveraged
    * by this "Nullable" logic.
    *
