@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 
 trait Tos
   extends DefaultTos
-  with TosVersionSpecific { this: Annotator =>
+  with CaseClassToPiece { this: Annotator =>
 
   implicit val ToLocalDate: To[LocalDate] = new MapStringTo(s => LocalDate.parse(s.toString))
   implicit val ToLocalTime: To[LocalTime] = new MapStringTo(s => LocalTime.parse(s.toString))

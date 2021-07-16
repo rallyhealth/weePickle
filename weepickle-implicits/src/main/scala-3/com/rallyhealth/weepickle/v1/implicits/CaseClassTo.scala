@@ -6,7 +6,7 @@ import scala.util.control.NonFatal
 import com.rallyhealth.weepickle.v1.core.{ Visitor, ObjVisitor, Annotator }
 
 trait CaseClassToPiece extends MacrosCommon:
-  this: com.rallyhealth.weepickle.v1.core.Types with Tos with Annotator =>
+  this: com.rallyhealth.weepickle.v1.core.Types with DefaultTos with Annotator =>
   trait CaseClassTo[T] extends CaseR[T]:
     def make(bldr: Map[String, Any]): T
 

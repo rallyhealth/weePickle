@@ -13,8 +13,7 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
 trait DefaultTos
-    extends com.rallyhealth.weepickle.v1.core.Types
-    with MacroImplicits // removing this would break bin compat
+    extends MacroImplicits // removing this would break bin compat
     with Generated {
   implicit val ToUnit: To[Unit] = new SimpleTo[Unit] {
     override def expectedMsg = "expected unit"

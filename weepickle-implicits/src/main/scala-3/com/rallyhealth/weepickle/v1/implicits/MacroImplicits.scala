@@ -2,9 +2,10 @@ package com.rallyhealth.weepickle.v1.implicits
 
 import deriving.Mirror
 import scala.reflect.ClassTag
+import com.rallyhealth.weepickle.v1.core.{Annotator, Types}
 
-trait MacroImplicits extends Tos with Froms with com.rallyhealth.weepickle.v1.core.Annotator:
-  this: com.rallyhealth.weepickle.v1.core.Types =>
+trait MacroImplicits extends Tos with Froms:
+  this: Types with Annotator =>
 
   inline def macroFromTo[T: ClassTag](using Mirror.Of[T]): FromTo[T] =
     FromTo.join(

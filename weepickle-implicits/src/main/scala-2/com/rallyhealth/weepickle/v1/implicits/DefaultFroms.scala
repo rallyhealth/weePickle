@@ -8,8 +8,7 @@ import com.rallyhealth.weepickle.v1.core.Visitor
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait DefaultFroms
-    extends com.rallyhealth.weepickle.v1.core.Types
-    with Generated
+    extends Generated
     with MacroImplicits // removing this would break bin compat
     with LowPriFroms {
   implicit val FromString: From[String] = new From[String] {
@@ -158,7 +157,7 @@ trait DefaultFroms
 /**
   * This needs to be split into a separate trait due to https://github.com/scala/bug/issues/11768
   */
-trait LowPriFroms extends com.rallyhealth.weepickle.v1.core.Types {
+trait LowPriFroms { this: com.rallyhealth.weepickle.v1.core.Types =>
   implicit def SeqLikeFrom[C[_] <: Iterable[_], T](implicit r: From[T]): From[C[T]] =
     new From[C[T]] {
       def transform0[R](v: C[T], out: Visitor[_, R]): R = {

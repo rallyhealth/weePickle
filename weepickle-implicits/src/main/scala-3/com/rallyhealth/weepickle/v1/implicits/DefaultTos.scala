@@ -12,10 +12,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait DefaultTos
-    extends com.rallyhealth.weepickle.v1.core.Types
-//    with MacroImplicits // removing this in Scala 2 would break its bin compat
-    with Generated {
+trait DefaultTos extends Generated {
   implicit val ToUnit: To[Unit] = new SimpleTo[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {

@@ -3,10 +3,10 @@ package com.rallyhealth.weepickle.v1.implicits
 import compiletime.{summonInline}
 import deriving.Mirror
 import scala.reflect.ClassTag
-import com.rallyhealth.weepickle.v1.core.{ Visitor, ObjVisitor, Annotator }
+import com.rallyhealth.weepickle.v1.core.{Annotator, Visitor, ObjVisitor, Types}
 
 trait CaseClassFromPiece extends MacrosCommon:
-  this: com.rallyhealth.weepickle.v1.core.Types with Froms with Annotator =>
+  this: Types with Annotator =>
   class CaseClassFrom[V](
     elemsInfo: V => List[(String, Boolean, From[_], Any)],
     defaultParams: Map[String, AnyRef]) extends CaseW[V]:
