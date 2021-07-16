@@ -1,33 +1,28 @@
 package bench
 
-import java.util.concurrent.TimeUnit
-
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.Common
 import com.rallyhealth.weepickle.v1.core.NoOpVisitor
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.Blackhole
+import ujson.transform
+
+import java.util.concurrent.TimeUnit
 
 /**
-  * Tests Json parsing only.
-  *
-  * ==Run with==
-  * mill bench.jvm.runJmh ParseBytesBench
-  *
-  * java 8:
-  * {{{
-  * Benchmark                   Mode  Cnt    Score   Error  Units
-  * ParseBytesBench.uJson      thrpt       250.238          ops/s
-  * ParseBytesBench.weePickle  thrpt       392.815          ops/s
-  * }}}
-  *
-  * java 11:
-  * {{{
-  * Benchmark                   Mode  Cnt    Score    Error  Units
-  * ParseBytesBench.uJson      thrpt   15  292.643 ± 13.337  ops/s
-  * ParseBytesBench.weePickle  thrpt   15  376.108 ± 21.080  ops/s
-  * }}}
-  */
+ * Tests Json parsing only.
+ *
+ * ==Run with==
+ * bench / Jmh / run .*ParseBytesBench
+ *
+ *
+ * 11.0.11.hs-adpt:
+ * {{{
+ * [info] Benchmark                              Mode  Cnt    Score    Error  Units
+ * [info] ParseBytesBench.uJsonNoTrace          thrpt   15  423.969 ± 57.024  ops/s
+ * [info] ParseBytesBench.uJsonTrace            thrpt   15  261.736 ± 19.183  ops/s
+ * [info] ParseBytesBench.weePickle             thrpt   15  355.395 ± 11.672  ops/s
+ * }}}
+ */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
@@ -36,7 +31,6 @@ import org.openjdk.jmh.infra.Blackhole
   jvmArgsAppend = Array(
     //    "-XX:+UnlockCommercialFeatures",
     //    "-XX:+FlightRecorder",
-    //    "-XX:StartFlightRecording=delay=8s,duration=30s,filename=recording.jfr,settings=profile",
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
   ),
@@ -45,9 +39,10 @@ import org.openjdk.jmh.infra.Blackhole
 class ParseBytesBench {
 
   @Benchmark
-  def uJson: Unit = {
-    ujson.validate(Common.benchmarkSampleJsonBytes)
-  }
+  def uJsonNoTrace: Unit = ujson.validate(Common.benchmarkSampleJsonBytes)
+
+  @Benchmark
+  def uJsonTrace: Unit = upickle.core.TraceVisitor.withTrace(true, upickle.core.NoOpVisitor)(transform(Common.benchmarkSampleJsonBytes, _))
 
   @Benchmark
   def weePickle: Unit = {
@@ -56,25 +51,19 @@ class ParseBytesBench {
 }
 
 /**
-  * Parses and generates a json String.
-  *
-  * ==Run with==
-  * mill bench.jvm.runJmh ParseBytesToStringBench
-  *
-  * java 8:
-  * {{{
-  * Benchmark                           Mode  Cnt    Score   Error  Units
-  * ParseBytesToStringBench.uJson      thrpt       106.882          ops/s
-  * ParseBytesToStringBench.weePickle  thrpt       220.347          ops/s
-  * }}}
-  *
-  * java 11:
-  * {{{
-  * Benchmark                           Mode  Cnt    Score   Error  Units
-  * ParseBytesToStringBench.uJson      thrpt   15  121.047 ± 2.615  ops/s
-  * ParseBytesToStringBench.weePickle  thrpt   15  195.739 ± 8.495  ops/s
-  * }}}
-  */
+ * Parses and generates a json String.
+ *
+ * ==Run with==
+ * bench / Jmh / run .*ParseBytesToStringBench
+ *
+ * 11.0.11.hs-adpt:
+ * {{{
+ * [info] Benchmark                              Mode  Cnt    Score    Error  Units
+ * [info] ParseBytesToStringBench.uJsonNoTrace  thrpt   15  193.519 ± 16.052  ops/s
+ * [info] ParseBytesToStringBench.uJsonTrace    thrpt   15  159.625 ±  7.865  ops/s
+ * [info] ParseBytesToStringBench.weePickle     thrpt   15  195.580 ±  1.651  ops/s
+ * }}}
+ */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
@@ -83,7 +72,6 @@ class ParseBytesBench {
   jvmArgsAppend = Array(
     //    "-XX:+UnlockCommercialFeatures",
     //    "-XX:+FlightRecorder",
-    //    "-XX:StartFlightRecording=delay=8s,duration=30s,filename=recording.jfr,settings=profile",
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
   ),
@@ -92,14 +80,15 @@ class ParseBytesBench {
 class ParseBytesToStringBench {
 
   @Benchmark
-  def uJson(bh: Blackhole): Unit = {
-    bh.consume(ujson.transform(Common.benchmarkSampleJsonBytes, ujson.StringRenderer()).toString)
+  def uJsonTrace: String = {
+    upickle.core.TraceVisitor.withTrace(true, ujson.StringRenderer())(transform(Common.benchmarkSampleJsonBytes, _)).toString
   }
 
   @Benchmark
-  def weePickle(bh: Blackhole): Unit = {
-    bh.consume(FromJson(Common.benchmarkSampleJsonBytes).transform(ToJson.string))
-  }
+  def uJsonNoTrace: String = ujson.reformat(Common.benchmarkSampleJsonBytes)
+
+  @Benchmark
+  def weePickle: String = FromJson(Common.benchmarkSampleJsonBytes).transform(ToJson.string)
 }
 
 
