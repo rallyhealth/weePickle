@@ -3,7 +3,7 @@ package com.rallyhealth.weepickle.v1.implicits
 import compiletime.{summonInline}
 import deriving.Mirror
 import scala.reflect.ClassTag
-import com.rallyhealth.weepickle.v1.core.{Annotator, Visitor, ObjVisitor, Types}
+import com.rallyhealth.weepickle.v1.core.{Annotator, ObjVisitor, Types, Visitor}
 
 trait CaseClassFromPiece extends MacrosCommon:
   this: Types with Annotator =>

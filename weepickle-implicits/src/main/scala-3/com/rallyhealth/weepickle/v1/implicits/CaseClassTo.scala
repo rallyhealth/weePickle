@@ -3,14 +3,63 @@ package com.rallyhealth.weepickle.v1.implicits
 import compiletime.{summonInline}
 import deriving.Mirror
 import scala.util.control.NonFatal
-import com.rallyhealth.weepickle.v1.core.{ Visitor, ObjVisitor, Annotator }
+import com.rallyhealth.weepickle.v1.core.{ Abort, Annotator, ObjVisitor, NoOpVisitor, Types, Visitor }
 
 trait CaseClassToPiece extends MacrosCommon:
-  this: com.rallyhealth.weepickle.v1.core.Types with DefaultTos with Annotator =>
-  trait CaseClassTo[T] extends CaseR[T]:
-    def make(bldr: Map[String, Any]): T
+  this: Types with DefaultTos with Annotator =>
+  class CaseClassTo[T](
+    mirror: Mirror.ProductOf[T],
+    defaultParams: Map[String, AnyRef],
+    labels: List[String],
+    visitors: List[Visitor[_, _]]
+  ) extends CaseR[T]:
 
-    def visitorForKey(currentKey: String): Visitor[_, _]
+    val labelToVisitor: Map[String, Visitor[_, _]] = labels.zip(visitors).toMap
+    val indexedLabels: List[(String, Int)] = labels.zipWithIndex
+    val valueCount: Int = labels.size
+
+    def visitorForKey(key: String) =
+      labelToVisitor.get(key) match {
+        case None =>
+          // println(s"WARNING: CaseClassTo.visitorForKey($key): not found, returning NoOpVisitor")
+          NoOpVisitor
+        case Some(v) =>
+          // println(s"CaseClassTo.visitorForKey($key): found, returning $v")
+          v
+      }
+
+    // by default, no extra level of fallback for missing fields
+    def processMissing(fieldName:String): Either[String, AnyRef] = Left(fieldName)
+
+    def make(params: Map[String, Any]): T =
+      // println(s"in make: params=$params, labels=$labels")
+      val valuesArray = new Array[AnyRef](valueCount)
+      val missingKeys = collection.mutable.ListBuffer.empty[String]
+
+      indexedLabels.map { case (fieldName, index) =>
+        params.get(fieldName) match {
+          case Some(value) => valuesArray(index) = value.asInstanceOf[AnyRef]
+          case None =>
+            defaultParams.get(fieldName) match {
+              case Some(fallback) => valuesArray(index) = fallback.asInstanceOf[AnyRef]
+              case None => processMissing(fieldName) match {
+                case Left(missingFieldName) => missingKeys += missingFieldName
+                case Right(extraFallbackValue) => valuesArray(index) = extraFallbackValue
+              }
+            }
+        }
+      }
+
+      if (!missingKeys.isEmpty) {
+        throw new Abort("missing keys in dictionary: " + missingKeys.mkString(", "))
+      }
+
+      mirror.fromProduct(new Product {
+        def canEqual(that: Any): Boolean = true
+        def productArity: Int = valueCount
+        def productElement(i: Int): Any = valuesArray(i)
+      })
+    end make
 
     private val builder = collection.mutable.Map.empty[String, Any]
 
@@ -34,53 +83,13 @@ trait CaseClassToPiece extends MacrosCommon:
 
   inline def macroTo[T](using m: Mirror.Of[T]): To[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
-      val labels: List[String] = macros.fieldLabels[T].map(_._1) // we don't need dropDefault in To
-      val visitors: List[Visitor[_, _]] =
-        macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
-          .asInstanceOf[List[com.rallyhealth.weepickle.v1.core.Visitor[_, _]]]
-      val defaultParams: Map[String, AnyRef] = macros.getDefaultParams[T]
-      val labelToVisitor = labels.zip(visitors).toMap // cache
-      val indexedLabels = labels.zipWithIndex // cache
-      val valueCount = labels.size // cache
-
-      val reader = new CaseClassTo[T] {
-        override def visitorForKey(key: String) =
-          labelToVisitor.get(key) match {
-            case None =>
-              // println(s"WARNING: CaseClassTo.visitorForKey($key): not found, returning NoOpVisitor")
-              com.rallyhealth.weepickle.v1.core.NoOpVisitor
-            case Some(v) =>
-              // println(s"CaseClassTo.visitorForKey($key): found, returning $v")
-              v
-          }
-
-        override def make(params: Map[String, Any]): T =
-          // println(s"in make: params=$params, labels=$labels")
-          val valuesArray = new Array[AnyRef](valueCount)
-          val missingKeys = collection.mutable.ListBuffer.empty[String]
-
-          indexedLabels.map { case (fieldName, index) =>
-            params.get(fieldName) match {
-              case Some(value) => valuesArray(index) = value.asInstanceOf[AnyRef]
-              case None =>
-                defaultParams.get(fieldName) match {
-                  case Some(fallback) => valuesArray(index) = fallback.asInstanceOf[AnyRef]
-                  case None => missingKeys += fieldName
-                }
-            }
-          }
-
-          if (!missingKeys.isEmpty) {
-            throw new com.rallyhealth.weepickle.v1.core.Abort("missing keys in dictionary: " + missingKeys.mkString(", "))
-          }
-
-          m.fromProduct(new Product {
-            def canEqual(that: Any): Boolean = true
-            def productArity: Int = valueCount
-            def productElement(i: Int): Any = valuesArray(i)
-          })
-        end make
-      }
+      val reader = new CaseClassTo[T](
+        mirror = m,
+        defaultParams = macros.getDefaultParams[T],
+        labels = macros.fieldLabels[T].map(_._1), // we don't need dropDefault in To
+        visitors = macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
+          .asInstanceOf[List[Visitor[_, _]]]
+      )
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
       if isSealed then annotate(reader, discriminator.getOrElse("$type"), macros.fullClassName[T]._1)
@@ -119,69 +128,35 @@ trait CaseClassToPiece extends MacrosCommon:
    * the "Nullable" actions for ToOption are really accomidated by having a None default by
    * default, so only the other default Tos (as well as anything custom) should be leveraged
    * by this "Nullable" logic.
-   *
-   * TODO: Consolidate duplicate code here and in macroTo (right now it is 90% cut and paste).
-   * (And maybe write a shorter, less stream-of-consciousness comment.)
    */
   inline def macroNullableTo[T](using m: Mirror.Of[T]): To[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
       val labels: List[String] = macros.fieldLabels[T].map(_._1) // we don't need dropDefault in To
       val visitors: List[Visitor[_, _]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
-          .asInstanceOf[List[com.rallyhealth.weepickle.v1.core.Visitor[_, _]]]
-      val defaultParams: Map[String, AnyRef] = macros.getDefaultParams[T]
-      val labelToVisitor = labels.zip(visitors).toMap // cache
-      val indexedLabels = labels.zipWithIndex // cache
-      val valueCount = labels.size // cache
+          .asInstanceOf[List[Visitor[_, _]]]
 
-      val reader = new CaseClassTo[T] {
-        override def visitorForKey(key: String) =
-          labelToVisitor.get(key) match {
+      val reader = new CaseClassTo[T](
+        mirror = m,
+        defaultParams = macros.getDefaultParams[T],
+        labels = macros.fieldLabels[T].map(_._1), // we don't need dropDefault in To
+        visitors = macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
+          .asInstanceOf[List[Visitor[_, _]]]
+      ) {
+
+        // extra level of fallback for missing fields
+        override def processMissing(fieldName:String): Either[String, AnyRef] =
+          labelToVisitor.get(fieldName) match {
             case None =>
-              // println(s"WARNING: CaseClassTo.visitorForKey($key): not found, returning NoOpVisitor")
-              com.rallyhealth.weepickle.v1.core.NoOpVisitor
+              // shouldn't happen - treat as missing
+              Left(fieldName)
             case Some(v) =>
-              // println(s"CaseClassTo.visitorForKey($key): found, returning $v")
-              v
+              try {
+                Right(v.visitNull().asInstanceOf[AnyRef])
+              } catch {
+                case NonFatal(_) => Left(fieldName)
+              }
           }
-
-        override def make(params: Map[String, Any]): T =
-          // println(s"in make: params=$params, labels=$labels")
-          val valuesArray = new Array[AnyRef](valueCount)
-          val missingKeys = collection.mutable.ListBuffer.empty[String]
-
-          indexedLabels.map { case (fieldName, index) =>
-            params.get(fieldName) match {
-              case Some(value) => valuesArray(index) = value.asInstanceOf[AnyRef]
-              case None =>
-                defaultParams.get(fieldName) match {
-                  case Some(fallback) => valuesArray(index) = fallback.asInstanceOf[AnyRef]
-                  case None =>
-                    labelToVisitor.get(fieldName) match {
-                      case None =>
-                        // shouldn't happen - treat as missing
-                        missingKeys += fieldName
-                      case Some(v) =>
-                        try {
-                          valuesArray(index) = v.visitNull().asInstanceOf[AnyRef]
-                        } catch {
-                          case NonFatal(_) => missingKeys += fieldName
-                        }
-                    }
-                }
-            }
-          }
-
-          if (!missingKeys.isEmpty) {
-            throw new com.rallyhealth.weepickle.v1.core.Abort("missing keys in dictionary: " + missingKeys.mkString(", "))
-          }
-
-          m.fromProduct(new Product {
-            def canEqual(that: Any): Boolean = true
-            def productArity: Int = valueCount
-            def productElement(i: Int): Any = valuesArray(i)
-          })
-        end make
       }
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
