@@ -27,16 +27,16 @@ lazy val bench = project
 lazy val `weepickle-core` = project
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
+      "org.scala-lang.modules" %% "scala-collection-compat" % (if (scalaBinaryVersion.value == "3") "2.5.0" else "2.4.3")
     )
   )
 
 lazy val `weepickle-implicits` = project
   .dependsOn(weejson)
   .settings(
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
-    ),
+    libraryDependencies ++= {
+      if (scalaBinaryVersion.value == "3") Seq.empty else Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+    },
     Compile / sourceGenerators += Def.task[Seq[File]] {
       val pkg = s"com.rallyhealth.weepickle.${shadedVersion.value}.implicits"
       val contents =
@@ -139,7 +139,7 @@ lazy val `weejson-circe` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-parser" % (if (scalaBinaryVersion.value == "2.11") "0.11.2" else "0.13.0")
+      "io.circe" %% "circe-parser" % (if (scalaBinaryVersion.value == "2.11") "0.11.2" else "0.14.1")
     )
   )
 
@@ -147,23 +147,24 @@ lazy val `weejson-json4s` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-ast" % "3.6.10",
-      "org.json4s" %% "json4s-native" % "3.6.10",
+      "org.json4s" %% "json4s-ast" % (if (scalaBinaryVersion.value == "3") "4.0.1" else "3.6.10"),
     )
   )
 lazy val `weejson-argonaut` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "io.argonaut" %% "argonaut" % "6.2.5",
+      "io.argonaut" %% "argonaut" % (if (scalaBinaryVersion.value == "3") "6.3.6" else "6.2.5") ,
     )
   )
 
+// TODO: 2.7 mostly -- for now, use 2.10 when on Scala 3. For testing, we need one
+//  project for 'weepickle-testing' to dependOn that is available on all Scala versions
 lazy val `weejson-play27` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-json" % "2.7.4",
+      "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC5" else "2.7.4"),
     )
   )
 
@@ -210,4 +211,5 @@ lazy val `weepickle-macro-lint-tests` = project
   .dependsOn(weepickle)
   .settings(noPublish)
   .settings(scalacOptions := (scalacOptions.value ++ Seq("-Xlint", "-Xfatal-warnings")).distinct)
+  .settings(crossScalaVersions := Seq(scala211, scala212, scala213)) // TODO: Scala 3?
 //  .settings(scalacOptions += "-Ymacro-debug-lite")

@@ -110,7 +110,7 @@ object JvmExampleTests extends TestSuite {
 
         stringified ==> """["HELLO","WORLD"]"""
       }
-      test("crossAst") {
+      test("crossAst - playJson and circe") {
         import com.rallyhealth.weejson.v1.circe.CirceJson
         val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
 
@@ -131,6 +131,30 @@ object JvmExampleTests extends TestSuite {
         )
 
         val stringified = PlayJson.transform(updatedPlayJson, StringRenderer()).toString
+
+        stringified ==> """["OLLEH","DLROW"]"""
+      }
+
+      test("crossAst - json4s and circe") {
+        import com.rallyhealth.weejson.v1.circe.CirceJson
+        val circeJson: io.circe.Json = FromJson("""["hello", "world"]""").transform(CirceJson)
+
+        val updatedCirceJson =
+          circeJson.mapArray(_.map(x => x.mapString(_.toUpperCase)))
+
+        import org.json4s.JsonAST
+
+        val json4sJson: JsonAST.JValue = CirceJson.transform(
+          updatedCirceJson,
+          Json4sJson
+        )
+
+        val updatedJson4sJson = JsonAST.JArray(
+          for (v <- json4sJson.children)
+            yield JsonAST.JString(v.values.toString.reverse)
+        )
+
+        val stringified = Json4sJson.transform(updatedJson4sJson, StringRenderer()).toString
 
         stringified ==> """["OLLEH","DLROW"]"""
       }

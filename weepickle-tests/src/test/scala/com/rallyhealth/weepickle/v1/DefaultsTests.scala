@@ -9,7 +9,7 @@ import utest._
 object IntDefaultTests extends TestSuite {
 
   case class A(a: Int = 0)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{"a":0}""")
@@ -22,7 +22,7 @@ object IntDefaultTests extends TestSuite {
 object FieldDropDefaultIntDefaultTests extends TestSuite {
 
   case class A(@dropDefault a: Int = 0)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{}""")
@@ -35,7 +35,7 @@ object FieldDropDefaultIntDefaultTests extends TestSuite {
 object TopDropDefaultIntDefaultTests extends TestSuite {
 
   @dropDefault case class A(a: Int = 0)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{}""")
@@ -48,7 +48,7 @@ object TopDropDefaultIntDefaultTests extends TestSuite {
 object TopDropDefaultIntTests extends TestSuite {
 
   @dropDefault case class A(a: Int) // @dropDefault is meaningless here.
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write")(FromScala(A(1)).transform(ToJson.string) ==> """{"a":1}""")
@@ -60,7 +60,7 @@ object TopDropDefaultIntTests extends TestSuite {
 object StringTests extends TestSuite {
 
   case class A(d: String)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write non-default")(FromScala(A("omg")).transform(ToJson.string) ==> """{"d":"omg"}""")
@@ -72,7 +72,7 @@ object StringTests extends TestSuite {
 object StringTopDropDefaultTests extends TestSuite {
 
   @dropDefault case class A(d: String)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write non-default")(FromScala(A("omg")).transform(ToJson.string) ==> """{"d":"omg"}""")
@@ -85,7 +85,7 @@ object StringTopDropDefaultTests extends TestSuite {
 object DefaultStringTopDropDefaultTests extends TestSuite {
 
   @dropDefault case class A(d: String = "lol")
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{}""")
@@ -100,7 +100,7 @@ object DefaultStringTopDropDefaultTests extends TestSuite {
 object OptionTopDropDefaultTests extends TestSuite {
 
   @dropDefault case class A(d: Option[String] = None)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
     test("write default")(FromScala(A()).transform(ToJson.string) ==> """{}""")
@@ -115,23 +115,20 @@ object OptionTopDropDefaultTests extends TestSuite {
 object FromInputStringTests extends TestSuite {
 
   case class A(d: String)
-  implicit val pickler = WeePickle.macroFromTo[A]
+  implicit val pickler: WeePickle.FromTo[A] = WeePickle.macroFromTo[A]
 
   override val tests: Tests = Tests {
-    test("write default FromInput")(
-      {
-        val fromInput: FromInput = FromScala(A(null))
-        FromScala(fromInput).transform(ToJson.string)
-      } ==> """{"d":null}""")
-    test("write non-default FromInput")(
-      {
-        val fromInput: FromInput = FromScala(A("omg"))
-        FromScala(fromInput).transform(ToJson.string)
-      } ==> """{"d":"omg"}""")
-    test("write null FromInput")(
-      {
-        val fromInput: FromInput = FromScala(A(null))
-        FromScala(fromInput).transform(ToJson.string)
-      } ==> """{"d":null}""")
+    test("write default FromInput")({
+      val fromInput: FromInput = FromScala(A(null))
+      FromScala(fromInput).transform(ToJson.string)
+    } ==> """{"d":null}""")
+    test("write non-default FromInput")({
+      val fromInput: FromInput = FromScala(A("omg"))
+      FromScala(fromInput).transform(ToJson.string)
+    } ==> """{"d":"omg"}""")
+    test("write null FromInput")({
+      val fromInput: FromInput = FromScala(A(null))
+      FromScala(fromInput).transform(ToJson.string)
+    } ==> """{"d":null}""")
   }
 }

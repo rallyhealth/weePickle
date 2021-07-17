@@ -36,12 +36,12 @@ object PrimitiveTests extends TestSuite {
     }
     test("Symbol") {
       test("plain") {
-        rw('i_am_a_cow, """ "i_am_a_cow" """)(
+        rw(Symbol("i_am_a_cow"), """ "i_am_a_cow" """)(
           com.rallyhealth.weepickle.v1.WeePickle.ToSymbol,
           com.rallyhealth.weepickle.v1.WeePickle.FromSymbol
         )
       }
-      test("unicode")(rw('叉烧包, """ "叉烧包" """))
+      test("unicode")(rw(Symbol("叉烧包"), """ "叉烧包" """))
       test("null")(rwNull(null: Symbol, "null"))
     }
     test("Long") {
@@ -95,7 +95,8 @@ object PrimitiveTests extends TestSuite {
         - If you need to kill a test run make sure you don't leave a stray node process in the background
          */
 
-        test("greater than max int exponential")(assertNumberFormatException[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """))
+        test("greater than max int exponential")(
+          assertNumberFormatException[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """))
         test("10k digits integer")(parses[BigDecimal](s""" "1${"0" * 9999}" """))
         test("100k digits integer")(assertNumberFormatException[BigDecimal](s""" "1${"0" * 99999}" """))
         test("10k digits after the decimal")(parses[BigDecimal](s""" ".${"9" * 9999}" """))

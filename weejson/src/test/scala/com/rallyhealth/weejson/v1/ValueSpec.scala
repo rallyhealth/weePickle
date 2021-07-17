@@ -1,11 +1,12 @@
 package com.rallyhealth.weejson.v1
 
 import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ValueSpec
-    extends PropSpec
+    extends AnyPropSpec
     with Matchers
     with ScalaCheckPropertyChecks
     with GenValue
@@ -16,13 +17,13 @@ class ValueSpec
   )
 
   property("roundtrip: Visitor") {
-    forAll { value: Value =>
+    forAll { (value: Value) =>
       value.transform(Value) should ===(value)
     }
   }
 
   property("roundtrip: String") {
-    forAll { value: Value =>
+    forAll { (value: Value) =>
       WeeJson.read(WeeJson.write(value)) === (value)
     }
   }

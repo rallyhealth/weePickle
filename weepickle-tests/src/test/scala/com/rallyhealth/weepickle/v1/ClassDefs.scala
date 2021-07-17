@@ -486,5 +486,5 @@ case class CaseClassWithJson(json: com.rallyhealth.weejson.v1.Value)
 
 class StringAnyVal(val string: String) extends AnyVal
 object StringAnyVal {
-  implicit val pickler = WeePickle.fromTo[String].bimap[StringAnyVal](_.string, new StringAnyVal(_))
+  implicit val pickler: RW[StringAnyVal] = WeePickle.fromTo[String].bimap[StringAnyVal](_.string, new StringAnyVal(_))
 }

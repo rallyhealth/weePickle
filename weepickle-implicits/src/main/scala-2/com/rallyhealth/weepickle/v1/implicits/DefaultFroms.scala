@@ -8,9 +8,8 @@ import com.rallyhealth.weepickle.v1.core.Visitor
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait DefaultFroms
-    extends com.rallyhealth.weepickle.v1.core.Types
-    with Generated
-    with MacroImplicits
+    extends Generated
+    with MacroImplicits // removing this would break bin compat
     with LowPriFroms {
   implicit val FromString: From[String] = new From[String] {
     def transform0[R](v: String, out: Visitor[_, R]): R = out.visitString(v)
@@ -47,7 +46,7 @@ trait DefaultFroms
     def transform0[R](v: Char, out: Visitor[_, R]): R = out.visitChar(v)
   }
   implicit val FromUUID: From[UUID] = FromString.comap[UUID](_.toString)
-  implicit val LongFrom = new From[Long] {
+  implicit val LongFrom: From[Long] = new From[Long] {
     def transform0[R](v: Long, out: Visitor[_, R]): R = out.visitInt64(v)
   }
   implicit val FromBigInt: From[BigInt] = FromString.comap[BigInt](_.toString)
@@ -158,12 +157,12 @@ trait DefaultFroms
 /**
   * This needs to be split into a separate trait due to https://github.com/scala/bug/issues/11768
   */
-trait LowPriFroms extends com.rallyhealth.weepickle.v1.core.Types {
+trait LowPriFroms { this: com.rallyhealth.weepickle.v1.core.Types =>
   implicit def SeqLikeFrom[C[_] <: Iterable[_], T](implicit r: From[T]): From[C[T]] =
     new From[C[T]] {
       def transform0[R](v: C[T], out: Visitor[_, R]): R = {
         val ctx = out.visitArray(v.size).narrow
-        v.asInstanceOf[Iterable[T]].foreach { t =>
+        v.iterator.foreach { t =>
           val written = r.transform(t.asInstanceOf[T], ctx.subVisitor)
           ctx.visitValue(written)
         }

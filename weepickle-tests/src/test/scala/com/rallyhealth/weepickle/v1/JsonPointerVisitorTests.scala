@@ -13,7 +13,7 @@ object JsonPointerVisitorTests extends TestSuite {
 
   case class Foo(foo: List[String], s: String, i: Int, b: Boolean)
 
-  implicit lazy val rw = weepickle.v1.WeePickle.macroFromTo[Foo]
+  implicit lazy val rw: WeePickle.FromTo[Foo] = weepickle.v1.WeePickle.macroFromTo[Foo]
 
   override def tests: Tests = Tests {
     test("failures") {
