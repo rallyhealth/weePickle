@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
   * trait instance is tagged during reading and writing.
   */
 trait Api extends implicits.Tos with implicits.Froms with Api.NoOpMappers with FromToValue {
-  this: Types with Annotator =>
+  this: Annotator =>
 
   /**
     * Somewhat internal version of [[WeePickle.ToScala]] for use by custom API bundles.
