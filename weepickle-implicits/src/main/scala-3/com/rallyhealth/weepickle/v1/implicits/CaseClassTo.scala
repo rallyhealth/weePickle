@@ -6,7 +6,14 @@ import scala.util.control.NonFatal
 import com.rallyhealth.weepickle.v1.core.{ Abort, Annotator, ObjVisitor, NoOpVisitor, Types, Visitor }
 
 trait CaseClassToPiece extends MacrosCommon:
-  this: Types with DefaultTos with Annotator =>
+  this: Types with Annotator =>
+
+  // must duplicate ToString definition here to avoid circular reference with DefaultTos
+  implicit val stringVisitor: To[String] = new SimpleTo[String] {
+    override def expectedMsg = "expected string"
+    override def visitString(cs: CharSequence): String = cs.toString
+  }
+
   class CaseClassTo[T](
     mirror: Mirror.ProductOf[T],
     defaultParams: Map[String, AnyRef],
@@ -68,7 +75,7 @@ trait CaseClassToPiece extends MacrosCommon:
 
       def subVisitor: Visitor[_, _] = visitorForKey(currentKey)
 
-      def visitKey(): Visitor[_, _] = ToString
+      def visitKey(): Visitor[_, _] = stringVisitor
 
       def visitKeyValue(v: Any): Unit =
         currentKey = objectAttributeKeyReadMap(v.asInstanceOf[String]).toString

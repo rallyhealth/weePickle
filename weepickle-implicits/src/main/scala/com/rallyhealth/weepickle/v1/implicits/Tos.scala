@@ -1,13 +1,12 @@
 package com.rallyhealth.weepickle.v1.implicits
 
+import com.rallyhealth.weepickle.v1.core.{Abort, Annotator}
+
 import java.time._
 import java.util.Date
-
-import com.rallyhealth.weepickle.v1.core.Abort
-
 import scala.util.{Failure, Success, Try}
 
-trait Tos extends DefaultTos {
+trait Tos extends DefaultTos { this: Annotator =>
 
   implicit val ToLocalDate: To[LocalDate] = new MapStringTo(s => LocalDate.parse(s.toString))
   implicit val ToLocalTime: To[LocalTime] = new MapStringTo(s => LocalTime.parse(s.toString))

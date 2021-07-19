@@ -1,20 +1,17 @@
 package com.rallyhealth.weepickle.v1.implicits
 
+import com.rallyhealth.weepickle.v1.core._
+
 import java.net.URI
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.{Base64, UUID}
-
-import com.rallyhealth.weepickle.v1.core._
-
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.ClassTag
 
-trait DefaultTos
-    extends MacroImplicits // removing this would break bin compat
-    with Generated {
+trait DefaultTos extends MacroImplicits with Generated { this: Annotator =>
   implicit val ToUnit: To[Unit] = new SimpleTo[Unit] {
     override def expectedMsg = "expected unit"
     override def visitObject(length: Int): ObjVisitor[Any, Unit] = new ObjVisitor[Any, Unit] {

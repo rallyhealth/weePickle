@@ -1,11 +1,11 @@
 package com.rallyhealth.weepickle.v1.implicits
 
+import com.rallyhealth.weepickle.v1.core.{Annotator, Visitor}
+
 import java.time._
 import java.util.Date
 
-import com.rallyhealth.weepickle.v1.core.Visitor
-
-trait Froms extends DefaultFroms {
+trait Froms extends DefaultFroms { this: Annotator =>
 
   implicit val FromLocalDate: From[LocalDate] = FromString.comap[LocalDate](_.toString)
   implicit val FromLocalTime: From[LocalTime] = FromString.comap[LocalTime](_.toString)

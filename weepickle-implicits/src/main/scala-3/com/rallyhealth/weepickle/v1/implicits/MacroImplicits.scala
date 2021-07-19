@@ -4,8 +4,8 @@ import deriving.Mirror
 import scala.reflect.ClassTag
 import com.rallyhealth.weepickle.v1.core.{Annotator, Types}
 
-trait MacroImplicits extends Tos with Froms:
-  this: Annotator =>
+trait MacroImplicits extends CaseClassToPiece with CaseClassFromPiece:
+  this: Annotator with Types =>
 
   inline def macroFromTo[T: ClassTag](using Mirror.Of[T]): FromTo[T] =
     FromTo.join(
