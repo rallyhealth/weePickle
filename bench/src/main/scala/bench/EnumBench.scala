@@ -15,7 +15,7 @@ object FastSuit extends Enumeration {
   val Clubs = Value("Clubs")
   val Diamonds = Value("Diamonds")
 
-  implicit val pickler = WeePickle.fromToEnumerationName(this)
+  implicit val pickler: WeePickle.FromTo[FastSuit.Value] = WeePickle.fromToEnumerationName(this)
 }
 
 /**
@@ -41,7 +41,7 @@ object SlowSuit extends Enumeration {
   val Clubs = Value
   val Diamonds = Value
 
-  implicit val pickler = WeePickle.fromToEnumerationName(this)
+  implicit val pickler: WeePickle.FromTo[SlowSuit.Value] = WeePickle.fromToEnumerationName(this)
 }
 
 /**

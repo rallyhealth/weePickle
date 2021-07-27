@@ -11,16 +11,16 @@ lazy val bench = project
   .enablePlugins(JmhPlugin)
   .settings(
     noPublish,
-    crossScalaVersions := Seq(scala212),
+    crossScalaVersions := Seq(scala213, scala3),
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.12.3",
-      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.12.3",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
-      "com.lihaoyi" %% "upickle" % "1.3.8",
-      "io.circe" %% "circe-generic" % "0.13.0",
-      "io.circe" %% "circe-parser" % "0.13.0",
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.0-rc1",
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.13.0-rc1",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.0-rc1",
+      "com.lihaoyi" %% "upickle" % "1.4.0",
+      "io.circe" %% "circe-generic" % "0.14.1",
+      "io.circe" %% "circe-parser" % "0.14.1",
       "org.msgpack" % "jackson-dataformat-msgpack" % "0.8.22",
-      "com.lihaoyi" %% "sourcecode" % "0.1.7",
+      "com.lihaoyi" %% "sourcecode" % "0.2.7",
     )
   )
 
@@ -99,9 +99,34 @@ lazy val `weepickle-tests` = project
     `weexml`,
     `weeyaml`,
   )
+//.settings(crossScalaVersions := Seq(scala211, scala212, scala213)) // no Scala 3
   .settings(
     noPublish,
   )
+
+//TODO: Seems like this should be the better way... but it doesn't work :'(
+// Scala 3 only available for play-json 2.10
+//lazy val `weepickle-tests-3` = Project(s"weepickle-tests-3", file(s"weepickle-tests-3"))
+//  .dependsOn(
+//    `weepickle-core` % "compile;test->test",
+//    `weejson-argonaut`,
+//    `weejson-circe`,
+//    `weejson-json4s`,
+//    `weejson-play210`, // Scala 3 version
+//    `weejson` % "compile;test->test",
+//    `weepack` % "compile;test->test",
+//    `weepickle`,
+//    `weexml`,
+//    `weeyaml`,
+//  )
+//  .settings(
+//    noPublish,
+//    Compile / unmanagedSourceDirectories ++= (`weepickle-tests` / Compile / unmanagedSourceDirectories).value,
+//    Test / unmanagedSourceDirectories ++= (`weepickle-tests` / Test / unmanagedSourceDirectories).value,
+//    crossScalaVersions := Seq(scala3),
+//    scalaVersion := scala3,
+//    ideSkipProject := true
+//  )
 
 /**
   * ADTs:
@@ -164,6 +189,7 @@ lazy val `weejson-play27` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
+//    "com.typesafe.play" %% "play-json" % "2.7.4",
       "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC5" else "2.7.4"),
     )
   )
@@ -190,6 +216,8 @@ lazy val `weejson-play25` = playProject("2.5.19", Seq(scala211))
 lazy val `weejson-play28` = playProject("2.8.1", Seq(scala213))
 
 lazy val `weejson-play29` = playProject("2.9.2", Seq(scala213))
+
+lazy val `weejson-play210` = playProject("2.10.0-RC5", Seq(scala3))
 
 lazy val weeyaml = project
   .dependsOn(`weejson-jackson`)

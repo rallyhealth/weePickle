@@ -150,12 +150,14 @@ object Generic {
   object A {
     implicit def rw[T: R: W]: RW[A[T]] = WeePickle.macroFromTo
   }
+  //Fails in Scala 3 - type parameters on a case class
   case class ADT[A, B, C, D, E, F](a: A, b: B, c: C, d: D, e: E, f: F)
   object ADT {
     implicit def rw[A: R: W, B: R: W, C: R: W, D: R: W, E: R: W, F: R: W]: RW[ADT[A, B, C, D, E, F]] =
       WeePickle.macroFromTo
   }
 }
+//Fails in Scala 3 - recursive
 object Recursive {
   sealed trait LL
   object LL {
