@@ -3,7 +3,7 @@ package bench
 import bench.ScalaVersionBench.Data
 import com.rallyhealth.weepickle.v1.WeePickle
 import upickle.core.Visitor
-import utest.*
+import utest._
 
 object ScalaVersionBenchTests extends TestSuite {
 
