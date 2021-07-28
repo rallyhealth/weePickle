@@ -59,7 +59,7 @@ object Common {
     implicit def _w9: Encoder[ADT0] = deriveEncoder
 
     bench[String](duration)(
-      decode[Seq[Data]](_).right.get,
+      decode[Seq[Data]](_).fold(throw _, identity),
       implicitly[Encoder[Seq[Data]]].apply(_).toString()
     )
 
@@ -152,7 +152,7 @@ object Common {
     implicit lazy val _w9: Encoder[ADT0] = deriveEncoder
 
     bench[String](duration)(
-      decode[Seq[Data]](_).right.get,
+      decode[Seq[Data]](_).fold(throw _, identity),
       implicitly[Encoder[Seq[Data]]].apply(_).toString()
     )
   }
