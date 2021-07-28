@@ -12,7 +12,7 @@ import com.rallyhealth.weepickle.v1.implicits.key
 object ADTs {
   case class ADT0()
   object ADT0 {
-    implicit def rw: RW[ADT0] = WeePickle.macroFromTo
+    implicit val rw: RW[ADT0] = WeePickle.macroFromTo
   }
   case class ADTa(i: Int)
   object ADTa {
@@ -66,7 +66,7 @@ object ADTs {
 object Hierarchy {
   sealed trait A
   object A {
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[A] = RW.merge(B.rw, C.rw)
+    implicit val rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[A] = RW.merge(B.rw, C.rw)
   }
   case class B(i: Int) extends A
   object B {
@@ -206,7 +206,7 @@ object Defaults {
   }
   case class ADTc(i: Int = 2, s: String, t: (Double, Double) = (1, 2))
   object ADTc {
-    implicit def rw: RW[ADTc] = WeePickle.macroFromTo
+    implicit val rw: RW[ADTc] = WeePickle.macroFromTo
   }
 }
 trait MixedIn {

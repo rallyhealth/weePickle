@@ -8,24 +8,23 @@ import com.rallyhealth.weepickle.v1.core.{Annotator, ObjVisitor, Types, Visitor}
 trait CaseClassFromPiece extends MacrosCommon:
   this: Types with Annotator =>
   class CaseClassFrom[V](
-    elemsInfo: V => List[(String, Boolean, From[_], Any)],
-    defaultParams: Map[String, AnyRef]) extends CaseW[V]:
+    elemsInfo: V => List[(String, Boolean, From[_], Option[AnyRef], Any)]
+  ) extends CaseW[V]:
 
     def length(v: V): Int =
       var n = 0
       for
-        (name, dropDefault, _, value) <- elemsInfo(v)
-        defaultValue <- defaultParams.get(name)
-        if defaultValue != value || !dropDefault || serializeDefaults
-      do n += 1
+        (_, dropDefault, _, defaultValue, value) <- elemsInfo(v)
+        if !dropDefault || serializeDefaults || !defaultValue.exists(_ == value)
+      do
+        n += 1
       n
     end length
 
     def writeToObject[R](ctx: ObjVisitor[_, R], v: V): Unit =
       for
-        (name, dropDefault, writer, value) <- elemsInfo(v)
-        defaultValue = defaultParams.get(name)
-        if !dropDefault || serializeDefaults || defaultValue.isEmpty || defaultValue.get != value
+        (name, dropDefault, writer, defaultValue, value) <- elemsInfo(v)
+        if !dropDefault || serializeDefaults || !defaultValue.exists(_ == value)
       do
         val keyVisitor = ctx.visitKey()
         ctx.visitKeyValue(
@@ -41,16 +40,19 @@ trait CaseClassFromPiece extends MacrosCommon:
   inline def macroFrom[T: ClassTag](using m: Mirror.Of[T]): From[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
       val (fullClassName, dropAllDefaults) = macros.fullClassName[T]
-      def elemsInfo(v: T): List[(String, Boolean, From[_], Any)] =
-        val labels: List[(String, Boolean)] = macros.fieldLabels[T]
-        val writers: List[From[_]] =
-          macros.summonList[Tuple.Map[m.MirroredElemTypes, From]]
-            .asInstanceOf[List[From[_]]]
-        val values: List[Any] = v.asInstanceOf[Product].productIterator.toList
-        for (((l, dd), w), v) <- labels.zip(writers).zip(values)
-        yield (l, dd || dropAllDefaults, w, v)
+      val labels: List[(String, Boolean)] = macros.fieldLabels[T]
+      val writers: List[From[_]] =
+        macros.summonList[Tuple.Map[m.MirroredElemTypes, From]]
+          .asInstanceOf[List[From[_]]]
+      val defaults = macros.getDefaultParams[T]
+      val staticElemsInfo: List[(String, Boolean, From[_], Option[AnyRef])] = for ((l, dd), w) <- labels.zip(writers)
+        yield (l, dd || dropAllDefaults, w, defaults.get(l))
+
+      def elemsInfo(v: T): List[(String, Boolean, From[_], Option[AnyRef], Any)] =
+        for ((l, dd, w, d), v) <- staticElemsInfo.zip(v.asInstanceOf[Product].productIterator)
+        yield (l, dd, w, d, v)
       end elemsInfo
-      val writer = CaseClassFrom[T](elemsInfo, macros.getDefaultParams[T])
+      val writer = CaseClassFrom[T](elemsInfo)
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
       if isSealed then annotate(writer, discriminator.getOrElse("$type"), fullClassName)
