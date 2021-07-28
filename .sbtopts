@@ -1,4 +1,4 @@
--J-Xmx3g
+-J-Xmx4g
 -J-Xss2m
 
 # "To best utilize classloader caching and to prevent file handle leaks, we recommend running sbt without a MaxMetaspaceSize limit."

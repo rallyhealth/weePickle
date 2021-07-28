@@ -1,15 +1,19 @@
 package bench
 
 import com.rallyhealth.weepickle.v1.WeePickle._
-import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor}
+import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor, Visitor}
 import org.openjdk.jmh.annotations._
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.TimeUnit
 
-/*
+/**
  * Benchmark to exercise the macro-generated logic (i.e., mapping to/from case classes),
  * where the implementation (and performance) differ quite a bit between Scala versions.
+ *
+ * ==Run with==
+ * bench / Jmh / run .*ScalaVersionBench.from
+ *
  */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -28,13 +32,17 @@ import java.util.concurrent.TimeUnit
 )
 class ScalaVersionBench {
 
-  import ScalaVersionBench.{benchmarkSampleData, Data}
+  import ScalaVersionBench.{Data, benchmarkFlatPrimitives, benchmarkSampleData}
 
   private val source: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
-  private val returnDone: NoOpVisitor[String] = new NoOpVisitor("done")
+  val visitor: Visitor[Any, String] = new NoOpVisitor("done")
+
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @Benchmark
+  def fromFlatPrimitives: String = FromScala(benchmarkFlatPrimitives).transform(visitor)
 
   @Benchmark
-  def fromSample: String = FromScala(benchmarkSampleData).transform(returnDone)
+  def fromSample: String = FromScala(benchmarkSampleData).transform(visitor)
 
   @Benchmark
   def toSample: Seq[Data] = source.transform(ToScala[Seq[Data]])
@@ -70,4 +78,19 @@ object ScalaVersionBench {
       ADT0()
     )
   )
+
+  case class FlatPrimitives(
+    i: Int,
+    s: String,
+    b: Boolean,
+    l: Long,
+    d: Double,
+    c: Char
+  )
+  object FlatPrimitives {
+    implicit val pickler: FromTo[FlatPrimitives] = macroFromTo
+  }
+
+  val benchmarkFlatPrimitives = FlatPrimitives(Int.MinValue, "", true, Long.MaxValue, Double.NaN, '!')
+
 }
