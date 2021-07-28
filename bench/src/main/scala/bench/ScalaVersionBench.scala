@@ -30,7 +30,7 @@ class ScalaVersionBench {
 
   import ScalaVersionBench.{benchmarkSampleData, Data}
 
-  private val source: FromInput = FromScala(benchmarkSampleData)
+  private val source: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
   private val returnDone: NoOpVisitor[String] = new NoOpVisitor("done")
 
   @Benchmark

@@ -3,9 +3,9 @@ package com.rallyhealth.weepickle.v1.implicits
 import compiletime.{summonInline}
 import deriving.Mirror
 import scala.util.control.NonFatal
-import com.rallyhealth.weepickle.v1.core.{ Abort, Annotator, ObjVisitor, NoOpVisitor, Types, Visitor }
+import com.rallyhealth.weepickle.v1.core.{Abort, Annotator, ObjVisitor, NoOpVisitor, Types, Visitor}
 
-trait CaseClassToPiece extends MacrosCommon:
+trait CaseClassToPiece extends MacrosCommon :
   this: Types with Annotator =>
 
   // must duplicate ToString definition here to avoid circular reference with DefaultTos
@@ -19,40 +19,35 @@ trait CaseClassToPiece extends MacrosCommon:
     defaultParams: Map[String, AnyRef],
     labels: List[String],
     visitors: List[Visitor[_, _]]
-  ) extends CaseR[T]:
+  ) extends CaseR[T] :
 
-    val labelToVisitor: Map[String, Visitor[_, _]] = labels.zip(visitors).toMap
+    val labelToVisitor: Map[String, Visitor[_, _]] = labels.zip(visitors).toMap.withDefaultValue(NoOpVisitor)
     val indexedLabels: List[(String, Int)] = labels.zipWithIndex
     val valueCount: Int = labels.size
 
-    def visitorForKey(key: String) =
-      labelToVisitor.get(key) match {
-        case None =>
-          // println(s"WARNING: CaseClassTo.visitorForKey($key): not found, returning NoOpVisitor")
-          NoOpVisitor
-        case Some(v) =>
-          // println(s"CaseClassTo.visitorForKey($key): found, returning $v")
-          v
-      }
+    def visitorForKey(key: String) = labelToVisitor(key)
 
     // by default, no extra level of fallback for missing fields
-    def processMissing(fieldName:String): Either[String, AnyRef] = Left(fieldName)
+    def processMissing(fieldName: String): Either[String, AnyRef] = Left(fieldName)
 
     def make(params: Map[String, Any]): T =
       // println(s"in make: params=$params, labels=$labels")
       val valuesArray = new Array[AnyRef](valueCount)
       val missingKeys = collection.mutable.ListBuffer.empty[String]
 
-      indexedLabels.map { case (fieldName, index) =>
+      indexedLabels.foreach { case (fieldName, index) =>
         params.get(fieldName) match {
-          case Some(value) => valuesArray(index) = value.asInstanceOf[AnyRef]
+          case Some(value) =>
+            valuesArray(index) = value.asInstanceOf[AnyRef]
           case None =>
             defaultParams.get(fieldName) match {
-              case Some(fallback) => valuesArray(index) = fallback.asInstanceOf[AnyRef]
-              case None => processMissing(fieldName) match {
-                case Left(missingFieldName) => missingKeys += missingFieldName
-                case Right(extraFallbackValue) => valuesArray(index) = extraFallbackValue
-              }
+              case Some(fallback) =>
+                valuesArray(index) = fallback.asInstanceOf[AnyRef]
+              case None =>
+                processMissing(fieldName) match {
+                  case Left(missingFieldName) => missingKeys += missingFieldName
+                  case Right(extraFallbackValue) => valuesArray(index) = extraFallbackValue
+                }
             }
         }
       }
@@ -68,7 +63,7 @@ trait CaseClassToPiece extends MacrosCommon:
       })
     end make
 
-    private val builder = collection.mutable.Map.empty[String, Any]
+    private val builder = Map.newBuilder[String, Any]
 
     override def visitObject(length: Int) = new ObjVisitor[Any, T] {
       var currentKey: String = null
@@ -78,13 +73,13 @@ trait CaseClassToPiece extends MacrosCommon:
       def visitKey(): Visitor[_, _] = stringVisitor
 
       def visitKeyValue(v: Any): Unit =
-        currentKey = objectAttributeKeyReadMap(v.asInstanceOf[String]).toString
+        currentKey = objectAttributeKeyReadMap(v.asInstanceOf[CharSequence]).toString
 
       def visitValue(v: Any): Unit =
-        builder(currentKey) = v
+        builder.addOne(currentKey, v)
 
       def visitEnd(): T =
-        make(builder.toMap)
+        make(builder.result)
     }
   end CaseClassTo
 
@@ -105,7 +100,7 @@ trait CaseClassToPiece extends MacrosCommon:
     case m: Mirror.SumOf[T] =>
       val readers: List[To[_ <: T]] = macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
         .asInstanceOf[List[To[_ <: T]]]
-      To.merge[T](readers:_*)
+      To.merge[T](readers: _*)
   }
 
   /*
@@ -152,7 +147,7 @@ trait CaseClassToPiece extends MacrosCommon:
       ) {
 
         // extra level of fallback for missing fields
-        override def processMissing(fieldName:String): Either[String, AnyRef] =
+        override def processMissing(fieldName: String): Either[String, AnyRef] =
           labelToVisitor.get(fieldName) match {
             case None =>
               // shouldn't happen - treat as missing
@@ -173,10 +168,10 @@ trait CaseClassToPiece extends MacrosCommon:
     case m: Mirror.SumOf[T] =>
       val readers: List[To[_ <: T]] = macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
         .asInstanceOf[List[To[_ <: T]]]
-      To.merge[T](readers:_*)
+      To.merge[T](readers: _*)
   }
 
-  inline given [T <: Singleton: Mirror.Of]: To[T] = macroTo[T]
+  inline given[T <: Singleton : Mirror.Of]: To[T] = macroTo[T]
 
   // see comment in MacroImplicits as to why Dotty's extension methods aren't used here
   implicit class ToExtension(r: To.type):
