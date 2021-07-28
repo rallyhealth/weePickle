@@ -12,10 +12,12 @@ trait CaseClassFromPiece extends MacrosCommon:
     // parallel arrays in field definition order
     fieldNames: Array[String],
     defaultValues: Array[Option[AnyRef]],
-    froms: Array[From[_]],
+    createFroms: => Array[From[_]],
     dropDefaults: Array[Boolean],
     dropAllDefaults: Boolean
   ) extends CaseW[V]:
+
+    lazy val froms = createFroms
 
     def length(v: V): Int =
       if mightDropDefaults then
@@ -73,13 +75,20 @@ trait CaseClassFromPiece extends MacrosCommon:
       val fieldNames = labels.map(_._1).toArray
       val dropDefaults = labels.map(_._2).toArray
       val defaultValues = fieldNames.map(macros.getDefaultParams[T].get)
-      val froms: List[From[_]] =
-        macros.summonList[Tuple.Map[m.MirroredElemTypes, From]].asInstanceOf[List[From[_]]]
+
+      /**
+       * froms must be lazy to handle deeply nested `def pickler = macroFromTo` structures.
+       * `val pickler = macroFromTo` is always preferred.
+       * Part of the problem is that `FromTo` is required even when only a From or To is needed.
+       * Covered by MacroTests.exponential.
+       */
+      def froms: Array[From[_]] =
+        macros.summonList[Tuple.Map[m.MirroredElemTypes, From]].asInstanceOf[List[From[_]]].toArray
 
       val fromCaseClass = CaseClassFrom[T](
         fieldNames,
         defaultValues,
-        froms.toArray,
+        froms,
         dropDefaults,
         dropAllDefaults,
       )
