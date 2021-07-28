@@ -42,7 +42,7 @@ object WeePicklePlugin extends AutoPlugin {
     organization := "com.rallyhealth",
     organizationHomepage := Some(url("https://www.rallyhealth.com")),
     organizationName := "Rally Health",
-    scalaVersion := scala3, // scala213, // for IDE
+    scalaVersion := scala3, // for IDE
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/rallyhealth/weePickle"),
@@ -85,8 +85,8 @@ object WeePicklePlugin extends AutoPlugin {
         "-language:higherKinds",
         "-language:implicitConversions",
         "-Xfatal-warnings",
-        "-encoding",
-        "utf8",
+//        "-encoding",
+//        "utf8",
         "-feature"
       )
 
