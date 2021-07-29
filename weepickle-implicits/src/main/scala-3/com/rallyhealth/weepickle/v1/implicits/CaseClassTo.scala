@@ -16,41 +16,43 @@ trait CaseClassToPiece extends MacrosCommon :
 
   class CaseClassTo[T](
     mirror: Mirror.ProductOf[T],
-    defaultParams: Map[String, AnyRef],
-    labels: List[String],
-    visitors: List[Visitor[_, _]]
+    // parallel arrays in field definition order
+    fieldNames: Array[String],
+    defaultValues: Array[Option[AnyRef]],
+    createVisitors: => Array[Visitor[_, _]]
   ) extends CaseR[T] :
 
-    val labelToVisitor: Map[String, Visitor[_, _]] = labels.zip(visitors).toMap.withDefaultValue(NoOpVisitor)
-    val indexedLabels: List[(String, Int)] = labels.zipWithIndex
-    val valueCount: Int = labels.size
+    lazy val visitors = createVisitors
+    val outOfBounds = -1
 
-    def visitorForKey(key: String) = labelToVisitor(key)
+    val fieldIndex = fieldNames.zipWithIndex.toMap.withDefaultValue(outOfBounds)
+    val arity: Int = fieldNames.size
 
     // by default, no extra level of fallback for missing fields
-    def processMissing(fieldName: String): Either[String, AnyRef] = Left(fieldName)
+    def processMissing(index: Int): Either[String, AnyRef] = Left(fieldNames(index))
 
-    def make(params: Map[String, Any]): T =
+    def make(visitedValues: Array[Option[AnyRef]]): T =
       // println(s"in make: params=$params, labels=$labels")
-      val valuesArray = new Array[AnyRef](valueCount)
+      val elements = new Array[AnyRef](arity)
       val missingKeys = collection.mutable.ListBuffer.empty[String]
 
-      indexedLabels.foreach { case (fieldName, index) =>
-        params.get(fieldName) match {
+      var i = 0
+      while (i < arity) do
+        visitedValues(i) match {
           case Some(value) =>
-            valuesArray(index) = value.asInstanceOf[AnyRef]
+            elements(i) = value
           case None =>
-            defaultParams.get(fieldName) match {
-              case Some(fallback) =>
-                valuesArray(index) = fallback.asInstanceOf[AnyRef]
+            defaultValues(i) match {
+              case Some(default) =>
+                elements(i) = default
               case None =>
-                processMissing(fieldName) match {
+                processMissing(i) match {
                   case Left(missingFieldName) => missingKeys += missingFieldName
-                  case Right(extraFallbackValue) => valuesArray(index) = extraFallbackValue
+                  case Right(extraFallbackValue) => elements(i) = extraFallbackValue
                 }
             }
         }
-      }
+        i += 1
 
       if (!missingKeys.isEmpty) {
         throw new Abort("missing keys in dictionary: " + missingKeys.mkString(", "))
@@ -58,39 +60,46 @@ trait CaseClassToPiece extends MacrosCommon :
 
       mirror.fromProduct(new Product {
         def canEqual(that: Any): Boolean = true
-        def productArity: Int = valueCount
-        def productElement(i: Int): Any = valuesArray(i)
+        def productArity: Int = arity
+        def productElement(i: Int): Any = elements(i)
       })
     end make
 
-    private val builder = Map.newBuilder[String, Any]
+    private val visitedValues = Array.fill[Option[AnyRef]](arity)(None)
 
     override def visitObject(length: Int) = new ObjVisitor[Any, T] {
-      var currentKey: String = null
+      var currentKey: Int = outOfBounds
 
-      def subVisitor: Visitor[_, _] = visitorForKey(currentKey)
+      def subVisitor: Visitor[_, _] =
+        if (currentKey == outOfBounds) NoOpVisitor
+        else visitors(currentKey)
 
       def visitKey(): Visitor[_, _] = stringVisitor
 
       def visitKeyValue(v: Any): Unit =
-        currentKey = objectAttributeKeyReadMap(v.asInstanceOf[CharSequence]).toString
+        currentKey = fieldIndex(objectAttributeKeyReadMap(v.asInstanceOf[CharSequence]).toString)
 
       def visitValue(v: Any): Unit =
-        builder.addOne(currentKey, v)
+        if (currentKey != outOfBounds) visitedValues(currentKey) = Some(v.asInstanceOf[AnyRef])
 
-      def visitEnd(): T =
-        make(builder.result)
+      def visitEnd(): T = make(visitedValues)
     }
   end CaseClassTo
 
   inline def macroTo[T](using m: Mirror.Of[T]): To[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
+      // parallel arrays in field definition order
+      val fieldNames = macros.fieldLabels[T].map(_._1).toArray
+      val defaultValues = fieldNames.map(macros.getDefaultParams[T].get)
+
+      def createVisitors: Array[Visitor[_, _]] =
+        macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
+
       val reader = new CaseClassTo[T](
         mirror = m,
-        defaultParams = macros.getDefaultParams[T],
-        labels = macros.fieldLabels[T].map(_._1), // we don't need dropDefault in To
-        visitors = macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
-          .asInstanceOf[List[Visitor[_, _]]]
+        fieldNames,
+        defaultValues,
+        createVisitors
       )
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
@@ -133,31 +142,26 @@ trait CaseClassToPiece extends MacrosCommon :
    */
   inline def macroNullableTo[T](using m: Mirror.Of[T]): To[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
-      val labels: List[String] = macros.fieldLabels[T].map(_._1) // we don't need dropDefault in To
-      val visitors: List[Visitor[_, _]] =
-        macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
-          .asInstanceOf[List[Visitor[_, _]]]
+      // parallel arrays in field definition order
+      val fieldNames = macros.fieldLabels[T].map(_._1).toArray
+      val defaultValues = fieldNames.map(macros.getDefaultParams[T].get)
+
+      def createVisitors: Array[Visitor[_, _]] =
+        macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
 
       val reader = new CaseClassTo[T](
         mirror = m,
-        defaultParams = macros.getDefaultParams[T],
-        labels = macros.fieldLabels[T].map(_._1), // we don't need dropDefault in To
-        visitors = macros.summonList[Tuple.Map[m.MirroredElemTypes, To]]
-          .asInstanceOf[List[Visitor[_, _]]]
+        fieldNames,
+        defaultValues,
+        createVisitors
       ) {
 
         // extra level of fallback for missing fields
-        override def processMissing(fieldName: String): Either[String, AnyRef] =
-          labelToVisitor.get(fieldName) match {
-            case None =>
-              // shouldn't happen - treat as missing
-              Left(fieldName)
-            case Some(v) =>
-              try {
-                Right(v.visitNull().asInstanceOf[AnyRef])
-              } catch {
-                case NonFatal(_) => Left(fieldName)
-              }
+        override def processMissing(index: Int): Either[String, AnyRef] =
+          try {
+            Right(visitors(index).visitNull().asInstanceOf[AnyRef])
+          } catch {
+            case NonFatal(_) => Left(fieldNames(index))
           }
       }
 

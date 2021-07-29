@@ -82,13 +82,13 @@ trait CaseClassFromPiece extends MacrosCommon:
        * Part of the problem is that `FromTo` is required even when only a From or To is needed.
        * Covered by MacroTests.exponential.
        */
-      def froms: Array[From[_]] =
+      def createFroms: Array[From[_]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, From]].asInstanceOf[List[From[_]]].toArray
 
       val fromCaseClass = CaseClassFrom[T](
         fieldNames,
         defaultValues,
-        froms,
+        createFroms,
         dropDefaults,
         dropAllDefaults,
       )
