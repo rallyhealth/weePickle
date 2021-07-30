@@ -3,6 +3,7 @@ package bench
 import com.rallyhealth.weepickle.v1.WeePickle._
 import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor, Visitor}
 import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.infra.Blackhole
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.TimeUnit
@@ -26,7 +27,10 @@ import java.util.concurrent.TimeUnit
 //        "-XX:StartFlightRecording=delay=10s,duration=20s,filename=recording.jfr,settings=profile",
     "-Xms350m",
     "-Xmx350m",
-    "-XX:+HeapDumpOnOutOfMemoryError"
+    "-XX:+HeapDumpOnOutOfMemoryError",
+    // https://stackoverflow.com/questions/32047440/different-benchmarking-results-between-forks-in-jmh
+    "-XX:-BackgroundCompilation",
+    "-XX:-TieredCompilation"
   ),
   value = 10
 )
@@ -49,6 +53,9 @@ class ScalaVersionBench {
 
   @Benchmark
   def toSample: Seq[Data] = source.transform(ToScala[Seq[Data]])
+
+  @Benchmark
+  def toBlackhole(bh: Blackhole) = source.transform(new BlackholeVisitor(bh))
 }
 
 object ScalaVersionBench {
