@@ -42,6 +42,9 @@ class ScalaVersionBench {
   def fromFlatPrimitives: String = FromScala(benchmarkFlatPrimitives).transform(visitor)
 
   @Benchmark
+  def toUpperbound: String = source.transform(visitor)
+
+  @Benchmark
   def fromSample: String = FromScala(benchmarkSampleData).transform(visitor)
 
   @Benchmark
