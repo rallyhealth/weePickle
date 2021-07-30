@@ -11,7 +11,7 @@ trait CaseClassFromPiece extends MacrosCommon:
   class CaseClassFrom[V](
     // parallel arrays in field definition order
     fieldNames: Array[String],
-    defaultValues: Array[Option[AnyRef]],
+    createDefaultValues: => Array[Option[AnyRef]],
     createFroms: => Array[From[_]],
     dropDefaults: Array[Boolean],
     dropAllDefaults: Boolean
@@ -21,6 +21,7 @@ trait CaseClassFromPiece extends MacrosCommon:
 
     def length(v: V): Int =
       if mightDropDefaults then
+        val defaultValues = createDefaultValues
         var sum = 0
         val product = v.asInstanceOf[Product]
         var i = 0
@@ -28,7 +29,7 @@ trait CaseClassFromPiece extends MacrosCommon:
         while (i < arity) do
           val value = product.productElement(i)
           val writer = froms(i)
-          if shouldWriteValue(value, i) then sum += 1
+          if shouldWriteValue(value, i, defaultValues(i)) then sum += 1
           i += 1
         sum
       else
@@ -40,11 +41,12 @@ trait CaseClassFromPiece extends MacrosCommon:
       val product = v.asInstanceOf[Product]
       var i = 0
       val arity = product.productArity
+      val defaultValues = createDefaultValues
       while (i < arity) do
         val value = product.productElement(i)
         val from = froms(i)
         val fieldName = fieldNames(i)
-        if shouldWriteValue(value, i) then
+        if shouldWriteValue(value, i, defaultValues(i)) then
           val keyVisitor = ctx.visitKey()
           ctx.visitKeyValue(
             keyVisitor.visitString(
@@ -60,9 +62,9 @@ trait CaseClassFromPiece extends MacrosCommon:
     /**
      * Optimization to allow short-circuiting length checks.
      */
-    private val mightDropDefaults = !serializeDefaults && (dropAllDefaults || dropDefaults.exists(_ == true)) && defaultValues.exists(_.isDefined)
+    private val mightDropDefaults = !serializeDefaults && (dropAllDefaults || dropDefaults.exists(_ == true)) && createDefaultValues.exists(_.isDefined)
 
-    private def shouldWriteValue(value: Any, i: Int): Boolean = serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValues(i).contains(value)
+    private def shouldWriteValue(value: Any, i: Int, defaultValue: Option[AnyRef]): Boolean = serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValue.contains(value)
 
   end CaseClassFrom
 
@@ -74,7 +76,12 @@ trait CaseClassFromPiece extends MacrosCommon:
       val labels: List[(String, Boolean)] = macros.fieldLabels[T]
       val fieldNames = labels.map(_._1).toArray
       val dropDefaults = labels.map(_._2).toArray
-      val defaultValues = fieldNames.map(macros.getDefaultParams[T].get)
+
+      /**
+       * defaultValues must be evaluated each time to handle changing values
+       * like System.currentTimeMillis. Covered by ChangingDefaultTests.
+       */
+      def defaultValues = fieldNames.map(macros.getDefaultParams[T].get)
 
       /**
        * froms must be lazy to handle deeply nested `def pickler = macroFromTo` structures.
