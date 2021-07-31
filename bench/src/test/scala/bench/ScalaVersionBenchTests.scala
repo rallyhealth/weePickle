@@ -9,13 +9,14 @@ object ScalaVersionBenchTests extends TestSuite {
 
   val tests = Tests {
     test("fromSample") {
-      new ScalaVersionBench() {
-        override val visitor = WeePickle.to[Seq[Data]]
+      new ScalaVersionBench()
+        .testableFromSample(
+          WeePickle.to[Seq[Data]]
           .map { data =>
             data ==> ScalaVersionBench.benchmarkSampleData
             "assertion reached"
           }
-      }.fromSample ==> "assertion reached"
+      ) ==> "assertion reached"
     }
 
     test("toSample") {
