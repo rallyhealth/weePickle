@@ -11,7 +11,7 @@ trait CaseClassFromPiece extends MacrosCommon:
   class CaseClassFrom[V](
     // parallel arrays in field definition order
     fieldNames: Array[String],
-    defaultValues: Array[Option[Unit => AnyRef]],
+    defaultValues: Array[Option[() => AnyRef]],
     createFroms: => Array[From[_]],
     dropDefaults: Array[Boolean],
     dropAllDefaults: Boolean
@@ -62,8 +62,8 @@ trait CaseClassFromPiece extends MacrosCommon:
      */
     private val mightDropDefaults = !serializeDefaults && (dropAllDefaults || dropDefaults.exists(_ == true)) && defaultValues.exists(_.isDefined)
 
-    private def shouldWriteValue(value: Any, i: Int, defaultValue: Option[Unit => AnyRef]): Boolean =
-      serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValue.map(_.apply(())).contains(value)
+    private def shouldWriteValue(value: Any, i: Int, defaultValue: Option[() => AnyRef]): Boolean =
+      serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValue.map(_.apply()).contains(value)
 
   end CaseClassFrom
 

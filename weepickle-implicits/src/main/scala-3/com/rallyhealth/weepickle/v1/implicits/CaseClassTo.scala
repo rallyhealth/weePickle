@@ -18,7 +18,7 @@ trait CaseClassToPiece extends MacrosCommon :
     mirror: Mirror.ProductOf[T],
     // parallel arrays in field definition order
     fieldNames: Array[String],
-    defaultValues: Array[Option[Unit => AnyRef]],
+    defaultValues: Array[Option[() => AnyRef]],
     createVisitors: => Array[Visitor[_, _]]
   ) extends CaseR[T] :
 
@@ -40,7 +40,7 @@ trait CaseClassToPiece extends MacrosCommon :
         if (!visited(i)) {
           defaultValues(i) match {
             case Some(default) =>
-              elements(i) = default.apply(())
+              elements(i) = default.apply()
               stillMissing -= 1
             case None =>
               processMissing(i) match {
