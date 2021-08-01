@@ -11,7 +11,7 @@ trait CaseClassFromPiece extends MacrosCommon:
   class CaseClassFrom[V](
     // parallel arrays in field definition order
     fieldNames: Array[String],
-    createDefaultValues: => Array[Option[AnyRef]],
+    defaultValues: Array[Option[Unit => AnyRef]],
     createFroms: => Array[From[_]],
     dropDefaults: Array[Boolean],
     dropAllDefaults: Boolean
@@ -21,7 +21,6 @@ trait CaseClassFromPiece extends MacrosCommon:
 
     def length(v: V): Int =
       if mightDropDefaults then
-        val defaultValues = createDefaultValues
         var sum = 0
         val product = v.asInstanceOf[Product]
         var i = 0
@@ -41,7 +40,6 @@ trait CaseClassFromPiece extends MacrosCommon:
       val product = v.asInstanceOf[Product]
       var i = 0
       val arity = product.productArity
-      val defaultValues = createDefaultValues
       while (i < arity) do
         val value = product.productElement(i)
         val from = froms(i)
@@ -62,9 +60,10 @@ trait CaseClassFromPiece extends MacrosCommon:
     /**
      * Optimization to allow short-circuiting length checks.
      */
-    private val mightDropDefaults = !serializeDefaults && (dropAllDefaults || dropDefaults.exists(_ == true)) && createDefaultValues.exists(_.isDefined)
+    private val mightDropDefaults = !serializeDefaults && (dropAllDefaults || dropDefaults.exists(_ == true)) && defaultValues.exists(_.isDefined)
 
-    private def shouldWriteValue(value: Any, i: Int, defaultValue: Option[AnyRef]): Boolean = serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValue.contains(value)
+    private def shouldWriteValue(value: Any, i: Int, defaultValue: Option[Unit => AnyRef]): Boolean =
+      serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValue.map(_.apply(())).contains(value)
 
   end CaseClassFrom
 
@@ -81,7 +80,7 @@ trait CaseClassFromPiece extends MacrosCommon:
        * defaultValues must be evaluated each time to handle changing values
        * like System.currentTimeMillis. Covered by ChangingDefaultTests.
        */
-      def defaultValues = fieldNames.map(macros.getDefaultParams[T].get)
+      val defaultValues = fieldNames.map(macros.getDefaultParams[T])
 
       /**
        * froms must be lazy to handle deeply nested `def pickler = macroFromTo` structures.

@@ -3,8 +3,8 @@ package com.rallyhealth.weepickle.v1.implicits.macros
 import scala.quoted.{ given, _ }
 import deriving._, compiletime._
 
-inline def getDefaultParams[T]: Map[String, AnyRef] = ${ getDefaultParmasImpl[T] }
-def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[Map[String, AnyRef]] =
+inline def getDefaultParams[T]: String => Option[Unit => AnyRef] = ${ getDefaultParmasImpl[T] }
+def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[String => Option[Unit => AnyRef]] =
   import quotes.reflect._
   val sym = TypeTree.of[T].symbol
 
@@ -46,11 +46,14 @@ def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[Map[String, AnyRef]] =
     // println(s"getDefaultParams for $sym assumeDefaultNoneNames = $assumeDefaultNoneNames")
 
     val namesExpr: Expr[List[String]] = Expr.ofList((names ++ assumeDefaultNoneNames).map(Expr(_)))
-    val identsExpr: Expr[List[Any]] = Expr.ofList(idents.map(_.asExpr) ++ assumeDefaultNoneNames.map(_ => '{ None }))
+    val identsExpr: Expr[List[Unit => AnyRef]] = Expr.ofList(
+      idents.map(_.asExpr).map(i => '{ (_: Unit) => $i.asInstanceOf[AnyRef] }) ++
+      assumeDefaultNoneNames.map(_ => '{ (_: Unit) => None })
+    )
 
-    '{ $namesExpr.zip($identsExpr.map(_.asInstanceOf[AnyRef])).toMap }
+    '{ $namesExpr.zip($identsExpr).toMap.get }
   } else {
-    '{ Map.empty }
+    '{ Map.empty.get }
   }
 end getDefaultParmasImpl
 

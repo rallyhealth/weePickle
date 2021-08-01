@@ -18,7 +18,7 @@ trait CaseClassToPiece extends MacrosCommon :
     mirror: Mirror.ProductOf[T],
     // parallel arrays in field definition order
     fieldNames: Array[String],
-    createDefaultValues: => Array[Option[AnyRef]],
+    defaultValues: Array[Option[Unit => AnyRef]],
     createVisitors: => Array[Visitor[_, _]]
   ) extends CaseR[T] :
 
@@ -32,7 +32,6 @@ trait CaseClassToPiece extends MacrosCommon :
     def processMissing(index: Int): Either[String, AnyRef] = Left(fieldNames(index))
 
     def makeWithDefaults(elements: Array[AnyRef], visited: Array[Boolean], missing: Int): T =
-      val defaultValues = createDefaultValues
       val missingKeys = collection.mutable.ListBuffer.empty[String]
 
       var i = 0
@@ -41,7 +40,7 @@ trait CaseClassToPiece extends MacrosCommon :
         if (!visited(i)) {
           defaultValues(i) match {
             case Some(default) =>
-              elements(i) = default
+              elements(i) = default.apply(())
               stillMissing -= 1
             case None =>
               processMissing(i) match {
@@ -103,7 +102,7 @@ trait CaseClassToPiece extends MacrosCommon :
     case m: Mirror.ProductOf[T] =>
       // parallel arrays in field definition order
       val fieldNames = macros.fieldLabels[T].map(_._1).toArray
-      def createDefaultValues = fieldNames.map(macros.getDefaultParams[T].get)
+      val defaultValues = fieldNames.map(macros.getDefaultParams[T])
 
       def createVisitors: Array[Visitor[_, _]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
@@ -111,7 +110,7 @@ trait CaseClassToPiece extends MacrosCommon :
       val reader = new CaseClassTo[T](
         mirror = m,
         fieldNames,
-        createDefaultValues,
+        defaultValues,
         createVisitors
       )
 
@@ -157,7 +156,7 @@ trait CaseClassToPiece extends MacrosCommon :
     case m: Mirror.ProductOf[T] =>
       // parallel arrays in field definition order
       val fieldNames = macros.fieldLabels[T].map(_._1).toArray
-      def createDefaultValues = fieldNames.map(macros.getDefaultParams[T].get)
+      val defaultValues = fieldNames.map(macros.getDefaultParams[T])
 
       def createVisitors: Array[Visitor[_, _]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
@@ -165,7 +164,7 @@ trait CaseClassToPiece extends MacrosCommon :
       val reader = new CaseClassTo[T](
         mirror = m,
         fieldNames,
-        createDefaultValues,
+        defaultValues,
         createVisitors
       ) {
 
