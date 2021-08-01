@@ -1,4 +1,5 @@
 package com.rallyhealth.weepickle.v1
+
 import utest._
 import acyclic.file
 import com.rallyhealth.weepickle.v1.TestUtil.rw
@@ -7,24 +8,21 @@ object shared {
   object that {
     import common.Message
     case class That(common: Message)
-    object That {
-      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[That] =
-        com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    object That{
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[That] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     }
   }
   object other {
     import common.Message
     case class Other(common: Message)
-    object Other {
-      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Other] =
-        com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    object Other{
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Other] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     }
   }
   object common {
     case class Message(content: String)
-    object Message {
-      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Message] =
-        com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+    object Message{
+      implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Message] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
     }
   }
 }
@@ -32,16 +30,14 @@ object shared {
 object All {
   import shared.other._
   sealed trait Outers
-  object Outers {
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Outers] =
-      com.rallyhealth.weepickle.v1.WeePickle.FromTo.merge(
-        Out1.rw
-      )
+  object Outers{
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Outers] = com.rallyhealth.weepickle.v1.WeePickle.FromTo.merge(
+      Out1.rw
+    )
   }
   case class Out1(a: Other) extends Outers
-  object Out1 {
-    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Out1] =
-      com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+  object Out1{
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Out1] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
   }
 
 //  import shared.that._
@@ -68,22 +64,22 @@ object All {
 
 import com.rallyhealth.weepickle.v1.WeePickle.{FromTo, macroFromTo}
 sealed trait Gadt[T]
-object Gadt {
+object Gadt{
   implicit def rw[T]: FromTo[Gadt[T]] = macroFromTo[Gadt[_]].asInstanceOf[FromTo[Gadt[T]]]
   case class IsDir(path: String) extends Gadt[Boolean]
-  object IsDir {
+  object IsDir{
     implicit val rw: FromTo[IsDir] = macroFromTo
   }
   case class Exists(path: String) extends Gadt[Boolean]
-  object Exists {
+  object Exists{
     implicit val rw: FromTo[Exists] = macroFromTo
   }
   case class ReadBytes(path: String) extends Gadt[Array[Byte]]
-  object ReadBytes {
+  object ReadBytes{
     implicit val rw: FromTo[ReadBytes] = macroFromTo
   }
   case class CopyOver(src: Seq[Byte], path: String) extends Gadt[Unit]
-  object CopyOver {
+  object CopyOver{
     implicit val rw: FromTo[CopyOver] = macroFromTo
   }
 }
@@ -175,80 +171,75 @@ object AdvancedTests extends TestSuite {
 //      }
 //    }
 
-//TODO: all recursiveDataTypes tests failing in Scala 3
-//    test("recursiveDataTypes") {
-//      import Recursive._
-//      rw(
-//        IntTree(123, List(IntTree(456, Nil), IntTree(789, Nil))),
-//        """{
-//          "value": 123,
-//          "children": [
-//            {"value":456,"children":[]},
-//            {"value":789,"children":[]}
-//          ]
-//        }"""
-//      )
-//      rw(
-//        SingleNode(123, List(SingleNode(456, Nil), SingleNode(789, Nil))),
-//        """{
-//          "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
-//          "value": 123,
-//          "children": [
-//            {
-//              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
-//              "value": 456,
-//              "children": []
-//            },
-//            {
-//              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
-//              "value":789,
-//              "children":[]
-//            }
-//          ]
-//        }"""
-//      )
-//      rw(
-//        SingleNode(123, List(SingleNode(456, Nil), SingleNode(789, Nil))): SingleTree,
-//        """{
-//          "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
-//          "value": 123,
-//          "children": [
-//            {
-//              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
-//              "value": 456,
-//              "children": []
-//            },
-//            {
-//              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
-//              "value":789,
-//              "children":[]
-//            }
-//          ]
-//        }"""
-//      )
-//      rw(End: LL, """{"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}""")
-//      rw(
-//        Node(3, End): LL,
-//        """{
-//          "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
-//          "c": 3,
-//          "next": {"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}
-//        }"""
-//      )
-//      rw(
-//        Node(6, Node(3, End)),
-//        """{
-//          "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
-//          "c": 6,
-//          "next": {
-//            "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
-//            "c":3,
-//            "next":{"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}
-//          }
-//        }"""
-//      )
-//
-//    }
+    test("recursiveDataTypes"){
+      import Recursive._
+      rw(
+        IntTree(123, List(IntTree(456, Nil), IntTree(789, Nil))),
+        """{
+          "value": 123,
+          "children": [
+            {"value":456,"children":[]},
+            {"value":789,"children":[]}
+          ]
+        }"""
+      )
+      rw(
+        SingleNode(123, List(SingleNode(456, Nil), SingleNode(789, Nil))),
+        """{
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
+          "value": 123,
+          "children": [
+            {
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
+              "value": 456,
+              "children": []
+            },
+            {
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
+              "value":789,
+              "children":[]
+            }
+          ]
+        }"""
+      )
+      rw(
+        SingleNode(123, List(SingleNode(456, Nil), SingleNode(789, Nil))): SingleTree,
+        """{
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
+          "value": 123,
+          "children": [
+            {
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
+              "value": 456,
+              "children": []
+            },
+            {
+              "$type": "com.rallyhealth.weepickle.v1.Recursive.SingleNode",
+              "value":789,
+              "children":[]
+            }
+          ]
+        }"""
+      )
+      rw(End: LL, """{"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}""")
+      rw(Node(3, End): LL,
+        """{
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
+          "c": 3,
+          "next": {"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}
+        }""")
+      rw(Node(6, Node(3, End)),
+        """{
+          "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
+          "c": 6,
+          "next": {
+            "$type": "com.rallyhealth.weepickle.v1.Recursive.Node",
+            "c":3,
+            "next":{"$type":"com.rallyhealth.weepickle.v1.Recursive.End"}
+          }
+        }""")
+
+    }
     test("gadt") {
 //TODO: the simple tests that compile also succeed in Scala 3, but the ones expressed with wildcard type parameters do not compile.
       test("simple") {
@@ -275,8 +266,8 @@ object AdvancedTests extends TestSuite {
 //        //TODO:compile test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
 //      }
     }
-    test("issues") {
-      test("issue95") {
+    test("issues"){
+      test("issue95"){
         rw(
           Tuple1(List(C1("hello", List("world")))),
           """[[{"name": "hello", "types": ["world"]}]]"""
@@ -291,37 +282,36 @@ object AdvancedTests extends TestSuite {
           """{"results": [{"name": "a", "whatever": "b", "types": ["c"]}], "status": "d"}"""
         )
       }
-//TODO: scalatex fails in Scala 3 - java.lang.StackOverflowError
-//      test("scalatex") {
-//        val block = Ast.Block(1, Seq(Ast.Block.Text(2, "hello")))
-//        val blockText = """{
-//            "$type":"com.rallyhealth.weepickle.v1.Ast.Block",
-//            "offset":1,
-//            "parts":[
-//              {
-//                "$type": "com.rallyhealth.weepickle.v1.Ast.Block.Text",
-//                "offset":2,
-//                "txt":"hello"
-//              }
-//            ]
-//          }"""
-//        rw(block: Ast, blockText)
-//        rw(block: Ast.Block, blockText)
-//        rw(block: Ast.Block.Sub, blockText)
-//        rw(block: Ast.Chain.Sub, blockText)
-//
-//        val header = Ast.Header(0, "Hello", block)
-//        val headerText = s"""{
-//          "$$type": "com.rallyhealth.weepickle.v1.Ast.Header",
-//          "offset": 0,
-//          "front": "Hello",
-//          "block": $blockText
-//        }"""
-//        rw(header: Ast, headerText)
-//        rw(header: Ast.Header, headerText)
-//        rw(header: Ast.Block.Sub, headerText)
-//        rw(header: Ast.Chain.Sub, headerText)
-//      }
+      test("scalatex"){
+        val block = Ast.Block(1, Seq(Ast.Block.Text(2, "hello")))
+        val blockText = """{
+            "$type":"com.rallyhealth.weepickle.v1.Ast.Block",
+            "offset":1,
+            "parts":[
+              {
+                "$type": "com.rallyhealth.weepickle.v1.Ast.Block.Text",
+                "offset":2,
+                "txt":"hello"
+              }
+            ]
+          }"""
+        rw(block: Ast, blockText)
+        rw(block: Ast.Block, blockText)
+        rw(block: Ast.Block.Sub, blockText)
+        rw(block: Ast.Chain.Sub, blockText)
+
+        val header = Ast.Header(0, "Hello", block)
+        val headerText = s"""{
+          "$$type": "com.rallyhealth.weepickle.v1.Ast.Header",
+          "offset": 0,
+          "front": "Hello",
+          "block": $blockText
+        }"""
+        rw(header: Ast, headerText)
+        rw(header: Ast.Header, headerText)
+        rw(header: Ast.Block.Sub, headerText)
+        rw(header: Ast.Chain.Sub, headerText)
+      }
 //TODO:compile      test("scala-issue-11768"){
 //        // Make sure this compiles
 //        class Thing[T: com.rallyhealth.weepickle.v1.WeePickle.From, V: com.rallyhealth.weepickle.v1.WeePickle.From](t: Option[(V, T)]){
