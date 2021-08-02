@@ -42,7 +42,7 @@ class ScalaVersionBench {
   private val source: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
   def visitor(bh: Blackhole) = new BlackholeVisitor(bh)
 
-  @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
   def fromFlatPrimitives(bh: Blackhole) = FromScala(benchmarkFlatPrimitives).transform(visitor(bh))
 

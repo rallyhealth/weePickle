@@ -58,8 +58,33 @@ class BlackholeVisitor(bh: Blackhole) extends JsVisitor[Any, Null] {
     null
   }
 
+  override def visitInt32(i: Int): Null = {
+    bh.consume(i)
+    null
+  }
+
+  override def visitInt64(l: Long): Null = {
+    bh.consume(l)
+    null
+  }
+
+  override def visitFloat64(d: Double): Null = {
+    bh.consume(d)
+    null
+  }
+
+  override def visitFloat32(d: Float): Null = {
+    bh.consume(d)
+    null
+  }
+
   override def visitString(s: CharSequence): Null = {
     bh.consume(s)
+    null
+  }
+
+  override def visitChar(c: Char): Null = {
+    bh.consume(c)
     null
   }
 }
