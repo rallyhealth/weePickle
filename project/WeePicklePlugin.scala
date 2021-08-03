@@ -16,7 +16,8 @@ object WeePicklePlugin extends AutoPlugin {
     val scala212 = "2.12.12"
     val scala213 = "2.13.5"
     val scala3 = "3.0.1"
-    val supportedScalaVersions = Seq(scala211, scala212, scala213, scala3)
+    val supportedScala2Versions = Seq(scala211, scala212, scala213)
+    val supportedScalaVersions = supportedScala2Versions :+ scala3
 
     lazy val ideSkipProject = SettingKey[Boolean]("ideSkipProject")
 

@@ -92,41 +92,16 @@ lazy val `weepickle-tests` = project
     `weejson-argonaut`,
     `weejson-circe`,
     `weejson-json4s`,
-    `weejson-play27`,
+    `weejson-play-base`,
     `weejson` % "compile;test->test",
     `weepack` % "compile;test->test",
     `weepickle`,
     `weexml`,
     `weeyaml`,
   )
-//.settings(crossScalaVersions := Seq(scala211, scala212, scala213)) // no Scala 3
   .settings(
     noPublish,
   )
-
-//TODO: Seems like this should be the better way... but it doesn't work :'(
-// Scala 3 only available for play-json 2.10
-//lazy val `weepickle-tests-3` = Project(s"weepickle-tests-3", file(s"weepickle-tests-3"))
-//  .dependsOn(
-//    `weepickle-core` % "compile;test->test",
-//    `weejson-argonaut`,
-//    `weejson-circe`,
-//    `weejson-json4s`,
-//    `weejson-play210`, // Scala 3 version
-//    `weejson` % "compile;test->test",
-//    `weepack` % "compile;test->test",
-//    `weepickle`,
-//    `weexml`,
-//    `weeyaml`,
-//  )
-//  .settings(
-//    noPublish,
-//    Compile / unmanagedSourceDirectories ++= (`weepickle-tests` / Compile / unmanagedSourceDirectories).value,
-//    Test / unmanagedSourceDirectories ++= (`weepickle-tests` / Test / unmanagedSourceDirectories).value,
-//    crossScalaVersions := Seq(scala3),
-//    scalaVersion := scala3,
-//    ideSkipProject := true
-//  )
 
 /**
   * ADTs:
@@ -183,15 +158,15 @@ lazy val `weejson-argonaut` = project
     )
   )
 
-// TODO: 2.7 mostly -- for now, use 2.10 when on Scala 3. For testing, we need one
-//  project for 'weepickle-testing' to dependOn that is available on all Scala versions
-lazy val `weejson-play27` = (project in file("weejson-play"))
+// We need one project for 'weepickle-testing' to dependOn that is available on all Scala versions.
+// This "base" project uses Play 2.7 when on any version of Scala 2 and Play 2.10 when on Scala 3.
+lazy val `weejson-play-base` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
-//    "com.typesafe.play" %% "play-json" % "2.7.4",
       "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC5" else "2.7.4"),
-    )
+    ),
+    noPublish
   )
 
 def playProject(playVersion: String, scalaVersions: Seq[String]) = {
@@ -201,10 +176,9 @@ def playProject(playVersion: String, scalaVersions: Seq[String]) = {
     .settings(
       libraryDependencies ++= Seq(
         "com.typesafe.play" %% "play-json" % playVersion,
-      )
-      ,
-      Compile / unmanagedSourceDirectories ++= (`weejson-play27` / Compile / unmanagedSourceDirectories).value,
-      Test / unmanagedSourceDirectories ++= (`weejson-play27` / Test / unmanagedSourceDirectories).value,
+      ),
+      Compile / unmanagedSourceDirectories ++= (`weejson-play-base` / Compile / unmanagedSourceDirectories).value,
+      Test / unmanagedSourceDirectories ++= (`weejson-play-base` / Test / unmanagedSourceDirectories).value,
       crossScalaVersions := scalaVersions,
       scalaVersion := scalaVersions.last,
       ideSkipProject := true
@@ -212,6 +186,8 @@ def playProject(playVersion: String, scalaVersions: Seq[String]) = {
 }
 
 lazy val `weejson-play25` = playProject("2.5.19", Seq(scala211))
+
+lazy val `weejson-play27` = playProject("2.7.4", supportedScala2Versions)
 
 lazy val `weejson-play28` = playProject("2.8.1", Seq(scala213))
 
@@ -239,5 +215,5 @@ lazy val `weepickle-macro-lint-tests` = project
   .dependsOn(weepickle)
   .settings(noPublish)
   .settings(scalacOptions := (scalacOptions.value ++ Seq("-Xlint", "-Xfatal-warnings")).distinct)
-  .settings(crossScalaVersions := Seq(scala211, scala212, scala213)) // TODO: Scala 3?
+  .settings(crossScalaVersions := supportedScala2Versions) // TODO: Scala 3?
 //  .settings(scalacOptions += "-Ymacro-debug-lite")
