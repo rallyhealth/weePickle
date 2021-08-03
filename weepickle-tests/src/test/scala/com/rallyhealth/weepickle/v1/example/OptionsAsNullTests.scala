@@ -68,9 +68,6 @@ object OptionsAsNullTests extends TestSuite {
       }
 
       test("optionCaseClass") {
-//        implicit val thingTo: OptionPickler.To[Thing] = rw
-//        implicit val thingFrom: OptionPickler.From[Thing] = rw
-
         fromScala(Opt(None, None)).transform(ToJson.string) ==> """{"a":null,"b":null}"""
         FromJson("""{"a":null,"b":null}""").transform(toScala[Opt]) ==> Opt(None, None)
         fromScala(Opt(Some("abc"), Some(1))).transform(ToJson.string) ==> """{"a":"abc","b":1}"""

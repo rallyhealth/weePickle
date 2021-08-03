@@ -215,7 +215,7 @@ object Obj {
   implicit def from(items: TraversableOnce[(String, Value)]): Obj = {
     val initialCapacity = items match {
       case is: mutable.IndexedSeq[_] => is.size
-      case _                         => 2
+      case _ => 2
     }
     Obj(new java.util.LinkedHashMap[String, Value](initialCapacity).asScala ++= items)
   }

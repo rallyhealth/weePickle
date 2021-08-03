@@ -212,29 +212,8 @@ trait Types { types =>
           found |= (1L << currentIndex)
         }
       }
-      //+start-1 -- not added: bin compat issue
-//      def visitKey(index: Int) = StringVisitor
-//      protected def storeValueIfNotFound(i: Int, v: Any) = {
-//        if ((found & (1L << i)) == 0) {
-//          found |= (1L << i)
-//          storeAggregatedValue(i, v)
-//        }
-//      }
-//      protected def errorMissingKeys(rawArgsLength: Int, mappedArgs: Array[String]) = {
-//        val keys = for {
-//          i <- 0 until rawArgsLength
-//          if (found & (1L << i)) == 0
-//        } yield mappedArgs(i)
-//        throw new Abort(
-//          "missing keys in dictionary: " + keys.mkString(", ")
-//        )
-//      }
-//      protected def checkErrorMissingKeys(rawArgsBitset: Long) = {
-//        found != rawArgsBitset
-//      }
-      //+end-1
     }
-    //+start-2 -- TBD if needed
+    //+start -- TBD if needed
     abstract class HugeCaseObjectContext(fieldCount: Int) extends ObjVisitor[Any, V] {
       def storeAggregatedValue(currentIndex: Int, v: Any): Unit
       var found = new Array[Long](fieldCount / 64 + 1)
@@ -280,19 +259,6 @@ trait Types { types =>
         ctx.visitEnd()
       }
     }
-    //+start-3 -- not added: bin compat issue
-//    protected def writeSnippet[R, V](objectAttributeKeyWriteMap: CharSequence => CharSequence,
-//                                     ctx: ObjVisitor[_, R],
-//                                     mappedArgsI: String,
-//                                     w: From[V],
-//                                     value: V) = {
-//      val keyVisitor = ctx.visitKey()
-//      ctx.visitKeyValue(
-//        keyVisitor.visitString(objectAttributeKeyWriteMap(mappedArgsI))
-//      )
-//      ctx.narrow.visitValue(w.transform(value, ctx.subVisitor), -1)
-//    }
-    //+end-3
   }
   class SingletonR[T](t: T) extends CaseR[T] {
     override def expectedMsg = "expected dictionary"

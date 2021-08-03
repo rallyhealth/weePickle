@@ -12,7 +12,7 @@ import com.rallyhealth.weepickle.v1.implicits.key
 object ADTs {
   case class ADT0()
   object ADT0 {
-    implicit val rw: RW[ADT0] = WeePickle.macroFromTo
+    implicit def rw: RW[ADT0] = WeePickle.macroFromTo
   }
   case class ADTa(i: Int)
   object ADTa {
@@ -66,7 +66,7 @@ object ADTs {
 object Hierarchy {
   sealed trait A
   object A {
-    implicit val rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[A] = RW.merge(B.rw, C.rw)
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[A] = RW.merge(B.rw, C.rw)
   }
   case class B(i: Int) extends A
   object B {
@@ -150,14 +150,12 @@ object Generic {
   object A {
     implicit def rw[T: R: W]: RW[A[T]] = WeePickle.macroFromTo
   }
-  //Fails in Scala 3 - type parameters on a case class
   case class ADT[A, B, C, D, E, F](a: A, b: B, c: C, d: D, e: E, f: F)
   object ADT {
     implicit def rw[A: R: W, B: R: W, C: R: W, D: R: W, E: R: W, F: R: W]: RW[ADT[A, B, C, D, E, F]] =
       WeePickle.macroFromTo
   }
 }
-//Fails in Scala 3 - recursive
 object Recursive {
   sealed trait LL
   object LL {
@@ -206,7 +204,7 @@ object Defaults {
   }
   case class ADTc(i: Int = 2, s: String, t: (Double, Double) = (1, 2))
   object ADTc {
-    implicit val rw: RW[ADTc] = WeePickle.macroFromTo
+    implicit def rw: RW[ADTc] = WeePickle.macroFromTo
   }
 }
 trait MixedIn {

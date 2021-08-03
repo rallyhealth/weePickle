@@ -23,7 +23,7 @@ object Custom {
   class Thing2(val i: Int, val s: String) extends ThingBase
 
   abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T) {
-    implicit val thing2From: WeePickle.FromTo[T] = com.rallyhealth.weepickle.v1.WeePickle
+    implicit val thing2From: WeePickle.FromTo[T] = WeePickle
       .fromTo[String]
       .bimap[T](
         t => s"${t.i} ${t.s}",
@@ -59,8 +59,7 @@ object TypedFoo {
 sealed trait Pony
 @key("twi") case class Twilight() extends Pony
 object Twilight {
-  implicit val fromTwi
-    : WeePickle.From[Twilight] = WeePickle.macroFrom[Twilight] // supporting comap requires breaking changes.
+  implicit val fromTwi: WeePickle.From[Twilight] = WeePickle.macroFrom[Twilight] // supporting comap requires breaking changes.
   implicit val toTwi: WeePickle.To[Twilight] = WeePickle.macroTo[Twilight].map(identity)
 }
 object Pony {
@@ -318,6 +317,7 @@ object MacroTests extends TestSuite {
 
   }
 }
+
 
 // format: off
 case class Big63(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte,

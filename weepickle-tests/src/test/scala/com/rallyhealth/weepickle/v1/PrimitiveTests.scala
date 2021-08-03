@@ -95,8 +95,7 @@ object PrimitiveTests extends TestSuite {
         - If you need to kill a test run make sure you don't leave a stray node process in the background
          */
 
-        test("greater than max int exponential")(
-          assertNumberFormatException[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """))
+        test("greater than max int exponential")(assertNumberFormatException[BigDecimal](s""" "1E${Integer.MAX_VALUE.toLong + 1}" """))
         test("10k digits integer")(parses[BigDecimal](s""" "1${"0" * 9999}" """))
         test("100k digits integer")(assertNumberFormatException[BigDecimal](s""" "1${"0" * 99999}" """))
         test("10k digits after the decimal")(parses[BigDecimal](s""" ".${"9" * 9999}" """))

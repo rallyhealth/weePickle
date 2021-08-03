@@ -1,9 +1,10 @@
 package com.rallyhealth.weepickle.v1.implicits
 
-import com.rallyhealth.weepickle.v1.core.{Annotator, Types, Visitor}
-
 import java.net.URI
 import java.util.UUID
+
+import com.rallyhealth.weepickle.v1.core.{Annotator, Types, Visitor}
+
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait DefaultFroms extends MacroImplicits with Generated with LowPriFroms { this: Annotator =>
@@ -158,7 +159,7 @@ trait LowPriFroms { this: Types =>
     new From[C[T]] {
       def transform0[R](v: C[T], out: Visitor[_, R]): R = {
         val ctx = out.visitArray(v.size).narrow
-        v.iterator.foreach { t =>
+        v.asInstanceOf[Iterable[T]].foreach { t =>
           val written = r.transform(t.asInstanceOf[T], ctx.subVisitor)
           ctx.visitValue(written)
         }

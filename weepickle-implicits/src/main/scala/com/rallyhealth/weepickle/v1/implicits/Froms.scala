@@ -1,9 +1,9 @@
 package com.rallyhealth.weepickle.v1.implicits
 
-import com.rallyhealth.weepickle.v1.core.{Annotator, Visitor}
-
 import java.time._
 import java.util.Date
+
+import com.rallyhealth.weepickle.v1.core.{Annotator, Visitor}
 
 trait Froms extends DefaultFroms { this: Annotator =>
 

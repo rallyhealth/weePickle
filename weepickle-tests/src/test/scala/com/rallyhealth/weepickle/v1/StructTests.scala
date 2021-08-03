@@ -170,13 +170,19 @@ object StructTests extends TestSuite {
           """{"a":true}"""
         )
         test("AnyVal key") - {
-          TestUtil.rw(Map(new StringAnyVal("a") -> 1), """{"a":1}""")
+          TestUtil.rw(Map(new StringAnyVal("a") -> 1),
+            """{"a":1}"""
+          )
         }
         test("enum key") - {
-          TestUtil.rw(Map(Suit.Spades -> "king"), """{"Spades":"king"}""")
+          TestUtil.rw(Map(Suit.Spades -> "king"),
+            """{"Spades":"king"}"""
+          )
         }
         test("enum value") - {
-          TestUtil.rw(Map("king" -> Suit.Spades), """{"king":"Spades"}""")
+          TestUtil.rw(Map("king" -> Suit.Spades),
+            """{"king":"Spades"}"""
+          )
         }
       }
     }

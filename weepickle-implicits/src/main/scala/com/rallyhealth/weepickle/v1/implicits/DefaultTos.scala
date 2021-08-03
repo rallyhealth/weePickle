@@ -1,11 +1,12 @@
 package com.rallyhealth.weepickle.v1.implicits
 
-import com.rallyhealth.weepickle.v1.core._
-
 import java.net.URI
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.{Base64, UUID}
+
+import com.rallyhealth.weepickle.v1.core._
+
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
