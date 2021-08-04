@@ -17,9 +17,9 @@ trait CaseClassFromPiece extends MacrosCommon:
     dropAllDefaults: Boolean
   ) extends CaseW[V]:
 
-    lazy val froms = createFroms
+    private lazy val froms = createFroms
 
-    def length(v: V): Int =
+    override def length(v: V): Int =
       if mightDropDefaults then
         var sum = 0
         val product = v.asInstanceOf[Product]
@@ -28,7 +28,7 @@ trait CaseClassFromPiece extends MacrosCommon:
         while (i < arity) do
           val value = product.productElement(i)
           val writer = froms(i)
-          if shouldWriteValue(value, i, defaultValues(i)) then sum += 1
+          if shouldWriteValue(value, i) then sum += 1
           i += 1
         sum
       else
@@ -36,15 +36,15 @@ trait CaseClassFromPiece extends MacrosCommon:
         froms.length
     end length
 
-    def writeToObject[R](ctx: ObjVisitor[_, R], v: V): Unit =
+    override def writeToObject[R](ctx: ObjVisitor[_, R], v: V): Unit =
       val product = v.asInstanceOf[Product]
       var i = 0
       val arity = product.productArity
       while (i < arity) do
         val value = product.productElement(i)
-        val from = froms(i)
-        val fieldName = fieldNames(i)
-        if shouldWriteValue(value, i, defaultValues(i)) then
+        if shouldWriteValue(value, i) then
+          val from = froms(i)
+          val fieldName = fieldNames(i)
           val keyVisitor = ctx.visitKey()
           ctx.visitKeyValue(
             keyVisitor.visitString(
@@ -62,8 +62,8 @@ trait CaseClassFromPiece extends MacrosCommon:
      */
     private val mightDropDefaults = !serializeDefaults && (dropAllDefaults || dropDefaults.exists(_ == true)) && defaultValues.exists(_.isDefined)
 
-    private def shouldWriteValue(value: Any, i: Int, defaultValue: Option[() => AnyRef]): Boolean =
-      serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValue.map(_.apply()).contains(value)
+    private def shouldWriteValue(value: Any, i: Int): Boolean =
+      serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValues(i).exists(_.apply() == value)
 
   end CaseClassFrom
 

@@ -15,23 +15,23 @@ trait CaseClassToPiece extends MacrosCommon :
   }
 
   class CaseClassTo[T](
-    mirror: Mirror.ProductOf[T],
+    fromProduct: Product => T,
     // parallel arrays in field definition order
     fieldNames: Array[String],
     defaultValues: Array[Option[() => AnyRef]],
     createVisitors: => Array[Visitor[_, _]]
   ) extends CaseR[T] :
 
-    lazy val visitors = createVisitors
-    val outOfBounds = -1
+    private lazy val visitors = createVisitors
+    private val outOfBounds = -1
 
-    val fieldIndex = fieldNames.zipWithIndex.toMap.withDefaultValue(outOfBounds)
-    val arity: Int = fieldNames.size
+    private val fieldIndex = fieldNames.zipWithIndex.toMap
+    private val arity: Int = fieldNames.size
 
     // by default, no extra level of fallback for missing fields
-    def processMissing(index: Int): Either[String, AnyRef] = Left(fieldNames(index))
+    protected def processMissing(index: Int, visitor: Visitor[_, _]): Either[String, AnyRef] = Left(fieldNames(index))
 
-    def makeWithDefaults(elements: Array[AnyRef], visited: Array[Boolean], missing: Int): T =
+    private def makeWithDefaults(elements: Array[AnyRef], visited: Array[Boolean], missing: Int): T =
       val missingKeys = collection.mutable.ListBuffer.empty[String]
 
       var i = 0
@@ -43,7 +43,7 @@ trait CaseClassToPiece extends MacrosCommon :
               elements(i) = default.apply()
               stillMissing -= 1
             case None =>
-              processMissing(i) match {
+              processMissing(i, visitors(i)) match {
                 case Right(extraFallbackValue) =>
                   elements(i) = extraFallbackValue
                   stillMissing -= 1
@@ -61,8 +61,8 @@ trait CaseClassToPiece extends MacrosCommon :
       makeWithoutDefaults(elements)
     end makeWithDefaults
 
-    def makeWithoutDefaults(elements: Array[AnyRef]): T =
-      mirror.fromProduct(new Product {
+    private def makeWithoutDefaults(elements: Array[AnyRef]): T =
+      fromProduct(new Product {
         def canEqual(that: Any): Boolean = true
         def productArity: Int = arity
         def productElement(i: Int): Any = elements(i)
@@ -71,20 +71,20 @@ trait CaseClassToPiece extends MacrosCommon :
 
     override def visitObject(length: Int) = new ObjVisitor[Any, T] {
       private val elements = new Array[AnyRef](arity)
-      private val visited = Array.fill[Boolean](arity)(false)
+      private val visited = elements.map(_ => false)
       private var missing = arity // count down missing fields
       private var currentKey: Int = outOfBounds
 
-      def subVisitor: Visitor[_, _] =
+      override def subVisitor: Visitor[_, _] =
         if (currentKey == outOfBounds) NoOpVisitor
         else visitors(currentKey)
 
-      def visitKey(): Visitor[_, _] = stringVisitor
+      override def visitKey(): Visitor[_, _] = stringVisitor
 
-      def visitKeyValue(v: Any): Unit =
-        currentKey = fieldIndex(objectAttributeKeyReadMap(v.asInstanceOf[CharSequence]).toString)
+      override def visitKeyValue(v: Any): Unit =
+        currentKey = fieldIndex.getOrElse(objectAttributeKeyReadMap(v.asInstanceOf[CharSequence]).toString, outOfBounds)
 
-      def visitValue(v: Any): Unit = if (currentKey != outOfBounds) {
+      override def visitValue(v: Any): Unit = if (currentKey != outOfBounds) {
         elements(currentKey) = v.asInstanceOf[AnyRef]
         if (!visited(currentKey)) { // may get the same key more than once
           visited(currentKey) = true
@@ -92,7 +92,7 @@ trait CaseClassToPiece extends MacrosCommon :
         }
       }
 
-      def visitEnd(): T =
+      override def visitEnd(): T =
         if (missing == 0) makeWithoutDefaults(elements)
         else makeWithDefaults(elements, visited, missing)
     }
@@ -108,7 +108,7 @@ trait CaseClassToPiece extends MacrosCommon :
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
 
       val reader = new CaseClassTo[T](
-        mirror = m,
+        m.fromProduct,
         fieldNames,
         defaultValues,
         createVisitors
@@ -162,16 +162,16 @@ trait CaseClassToPiece extends MacrosCommon :
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
 
       val reader = new CaseClassTo[T](
-        mirror = m,
+        m.fromProduct,
         fieldNames,
         defaultValues,
         createVisitors
       ) {
 
         // extra level of fallback for missing fields
-        override def processMissing(index: Int): Either[String, AnyRef] =
+        override def processMissing(index: Int, visitor: Visitor[_, _]): Either[String, AnyRef] =
           try {
-            Right(visitors(index).visitNull().asInstanceOf[AnyRef])
+            Right(visitor.visitNull().asInstanceOf[AnyRef])
           } catch {
             case NonFatal(_) => Left(fieldNames(index))
           }

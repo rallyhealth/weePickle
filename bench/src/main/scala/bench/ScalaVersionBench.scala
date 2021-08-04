@@ -63,15 +63,47 @@ class ScalaVersionBench {
 
 object ScalaVersionBench {
 
-  import com.rallyhealth.weepickle.v1.ADTs.ADT0
-  import com.rallyhealth.weepickle.v1.Defaults.ADTc
-  import com.rallyhealth.weepickle.v1.Hierarchy.{A, C}
+  case class ADT0()
+  object ADT0 {
+    implicit val rw: FromTo[ADT0] = macroFromTo
+  }
+  case class ADTa(i: Int)
+  object ADTa {
+    implicit val rw: FromTo[ADTa] = macroFromTo
+  }
+  case class ADTc(i: Int = 2, s: String, t: (Double, Double) = (1, 2))
+  object ADTc {
+    implicit val rw: FromTo[ADTc] = macroFromTo
+  }
+
+  sealed trait A
+  object A {
+    implicit val rw: FromTo[A] = FromTo.merge(B.rw, C.rw)
+  }
+  case class B(i: Int) extends A
+  object B {
+    implicit val rw: FromTo[B] = macroFromTo
+  }
+  case class C(s1: String, s2: String) extends A
+  object C {
+    implicit val rw: FromTo[C] = macroFromTo
+  }
+
+  sealed trait LL
+  object LL {
+    implicit val rw: FromTo[LL] = FromTo.merge(macroFromTo[End.type], macroFromTo[Node])
+  }
+  case object End extends LL
+  case class Node(c: Int, next: LL) extends LL
+  object Node {
+    implicit val rw: FromTo[Node] = macroFromTo
+  }
 
   case class Data( // no type parameters - Scala 3 implementation can't support them yet
     a: Seq[(Int, Int)],
     b: String,
     c: A,
-    // no linked list - Scala 3 implementation can't support the recursion yet
+    d: LL, // no linked list - Scala 3 implementation can't support the recursion yet
     e: ADTc,
     f: ADT0
   )
@@ -87,6 +119,7 @@ object ScalaVersionBench {
         |And I look good on the barbecueeeee
     """.stripMargin,
       C("lol i am a noob", "haha you are a noob"): A,
+      Node(-11, Node(-22, Node(-33, Node(-44, End)))): LL,
       ADTc(i = 1234567890, s = "i am a strange loop"),
       ADT0()
     )
@@ -156,9 +189,7 @@ class ScalaVersionDefaultBench {
 
 object ScalaVersionDefaultBench {
 
-  import com.rallyhealth.weepickle.v1.ADTs.ADT0
-  import com.rallyhealth.weepickle.v1.Defaults.ADTc
-  import com.rallyhealth.weepickle.v1.Hierarchy.{A, C}
+  import ScalaVersionBench.{ADT0, ADTc, A, C, LL, End}
 
   case class Data(
     @dropDefault
@@ -166,6 +197,8 @@ object ScalaVersionDefaultBench {
     @dropDefault
     b: String = "",
     c: A,
+    @dropDefault
+    d: LL = End,
     e: ADTc,
     f: ADT0
   )
