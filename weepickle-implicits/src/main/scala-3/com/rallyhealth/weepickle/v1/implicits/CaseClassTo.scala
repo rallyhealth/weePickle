@@ -14,22 +14,20 @@ trait CaseClassToPiece extends MacrosCommon :
     override def visitString(cs: CharSequence): String = cs.toString
   }
 
-  class CaseClassTo[T](
+  private def caseClassTo[T](
     fromProduct: Product => T,
     // parallel arrays in field definition order
     fieldNames: Array[String],
     defaultValues: Array[Option[() => AnyRef]],
-    createVisitors: => Array[Visitor[_, _]]
-  ) extends CaseR[T] :
+    createVisitors: => Array[Visitor[_, _]],
+    processMissing: Int => Visitor[_, _] => Either[String, AnyRef]
+  ): CaseR[T] = new CaseR[T] {
 
     private lazy val visitors = createVisitors
-    private val outOfBounds = -1
+    private inline val outOfBounds = -1
 
     private val fieldIndex = fieldNames.zipWithIndex.toMap
     private val arity: Int = fieldNames.size
-
-    // by default, no extra level of fallback for missing fields
-    protected def processMissing(index: Int, visitor: Visitor[_, _]): Either[String, AnyRef] = Left(fieldNames(index))
 
     private def makeWithDefaults(elements: Array[AnyRef], visited: Array[Boolean], missing: Int): T =
       val missingKeys = collection.mutable.ListBuffer.empty[String]
@@ -43,7 +41,7 @@ trait CaseClassToPiece extends MacrosCommon :
               elements(i) = default.apply()
               stillMissing -= 1
             case None =>
-              processMissing(i, visitors(i)) match {
+              processMissing(i)(visitors(i)) match {
                 case Right(extraFallbackValue) =>
                   elements(i) = extraFallbackValue
                   stillMissing -= 1
@@ -96,7 +94,7 @@ trait CaseClassToPiece extends MacrosCommon :
         if (missing == 0) makeWithoutDefaults(elements)
         else makeWithDefaults(elements, visited, missing)
     }
-  end CaseClassTo
+  }
 
   inline def macroTo[T](using m: Mirror.Of[T]): To[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
@@ -107,15 +105,17 @@ trait CaseClassToPiece extends MacrosCommon :
       def createVisitors: Array[Visitor[_, _]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
 
-      val reader = new CaseClassTo[T](
+      val reader = caseClassTo[T](
         m.fromProduct,
         fieldNames,
         defaultValues,
-        createVisitors
+        createVisitors,
+        // by default, no extra level of fallback for missing fields
+        index => _ => Left(fieldNames(index))
       )
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
-      if isSealed then annotate(reader, discriminator.getOrElse("$type"), macros.fullClassName[T]._1)
+      if isSealed then annotate(reader, discriminator.getOrElse(tagName), macros.fullClassName[T]._1)
       else reader
 
     case m: Mirror.SumOf[T] =>
@@ -161,24 +161,22 @@ trait CaseClassToPiece extends MacrosCommon :
       def createVisitors: Array[Visitor[_, _]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, To]].asInstanceOf[List[Visitor[_, _]]].toArray
 
-      val reader = new CaseClassTo[T](
+      val reader = caseClassTo[T](
         m.fromProduct,
         fieldNames,
         defaultValues,
-        createVisitors
-      ) {
-
+        createVisitors,
         // extra level of fallback for missing fields
-        override def processMissing(index: Int, visitor: Visitor[_, _]): Either[String, AnyRef] =
+        index => visitor =>
           try {
             Right(visitor.visitNull().asInstanceOf[AnyRef])
           } catch {
             case NonFatal(_) => Left(fieldNames(index))
           }
-      }
+      )
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
-      if isSealed then annotate(reader, discriminator.getOrElse("$type"), macros.fullClassName[T]._1)
+      if isSealed then annotate(reader, discriminator.getOrElse(tagName), macros.fullClassName[T]._1)
       else reader
 
     case m: Mirror.SumOf[T] =>

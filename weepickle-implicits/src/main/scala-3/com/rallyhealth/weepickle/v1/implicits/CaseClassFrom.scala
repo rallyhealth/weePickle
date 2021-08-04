@@ -8,14 +8,14 @@ import com.rallyhealth.weepickle.v1.core.{Annotator, ObjVisitor, Types, Visitor}
 trait CaseClassFromPiece extends MacrosCommon:
   this: Types with Annotator =>
 
-  class CaseClassFrom[V](
+  private def caseClassFrom[V](
     // parallel arrays in field definition order
     fieldNames: Array[String],
     defaultValues: Array[Option[() => AnyRef]],
     createFroms: => Array[From[_]],
     dropDefaults: Array[Boolean],
     dropAllDefaults: Boolean
-  ) extends CaseW[V]:
+  ): CaseW[V] = new CaseW[V] {
 
     private lazy val froms = createFroms
 
@@ -32,7 +32,7 @@ trait CaseClassFromPiece extends MacrosCommon:
           i += 1
         sum
       else
-        // fast path
+      // fast path
         froms.length
     end length
 
@@ -65,7 +65,7 @@ trait CaseClassFromPiece extends MacrosCommon:
     private def shouldWriteValue(value: Any, i: Int): Boolean =
       serializeDefaults || !(dropAllDefaults || dropDefaults(i)) || !defaultValues(i).exists(_.apply() == value)
 
-  end CaseClassFrom
+  }
 
   inline def macroFrom[T: ClassTag](using m: Mirror.Of[T]): From[T] = inline m match {
     case m: Mirror.ProductOf[T] =>
@@ -91,7 +91,7 @@ trait CaseClassFromPiece extends MacrosCommon:
       def createFroms: Array[From[_]] =
         macros.summonList[Tuple.Map[m.MirroredElemTypes, From]].asInstanceOf[List[From[_]]].toArray
 
-      val fromCaseClass = CaseClassFrom[T](
+      val fromCaseClass = caseClassFrom[T](
         fieldNames,
         defaultValues,
         createFroms,
@@ -100,7 +100,7 @@ trait CaseClassFromPiece extends MacrosCommon:
       )
 
       val (isSealed, discriminator) = macros.isMemberOfSealedHierarchy[T]
-      if isSealed then annotate(fromCaseClass, discriminator.getOrElse("$type"), fullClassName)
+      if isSealed then annotate(fromCaseClass, discriminator.getOrElse(tagName), fullClassName)
       else fromCaseClass
     case m: Mirror.SumOf[T] =>
       val writers: List[From[_ <: T]] = macros.summonList[Tuple.Map[m.MirroredElemTypes, From]]

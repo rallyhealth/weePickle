@@ -37,17 +37,23 @@ import java.util.concurrent.TimeUnit
 )
 class ScalaVersionBench {
 
-  import ScalaVersionBench.{Data, benchmarkFlatPrimitives, benchmarkSampleData}
+  import ScalaVersionBench.{Data, FlatPrimitives, benchmarkFlatPrimitives, benchmarkSampleData}
 
-  private val source: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
+  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(ToValue)
+  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
   def visitor(bh: Blackhole) = new BlackholeVisitor(bh)
+  val YYYYMMDDnoDashes: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
   def fromFlatPrimitives(bh: Blackhole) = FromScala(benchmarkFlatPrimitives).transform(visitor(bh))
 
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
-  def toUpperbound(bh: Blackhole) = source.transform(visitor(bh))
+  def toFlatPrimitives: FlatPrimitives = flatPrimitivesSource.transform(ToScala[FlatPrimitives])
+
+  @Benchmark
+  def toUpperbound(bh: Blackhole) = sampleDataSource.transform(visitor(bh))
 
   def testableFromSample[T](visitor: Visitor[Any, T]) = FromScala(benchmarkSampleData).transform(visitor)
 
@@ -55,10 +61,7 @@ class ScalaVersionBench {
   def fromSample(bh: Blackhole) = testableFromSample(visitor(bh))
 
   @Benchmark
-  def toSample: Seq[Data] = source.transform(ToScala[Seq[Data]])
-
-  @Benchmark
-  def toBlackhole(bh: Blackhole) = source.transform(visitor(bh))
+  def toSample: Seq[Data] = sampleDataSource.transform(ToScala[Seq[Data]])
 }
 
 object ScalaVersionBench {
@@ -137,7 +140,7 @@ object ScalaVersionBench {
     implicit val pickler: FromTo[FlatPrimitives] = macroFromTo
   }
 
-  val benchmarkFlatPrimitives = FlatPrimitives(Int.MinValue, "", true, Long.MaxValue, Double.NaN, '!')
+  val benchmarkFlatPrimitives = FlatPrimitives(Int.MinValue, "", true, Long.MaxValue, Double.MaxValue, '!')
 
 }
 
@@ -166,14 +169,24 @@ object ScalaVersionBench {
 )
 class ScalaVersionDefaultBench {
 
-  import ScalaVersionDefaultBench.{Data, benchmarkSampleData, benchmarkSampleDataTrunc}
+  import ScalaVersionDefaultBench.{Data, FlatPrimitives, benchmarkSampleData, benchmarkSampleDataTrunc, benchmarkFlatPrimitives, benchmarkFlatPrimitivesTrunc}
 
-  private val source: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
-  private val sourceTrunc: FromInput = FromScala(benchmarkSampleDataTrunc).transform(ToValue)
+  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
+  private val sampleDataSourceTrunc: FromInput = FromScala(benchmarkSampleDataTrunc).transform(ToValue)
+  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(ToValue)
+  private val flatPrimitivesSourceTrunc: FromInput = FromScala(benchmarkFlatPrimitivesTrunc).transform(ToValue)
   def visitor(bh: Blackhole): Visitor[Any, Null] = new BlackholeVisitor(bh)
 
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
-  def toUpperbound(bh: Blackhole) = source.transform(visitor(bh))
+  def fromFlatPrimitives(bh: Blackhole) = FromScala(benchmarkFlatPrimitives).transform(visitor(bh))
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFlatPrimitives: FlatPrimitives = flatPrimitivesSourceTrunc.transform(ToScala[FlatPrimitives])
+
+  @Benchmark
+  def toUpperbound(bh: Blackhole) = sampleDataSource.transform(visitor(bh))
 
   def testableFromSample[T](visitor: Visitor[Any, T]) = FromScala(benchmarkSampleData).transform(visitor)
 
@@ -181,10 +194,7 @@ class ScalaVersionDefaultBench {
   def fromSample(bh: Blackhole) = testableFromSample(visitor(bh))
 
   @Benchmark
-  def toSample: Seq[Data] = sourceTrunc.transform(ToScala[Seq[Data]])
-
-  @Benchmark
-  def toBlackhole(bh: Blackhole) = source.transform(visitor(bh))
+  def toSample: Seq[Data] = sampleDataSourceTrunc.transform(ToScala[Seq[Data]])
 }
 
 object ScalaVersionDefaultBench {
@@ -228,4 +238,29 @@ object ScalaVersionDefaultBench {
       f = ADT0()
     )
   )
+
+  @dropDefault
+  case class FlatPrimitives(
+    i: Int,
+    s: String = "",
+    b: Boolean =  true,
+    l: Long=  Long.MaxValue,
+    d: Double = Double.NaN,
+    c: Char = '!'
+  )
+  object FlatPrimitives {
+    implicit val pickler: FromTo[FlatPrimitives] = macroFromTo
+  }
+
+  val benchmarkFlatPrimitives = FlatPrimitives(Int.MinValue, "", true, Long.MaxValue, Double.MaxValue, '!')
+
+  case class FlatPrimitivesTrunc(
+    i: Int
+  )
+  object FlatPrimitivesTrunc {
+    implicit val pickler: FromTo[FlatPrimitivesTrunc] = macroFromTo
+  }
+
+  val benchmarkFlatPrimitivesTrunc = FlatPrimitivesTrunc(Int.MinValue)
+
 }
