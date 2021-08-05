@@ -42,7 +42,6 @@ class ScalaVersionBench {
   private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(ToValue)
   private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
   def visitor(bh: Blackhole) = new BlackholeVisitor(bh)
-  val YYYYMMDDnoDashes: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
