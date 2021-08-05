@@ -11,11 +11,39 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Benchmark to exercise the macro-generated logic (i.e., mapping to/from case classes),
- * where the implementation (and performance) differ quite a bit between Scala versions.
+ * where the implementation (and performance) differ quite a bit between Scala versions,
+ * especially with respect to default value processing.
  *
  * ==Run with==
- * bench / Jmh / run .*ScalaVersionBench.from
+ * +bench / Jmh / run .ScalaVersionBench.*
+ * +bench / Jmh / run .ScalaVersionDefaultBench.*
  *
+ * Here are some example results from 8/3 - 8/4/2021 informal (-f 4) runs:
+ *
+ *  Version  Benchmark                                    Mode  Cnt     Score     Error Units
+ *   2.13.5: ScalaVersionBench.fromFlatPrimitives        thrpt   20  13202.890 ± 102.405  ops/ms
+ *   2.13.5: ScalaVersionBench.toFlatPrimitives          thrpt   20    192.373 ±   1.867  ops/ms
+ *   2.13.5: ScalaVersionBench.fromSample                thrpt   20   1006.202 ±  11.330  ops/s
+ *   2.13.5: ScalaVersionBench.toSample                  thrpt   20    314.882 ±   7.125  ops/s
+ *   2.13.5: ScalaVersionBench.toUpperbound              thrpt   20    713.025 ±  30.174  ops/s
+ *
+ *   2.13.5: ScalaVersionDefaultBench.fromFlatPrimitives thrpt   20  22038.074 ±  38.954  ops/ms
+ *   2.13.5: ScalaVersionDefaultBench.toFlatPrimitives   thrpt   20  24854.633 ± 214.081  ops/ms
+ *   2.13.5: ScalaVersionDefaultBench.fromSample         thrpt   20   4188.035 ±  85.052  ops/s
+ *   2.13.5: ScalaVersionDefaultBench.toSample           thrpt   20   1546.885 ±  12.538  ops/s
+ *   2.13.5: ScalaVersionDefaultBench.toUpperbound       thrpt   20   2936.679 ±  36.324  ops/s
+ *
+ *   3.0.1:  ScalaVersionBench.fromFlatPrimitives        thrpt   20   4653.536 ±  35.851  ops/ms // ~65% less
+ *   3.0.1:  ScalaVersionBench.toFlatPrimitives          thrpt   20    186.453 ±   1.404  ops/ms // ~the same
+ *   3.0.1:  ScalaVersionBench.fromSample                thrpt   20    733.122 ±   5.783  ops/s  // ~25% less
+ *   3.0.1:  ScalaVersionBench.toSample                  thrpt   20    346.230 ±   9.235  ops/s  // ~10% more
+ *   3.0.1:  ScalaVersionBench.toUpperbound              thrpt   20    717.988 ±  30.697  ops/s  // ~the same
+ *
+ *   3.0.1:  ScalaVersionDefaultBench.fromFlatPrimitives thrpt   20   4157.921 ±  37.427  ops/ms // ~80% less
+ *   3.0.1:  ScalaVersionDefaultBench.toFlatPrimitives   thrpt   20   7424.267 ± 900.835  ops/ms // ~70% less
+ *   3.0.1:  ScalaVersionDefaultBench.fromSample         thrpt   20   1728.697 ±  20.222  ops/s  // ~60% less
+ *   3.0.1:  ScalaVersionDefaultBench.toSample           thrpt   20   1165.583 ±  14.725  ops/s  // ~25% less
+ *   3.0.1:  ScalaVersionDefaultBench.toUpperbound       thrpt   20   2308.280 ±  19.467  ops/s  // ~20% less
  */
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
