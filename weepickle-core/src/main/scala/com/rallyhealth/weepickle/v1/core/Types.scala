@@ -77,18 +77,14 @@ trait Types { types =>
   }
 
   object To {
-    class Delegate[T, J](delegatedTo: Visitor[T, J])
-        extends Visitor.Delegate[T, J](delegatedTo)
-        with To[J] {
+    class Delegate[T, J](delegatedTo: Visitor[T, J]) extends Visitor.Delegate[T, J](delegatedTo) with To[J] {
       override def visitObject(length: Int): ObjVisitor[Any, J] =
         super.visitObject(length).asInstanceOf[ObjVisitor[Any, J]]
       override def visitArray(length: Int): ArrVisitor[Any, J] =
         super.visitArray(length).asInstanceOf[ArrVisitor[Any, J]]
     }
 
-    abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V])
-        extends Visitor.MapTo[T, V, Z](delegatedTo)
-        with To[Z] {
+    abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V]) extends Visitor.MapTo[T, V, Z](delegatedTo) with To[Z] {
 
       def mapNonNullsFunction(t: V): Z
 
@@ -289,8 +285,10 @@ trait Types { types =>
     class Node[T](rs: TaggedTo[_ <: T]*) extends TaggedTo[T] {
       override val tagName: String = findTagName(rs)
       def findTo(s: String) = scanChildren(rs)(_.findTo(s)).asInstanceOf[To[T]]
-      override def map[Z](f: T => Z): TaggedTo[Z] = new Node[Z](rs.map(_.map(f).asInstanceOf[TaggedTo[Z]]): _*)
-      override def mapNulls[Z](f: T => Z): TaggedTo[Z] = new Node(rs.map(_.mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def map[Z](f: T => Z): TaggedTo[Z] =
+        new Node[Z](rs.map(_.asInstanceOf[To[T]].map(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def mapNulls[Z](f: T => Z): TaggedTo[Z] =
+        new Node(rs.map(_.asInstanceOf[To[T]].mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
     }
   }
 
@@ -314,11 +312,7 @@ trait Types { types =>
     }
   }
 
-  trait TaggedFromTo[T]
-      extends FromTo[T]
-      with TaggedTo[T]
-      with TaggedFrom[T]
-      with SimpleTo[T] {
+  trait TaggedFromTo[T] extends FromTo[T] with TaggedTo[T] with TaggedFrom[T] with SimpleTo[T] {
     override def visitArray(length: Int) = taggedArrayContext(this)
     override def visitObject(length: Int) = taggedObjectContext(this)
 

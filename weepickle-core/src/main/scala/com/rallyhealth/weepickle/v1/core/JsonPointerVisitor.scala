@@ -94,7 +94,7 @@ object JsonPointerVisitor {
 
 }
 
-private class JsonPointerVisitor[T, J](
+private class JsonPointerVisitor[T, J] private (
   protected val delegate: Visitor[T, J],
   parentPath: HasPath
 ) extends Visitor.Delegate[T, J](delegate) {

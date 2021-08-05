@@ -1,9 +1,9 @@
 package com.rallyhealth.weepickle.v1
 import com.rallyhealth.weejson.v1.Value
 import com.rallyhealth.weepickle.v1.implicits.MacroImplicits
-import com.rallyhealth.weepickle.v1.core.Visitor
+import com.rallyhealth.weepickle.v1.core.{Annotator, Types, Visitor}
 
-trait FromToValue extends com.rallyhealth.weepickle.v1.core.Types with MacroImplicits {
+trait FromToValue extends MacroImplicits { this: Types with Annotator =>
 
   implicit val ToValue: To[com.rallyhealth.weejson.v1.Value] =
     new To.Delegate(com.rallyhealth.weejson.v1.Value)

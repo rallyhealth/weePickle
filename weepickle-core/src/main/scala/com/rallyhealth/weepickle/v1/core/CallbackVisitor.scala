@@ -16,11 +16,11 @@ class CallbackVisitor[T, J](delegate: Visitor[T, J])(callback: J => Unit) extend
     j
   }
 
-  override def visitObject(length: Int): ObjVisitor[T, J] = new ObjDelegate(super.visitObject(length)) {
+  override def visitObject(length: Int): ObjVisitor[T, J] = new ObjDelegate(delegate.visitObject(length)) {
     override def visitEnd(): J = emitFluently(super.visitEnd())
   }
 
-  override def visitArray(length: Int): ArrVisitor[T, J] = new ArrDelegate(super.visitArray(length)) {
+  override def visitArray(length: Int): ArrVisitor[T, J] = new ArrDelegate(delegate.visitArray(length)) {
     override def visitEnd(): J = emitFluently(super.visitEnd())
   }
 

@@ -36,12 +36,12 @@ object PrimitiveTests extends TestSuite {
     }
     test("Symbol") {
       test("plain") {
-        rw('i_am_a_cow, """ "i_am_a_cow" """)(
+        rw(Symbol("i_am_a_cow"), """ "i_am_a_cow" """)(
           com.rallyhealth.weepickle.v1.WeePickle.ToSymbol,
           com.rallyhealth.weepickle.v1.WeePickle.FromSymbol
         )
       }
-      test("unicode")(rw('叉烧包, """ "叉烧包" """))
+      test("unicode")(rw(Symbol("叉烧包"), """ "叉烧包" """))
       test("null")(rwNull(null: Symbol, "null"))
     }
     test("Long") {

@@ -26,7 +26,7 @@ trait GenValue {
 
   def genValue(depth: Int): Gen[Value] = {
     val nonRecursive = List(
-      Gen.alphaNumStr.map(Str),
+      Gen.alphaNumStr.map(Str.apply),
       arbNum.arbitrary,
       Arbitrary.arbitrary[Boolean].map(Bool(_)),
       Gen.const(Null)

@@ -21,6 +21,30 @@ import scala.reflect.ClassTag
 import language.postfixOps
 
 object StructTests extends TestSuite {
+  object AlwaysReturn {
+    case class Bar()
+    val r: WeePickle.To[Bar] = WeePickle.macroTo[Bar]
+
+    //the following reader always returns Bar() even when input is null
+    implicit val barDelegateTo: WeePickle.To[Bar] = new WeePickle.To.Delegate[Any, Bar](
+      r.map(identity)
+    ) {
+      override def visitNull(): AlwaysReturn.Bar = Bar()
+    }
+  }
+  object NoDefault {
+    case class Bar(noDefault: Option[Int])
+    implicit val r: WeePickle.To[Bar] = WeePickle.macroTo[Bar]
+  }
+  object SomeAsDefault {
+    case class Bar(noDefault: Option[Int] = Some(1))
+    implicit val r: WeePickle.To[Bar] = WeePickle.macroTo[Bar]
+  }
+  object NoDefaultContainerTypes {
+    case class Bar(option: Option[Int], seq: Seq[Int], list: List[Int], array: Array[Int], map: Map[Int, Int])
+    val to = WeePickle.macroTo[Bar]
+    val toNullable = WeePickle.macroNullableTo[Bar]
+  }
 
   val tests = Tests {
     test("arrays") {
@@ -72,16 +96,16 @@ object StructTests extends TestSuite {
       }
       test("Map") {
         test("Structured") - roundTripMsgPack(
-          Map(Nil -> List(1), List(1) -> List(1, 2, 3))
+          Map[List[Int], List[Int]](Nil -> List(1), List(1) -> List(1, 2, 3))
         )
         test("Structured2") - roundTripMsgPack(
-          collection.mutable.Map(Nil -> List(1), List(1) -> List(1, 2, 3))
+          collection.mutable.Map[List[Int], List[Int]](Nil -> List(1), List(1) -> List(1, 2, 3))
         )
         test("Structured3") - roundTripMsgPack(
-          collection.immutable.Map(Nil -> List(1), List(1) -> List(1, 2, 3))
+          collection.immutable.Map[List[Int], List[Int]](Nil -> List(1), List(1) -> List(1, 2, 3))
         )
         test("Structured4") - roundTripMsgPack(
-          collection.Map(Nil -> List(1), List(1) -> List(1, 2, 3))
+          collection.Map[List[Int], List[Int]](Nil -> List(1), List(1) -> List(1, 2, 3))
         )
         test("StructuredEmpty") - rw(
           Map[List[Int], List[Int]](),
@@ -100,7 +124,7 @@ object StructTests extends TestSuite {
           """{"Hello":[1],"World":[1,2,3]}"""
         )
         test("String4") - rw(
-          collection.mutable.Map("Hello" -> List(1), "World" -> List(1, 2, 3)),
+          collection.mutable.Map[String, List[Int]]("Hello" -> List(1), "World" -> List(1, 2, 3)),
           """{"Hello":[1],"World":[1,2,3]}"""
         )
         test("StringEmpty") - rw(
@@ -176,20 +200,6 @@ object StructTests extends TestSuite {
       * this test is inspired by PlayJson which returns Some(T) even when input is null
       */
     test("optionWithNull should always return None") {
-
-      object AlwaysReturn {
-        case class Bar()
-        implicit val r = WeePickle.macroTo[Bar]
-
-        //the following reader always returns Bar() even when input is null
-        implicit val barDelegateTo = new WeePickle.To.Delegate[Any, Bar](
-          implicitly[WeePickle.To[Bar]]
-            .map(identity)
-        ) {
-          override def visitNull(): AlwaysReturn.Bar = Bar()
-        }
-      }
-
       import AlwaysReturn._
 
       assert(FromJson("""{}""").transform(ToScala[Bar]) == Bar())
@@ -199,27 +209,16 @@ object StructTests extends TestSuite {
     }
 
     test("assume None as default for Option types") {
-      object NoneAsDefault {
-        case class Bar(noDefault: Option[Int])
-        implicit val r = WeePickle.macroTo[Bar]
-      }
-      assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(None))
+      import NoDefault._
+      assert(FromJson("""{}""").transform(ToScala[Bar]) == Bar(None))
     }
 
     test("use explicitly-provided default for Option types") {
-      object NoneAsDefault {
-        case class Bar(noDefault: Option[Int] = Some(1))
-        implicit val r = WeePickle.macroTo[Bar]
-      }
-      assert(FromJson("""{}""").transform(ToScala[NoneAsDefault.Bar]) == NoneAsDefault.Bar(Some(1)))
+      import SomeAsDefault._
+      assert(FromJson("""{}""").transform(ToScala[Bar]) == Bar(Some(1)))
     }
 
     test("apply defaults for missing inputs for nullable container types") {
-      object NoDefaultContainerTypes {
-        case class Bar(option: Option[Int], seq: Seq[Int], list: List[Int], array: Array[Int], map: Map[Int, Int])
-        val to = WeePickle.macroTo[Bar]
-        val toNullable = WeePickle.macroNullableTo[Bar]
-      }
       val e = intercept[Exception] {
         FromJson("""{}""").transform(NoDefaultContainerTypes.to)
       }
@@ -229,7 +228,7 @@ object StructTests extends TestSuite {
       assert(fromMissing.option == None)
       assert(fromMissing.seq == Seq.empty)
       assert(fromMissing.list == List.empty)
-      assert(fromMissing.array.toSeq == Array.empty.toSeq)
+      assert(fromMissing.array.toSeq == Array.empty[Int].toSeq)
       assert(fromMissing.map == Map.empty)
     }
 

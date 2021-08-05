@@ -4,7 +4,7 @@ import java.util.UUID
 
 object Util {
 
-  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int): Long = {
+  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int) = {
     val expMul =
       if (expIndex == -1) 1
       else {

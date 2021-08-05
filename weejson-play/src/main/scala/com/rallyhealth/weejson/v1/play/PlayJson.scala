@@ -41,9 +41,11 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
   def visitNull(): JsValue = JsNull
 
-  val visitFalse: JsValue = JsBoolean(false)
+  private val jsFalse = JsBoolean(false)
+  def visitFalse(): JsValue = jsFalse
 
-  val visitTrue: JsValue = JsBoolean(true)
+  private val jsTrue = JsBoolean(true)
+  def visitTrue(): JsValue = jsTrue
 
   def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): JsValue = {
     JsNumber(BigDecimal(cs.toString))
