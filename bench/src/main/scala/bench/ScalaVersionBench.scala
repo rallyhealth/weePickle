@@ -91,54 +91,108 @@ class ScalaVersionBench {
   def toSample: Seq[Data] = sampleDataSource.transform(ToScala[Seq[Data]])
 }
 
+@Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
+@State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.Throughput))
+@Fork(
+  jvmArgsAppend = Array(
+    //        "-XX:+UnlockCommercialFeatures",
+    //        "-XX:+FlightRecorder",
+    //        "-XX:StartFlightRecording=delay=10s,duration=20s,filename=recording.jfr,settings=profile",
+    "-Xms350m",
+    "-Xmx350m",
+    "-XX:+HeapDumpOnOutOfMemoryError",
+    // https://stackoverflow.com/questions/32047440/different-benchmarking-results-between-forks-in-jmh
+    "-XX:-BackgroundCompilation",
+    "-XX:-TieredCompilation"
+  ),
+  value = 10
+)
+class ScalaVersionUBench {
+  import ScalaVersionBench.{Data, FlatPrimitives, benchmarkFlatPrimitives, benchmarkSampleData}
+  /*
+   * Micropickle equivalents
+   */
+  private val flatPrimitivesSource: ujson.Value = upickle.default.transform(benchmarkFlatPrimitives).to[ujson.Value]
+  private val sampleDataSource: ujson.Value = upickle.default.transform(benchmarkSampleData).to[ujson.Value]
+  def uVisitor(bh: Blackhole): upickle.core.Visitor[_, _] = new BlackholeUVisitor(bh) // upickle.core.NoOpVisitor
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def fromFlatPrimitives(bh: Blackhole) = upickle.default.transform(benchmarkFlatPrimitives).to(uVisitor(bh))
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFlatPrimitives: FlatPrimitives = flatPrimitivesSource.transform(FlatPrimitives.upickler)
+
+  @Benchmark
+  def toUpperbound(bh: Blackhole) = sampleDataSource.transform(uVisitor(bh))
+
+  @Benchmark
+  def fromSample(bh: Blackhole) = upickle.default.transform(benchmarkSampleData).to(uVisitor(bh))
+
+  @Benchmark
+  def toSample: Seq[Data] = sampleDataSource.transform(implicitly[upickle.default.Reader[Seq[Data]]])
+}
+
 object ScalaVersionBench {
 
   case class ADT0()
   object ADT0 {
     implicit val rw: FromTo[ADT0] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[ADT0] = upickle.default.macroRW
   }
   case class ADTa(i: Int)
   object ADTa {
     implicit val rw: FromTo[ADTa] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[ADTa] = upickle.default.macroRW
   }
   case class ADTc(i: Int = 2, s: String, t: (Double, Double) = (1, 2))
   object ADTc {
     implicit val rw: FromTo[ADTc] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[ADTc] = upickle.default.macroRW
   }
 
   sealed trait A
   object A {
     implicit val rw: FromTo[A] = FromTo.merge(B.rw, C.rw)
+    implicit val urw: upickle.default.ReadWriter[A] = upickle.default.ReadWriter.merge(B.urw, C.urw)
   }
   case class B(i: Int) extends A
   object B {
     implicit val rw: FromTo[B] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[B] = upickle.default.macroRW
   }
   case class C(s1: String, s2: String) extends A
   object C {
     implicit val rw: FromTo[C] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[C] = upickle.default.macroRW
   }
 
   sealed trait LL
   object LL {
     implicit val rw: FromTo[LL] = FromTo.merge(macroFromTo[End.type], macroFromTo[Node])
+    implicit val urw: upickle.default.ReadWriter[LL] = upickle.default.ReadWriter.merge(upickle.default.macroRW[End.type], upickle.default.macroRW[Node])
   }
   case object End extends LL
   case class Node(c: Int, next: LL) extends LL
   object Node {
     implicit val rw: FromTo[Node] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[Node] = upickle.default.macroRW
   }
 
   case class Data( // no type parameters - Scala 3 implementation can't support them yet
     a: Seq[(Int, Int)],
     b: String,
     c: A,
-    d: LL, // no linked list - Scala 3 implementation can't support the recursion yet
+    //d: LL, // no linked list - uPickle's Scala 3 implementation can't support the recursion yet (WeePickle does)
     e: ADTc,
     f: ADT0
   )
   object Data {
     implicit val rw: FromTo[Data] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[Data] = upickle.default.macroRW
   }
   val benchmarkSampleData: Seq[Data] = Seq.fill(1000)(
     Data(
@@ -149,7 +203,7 @@ object ScalaVersionBench {
         |And I look good on the barbecueeeee
     """.stripMargin,
       C("lol i am a noob", "haha you are a noob"): A,
-      Node(-11, Node(-22, Node(-33, Node(-44, End)))): LL,
+      //Node(-11, Node(-22, Node(-33, Node(-44, End)))): LL,
       ADTc(i = 1234567890, s = "i am a strange loop"),
       ADT0()
     )
@@ -165,6 +219,7 @@ object ScalaVersionBench {
   )
   object FlatPrimitives {
     implicit val pickler: FromTo[FlatPrimitives] = macroFromTo
+    implicit val upickler: upickle.default.ReadWriter[FlatPrimitives] = upickle.default.macroRW
   }
 
   val benchmarkFlatPrimitives = FlatPrimitives(Int.MinValue, "", true, Long.MaxValue, Double.MaxValue, '!')
@@ -224,6 +279,54 @@ class ScalaVersionDefaultBench {
   def toSample: Seq[Data] = sampleDataSourceTrunc.transform(ToScala[Seq[Data]])
 }
 
+@Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
+@State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.Throughput))
+@Fork(
+  jvmArgsAppend = Array(
+    //        "-XX:+UnlockCommercialFeatures",
+    //        "-XX:+FlightRecorder",
+    //        "-XX:StartFlightRecording=delay=10s,duration=20s,filename=recording.jfr,settings=profile",
+    "-Xms350m",
+    "-Xmx350m",
+    "-XX:+HeapDumpOnOutOfMemoryError",
+    // https://stackoverflow.com/questions/32047440/different-benchmarking-results-between-forks-in-jmh
+    "-XX:-BackgroundCompilation",
+    "-XX:-TieredCompilation"
+  ),
+  value = 10
+)
+class ScalaVersionDefaultUBench {
+  import ScalaVersionDefaultBench.{Data, FlatPrimitives, benchmarkSampleData, benchmarkSampleDataTrunc, benchmarkFlatPrimitives, benchmarkFlatPrimitivesTrunc}
+
+  /*
+   * Micropickle equivalents
+   */
+  private val sampleDataSource: ujson.Value = upickle.default.transform(benchmarkSampleData).to[ujson.Value]
+  private val sampleDataSourceTrunc: ujson.Value = upickle.default.transform(benchmarkSampleDataTrunc).to[ujson.Value]
+  private val flatPrimitivesSource: ujson.Value = upickle.default.transform(benchmarkFlatPrimitives).to[ujson.Value]
+  private val flatPrimitivesSourceTrunc: ujson.Value = upickle.default.transform(benchmarkFlatPrimitivesTrunc).to[ujson.Value]
+  def uVisitor(bh: Blackhole): upickle.core.Visitor[_, _] = new BlackholeUVisitor(bh) // upickle.core.NoOpVisitor // ?
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def fromFlatPrimitives(bh: Blackhole) = upickle.default.transform(benchmarkFlatPrimitives).to(uVisitor(bh))
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFlatPrimitives: FlatPrimitives = flatPrimitivesSourceTrunc.transform(FlatPrimitives.upickler)
+
+  @Benchmark
+  def toUpperbound(bh: Blackhole) = sampleDataSource.transform(uVisitor(bh))
+
+  @Benchmark
+  def fromSample(bh: Blackhole) = upickle.default.transform(benchmarkSampleData).to(uVisitor(bh))
+
+  @Benchmark
+  def toSample: Seq[Data] = sampleDataSourceTrunc.transform(implicitly[upickle.default.Reader[Seq[Data]]])
+}
+
 object ScalaVersionDefaultBench {
 
   import ScalaVersionBench.{ADT0, ADTc, A, C, LL, End}
@@ -234,13 +337,14 @@ object ScalaVersionDefaultBench {
     @dropDefault
     b: String = "",
     c: A,
-    @dropDefault
-    d: LL = End,
+    //@dropDefault
+    //d: LL = End, // no linked list - uPickle's Scala 3 implementation can't support the recursion yet (WeePickle does)
     e: ADTc,
     f: ADT0
   )
   object Data {
     implicit val rw: FromTo[Data] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[Data] = upickle.default.macroRW
   }
   val benchmarkSampleData: Seq[Data] = Seq.fill(1000)(
     Data(
@@ -257,6 +361,7 @@ object ScalaVersionDefaultBench {
   )
   object DataTrunc {
     implicit val rw: FromTo[DataTrunc] = macroFromTo
+    implicit val urw: upickle.default.ReadWriter[DataTrunc] = upickle.default.macroRW
   }
   val benchmarkSampleDataTrunc: Seq[DataTrunc] = Seq.fill(1000)(
     DataTrunc(
@@ -277,6 +382,7 @@ object ScalaVersionDefaultBench {
   )
   object FlatPrimitives {
     implicit val pickler: FromTo[FlatPrimitives] = macroFromTo
+    implicit val upickler: upickle.default.ReadWriter[FlatPrimitives] = upickle.default.macroRW
   }
 
   val benchmarkFlatPrimitives = FlatPrimitives(Int.MinValue, "", true, Long.MaxValue, Double.MaxValue, '!')
@@ -286,6 +392,7 @@ object ScalaVersionDefaultBench {
   )
   object FlatPrimitivesTrunc {
     implicit val pickler: FromTo[FlatPrimitivesTrunc] = macroFromTo
+    implicit val upickler: upickle.default.ReadWriter[FlatPrimitivesTrunc] = upickle.default.macroRW
   }
 
   val benchmarkFlatPrimitivesTrunc = FlatPrimitivesTrunc(Int.MinValue)
