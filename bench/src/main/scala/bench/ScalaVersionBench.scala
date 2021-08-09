@@ -1,12 +1,12 @@
 package bench
 
+import com.rallyhealth.weejson.v1.BufferedValue
 import com.rallyhealth.weepickle.v1.WeePickle._
-import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 import com.rallyhealth.weepickle.v1.implicits.dropDefault
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.TimeUnit
 
 /**
@@ -66,9 +66,8 @@ import java.util.concurrent.TimeUnit
 class ScalaVersionBench {
 
   import ScalaVersionBench.{Data, FlatPrimitives, benchmarkFlatPrimitives, benchmarkSampleData}
-
-  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(ToValue)
-  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
+  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(BufferedValue.Builder)
+  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(BufferedValue.Builder)
   def visitor(bh: Blackhole) = new BlackholeVisitor(bh)
 
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -78,6 +77,10 @@ class ScalaVersionBench {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
   def toFlatPrimitives: FlatPrimitives = flatPrimitivesSource.transform(ToScala[FlatPrimitives])
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFPUpperbound(bh: Blackhole) = flatPrimitivesSource.transform(visitor(bh))
 
   @Benchmark
   def toUpperbound(bh: Blackhole) = sampleDataSource.transform(visitor(bh))
@@ -125,6 +128,10 @@ class ScalaVersionUBench {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
   def toFlatPrimitives: FlatPrimitives = flatPrimitivesSource.transform(FlatPrimitives.upickler)
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFPUpperbound(bh: Blackhole) = flatPrimitivesSource.transform(uVisitor(bh))
 
   @Benchmark
   def toUpperbound(bh: Blackhole) = sampleDataSource.transform(uVisitor(bh))
@@ -253,10 +260,10 @@ class ScalaVersionDefaultBench {
 
   import ScalaVersionDefaultBench.{Data, FlatPrimitives, benchmarkSampleData, benchmarkSampleDataTrunc, benchmarkFlatPrimitives, benchmarkFlatPrimitivesTrunc}
 
-  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(ToValue)
-  private val sampleDataSourceTrunc: FromInput = FromScala(benchmarkSampleDataTrunc).transform(ToValue)
-  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(ToValue)
-  private val flatPrimitivesSourceTrunc: FromInput = FromScala(benchmarkFlatPrimitivesTrunc).transform(ToValue)
+  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(BufferedValue.Builder)
+  private val sampleDataSourceTrunc: FromInput = FromScala(benchmarkSampleDataTrunc).transform(BufferedValue.Builder)
+  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(BufferedValue.Builder)
+  private val flatPrimitivesSourceTrunc: FromInput = FromScala(benchmarkFlatPrimitivesTrunc).transform(BufferedValue.Builder)
   def visitor(bh: Blackhole): Visitor[Any, Null] = new BlackholeVisitor(bh)
 
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -266,6 +273,10 @@ class ScalaVersionDefaultBench {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
   def toFlatPrimitives: FlatPrimitives = flatPrimitivesSourceTrunc.transform(ToScala[FlatPrimitives])
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFPUpperbound(bh: Blackhole) = flatPrimitivesSourceTrunc.transform(visitor(bh))
 
   @Benchmark
   def toUpperbound(bh: Blackhole) = sampleDataSource.transform(visitor(bh))
@@ -316,6 +327,10 @@ class ScalaVersionDefaultUBench {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Benchmark
   def toFlatPrimitives: FlatPrimitives = flatPrimitivesSourceTrunc.transform(FlatPrimitives.upickler)
+
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Benchmark
+  def toFPUpperbound(bh: Blackhole) = flatPrimitivesSource.transform(uVisitor(bh))
 
   @Benchmark
   def toUpperbound(bh: Blackhole) = sampleDataSource.transform(uVisitor(bh))

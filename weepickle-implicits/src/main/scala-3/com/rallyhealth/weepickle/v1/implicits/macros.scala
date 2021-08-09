@@ -3,8 +3,8 @@ package com.rallyhealth.weepickle.v1.implicits.macros
 import scala.quoted.{ given, _ }
 import deriving._, compiletime._
 
-inline def getDefaultParams[T]: String => Option[() => AnyRef] = ${ getDefaultParmasImpl[T] }
-def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[String => Option[() => AnyRef]] =
+inline def getDefaultParams[T]: String => Option[() => AnyRef] = ${ getDefaultParamsImpl[T] }
+def getDefaultParamsImpl[T](using Quotes, Type[T]): Expr[String => Option[() => AnyRef]] =
   import quotes.reflect._
 
   /*
@@ -63,7 +63,7 @@ def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[String => Option[() => 
   } else {
     '{ Map.empty.get }
   }
-end getDefaultParmasImpl
+end getDefaultParamsImpl
 
 inline def summonList[T <: Tuple]: List[_] =
   inline erasedValue[T] match
@@ -71,34 +71,35 @@ inline def summonList[T <: Tuple]: List[_] =
     case _: (t *: ts) => summonInline[t] :: summonList[ts]
 end summonList
 
-def extractKey[A](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
+private def annotationString[T: Type](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
   import quotes.reflect._
   sym
     .annotations
-    .find(_.tpe =:= TypeRepr.of[com.rallyhealth.weepickle.v1.implicits.key])
-    .map{case Apply(_, Literal(StringConstant(s)) :: Nil) => s}
-end extractKey
+    .find(_.tpe =:= TypeRepr.of[T])
+    .collect { case Apply(_, Literal(StringConstant(s)) :: Nil) => s }
+end annotationString
+
+private def annotationExists[T: Type](using Quotes)(sym: quotes.reflect.Symbol): Boolean =
+  import quotes.reflect._
+  sym
+    .annotations
+    .exists(_.tpe =:= TypeRepr.of[T])
+end annotationExists
+
+def extractKey[A](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
+  annotationString[com.rallyhealth.weepickle.v1.implicits.key](sym)
 
 /*
  * Returns the custom discriminator we should use instead of "$type", if there is one.
  */
 def extractDiscriminator[A](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
-  import quotes.reflect._
-  sym
-    .annotations
-    .find(_.tpe =:= TypeRepr.of[com.rallyhealth.weepickle.v1.implicits.discriminator])
-    .map{case Apply(_, Literal(StringConstant(s)) :: Nil) => s}
-end extractDiscriminator
+  annotationString[com.rallyhealth.weepickle.v1.implicits.discriminator](sym)
 
 /*
  * Returns if dropDefault is present. Could be defined at the class or field level.
  */
 def extractDropDefault[A](using Quotes)(sym: quotes.reflect.Symbol): Boolean =
-  import quotes.reflect._
-  sym
-    .annotations
-    .exists(_.tpe =:= TypeRepr.of[com.rallyhealth.weepickle.v1.implicits.dropDefault])
-end extractDropDefault
+  annotationExists[com.rallyhealth.weepickle.v1.implicits.dropDefault](sym)
 
 /*
  * Return associated field labels and an indication of if individual field defaults should be dropped.
