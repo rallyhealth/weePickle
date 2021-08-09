@@ -1,8 +1,9 @@
 package bench
 
 import com.rallyhealth.weejson.v1.BufferedValue
+import com.rallyhealth.weejson.v1.BufferedValueOps._
 import com.rallyhealth.weepickle.v1.WeePickle._
-import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
+import com.rallyhealth.weepickle.v1.core.Visitor
 import com.rallyhealth.weepickle.v1.implicits.dropDefault
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
@@ -66,8 +67,8 @@ import java.util.concurrent.TimeUnit
 class ScalaVersionBench {
 
   import ScalaVersionBench.{Data, FlatPrimitives, benchmarkFlatPrimitives, benchmarkSampleData}
-  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(BufferedValue.Builder)
-  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(BufferedValue.Builder)
+  private val flatPrimitivesSource = FromScala(benchmarkFlatPrimitives).transform(BufferedValue.Builder)
+  private val sampleDataSource = FromScala(benchmarkSampleData).transform(BufferedValue.Builder)
   def visitor(bh: Blackhole) = new BlackholeVisitor(bh)
 
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -260,10 +261,10 @@ class ScalaVersionDefaultBench {
 
   import ScalaVersionDefaultBench.{Data, FlatPrimitives, benchmarkSampleData, benchmarkSampleDataTrunc, benchmarkFlatPrimitives, benchmarkFlatPrimitivesTrunc}
 
-  private val sampleDataSource: FromInput = FromScala(benchmarkSampleData).transform(BufferedValue.Builder)
-  private val sampleDataSourceTrunc: FromInput = FromScala(benchmarkSampleDataTrunc).transform(BufferedValue.Builder)
-  private val flatPrimitivesSource: FromInput = FromScala(benchmarkFlatPrimitives).transform(BufferedValue.Builder)
-  private val flatPrimitivesSourceTrunc: FromInput = FromScala(benchmarkFlatPrimitivesTrunc).transform(BufferedValue.Builder)
+  private val sampleDataSource = FromScala(benchmarkSampleData).transform(BufferedValue.Builder)
+  private val sampleDataSourceTrunc = FromScala(benchmarkSampleDataTrunc).transform(BufferedValue.Builder)
+  private val flatPrimitivesSource = FromScala(benchmarkFlatPrimitives).transform(BufferedValue.Builder)
+  private val flatPrimitivesSourceTrunc = FromScala(benchmarkFlatPrimitivesTrunc).transform(BufferedValue.Builder)
   def visitor(bh: Blackhole): Visitor[Any, Null] = new BlackholeVisitor(bh)
 
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
