@@ -71,9 +71,7 @@ object BufferedValueOps {
      * Returns an Option[BigDecimal] in case this [[BufferedValue]] is a 'Num'.
      */
     def numOpt: Option[BigDecimal] = bv match {
-      case Num(s, _, _) => Some(BigDecimal(s))
-      case NumLong(l) => Some(BigDecimal(l))
-      case NumDouble(d) => Some(BigDecimal(d))
+      case a: AnyNum => Some(a.value)
       case _ => None
     }
 
@@ -101,8 +99,7 @@ object BufferedValueOps {
      * Returns an Optional `Boolean` value of this [[BufferedValue]] in case this [[BufferedValue]] is a 'Bool'.
      */
     def boolOpt: Option[Boolean] = bv match {
-      case True => Some(true)
-      case False => Some(false)
+      case b: Bool => Some(b.value)
       case _ => None
     }
 
@@ -125,6 +122,11 @@ object BufferedValue extends Transformer[BufferedValue] {
   sealed trait Selector {
     def apply(x: BufferedValue): BufferedValue
   }
+  /*
+   * Note that, because objects are represented internally using a sequence of attributes rather than
+   * a dictionary-style map, access time may suffer for objects with a large number of attributes. In
+   * these cases, it may be best to fetch the sequence and convert it into a map locally (using `.obj.toMap`).
+   */
   object Selector {
     implicit class IntSelector(i: Int) extends Selector {
       def apply(x: BufferedValue): BufferedValue = x.arr(i)
@@ -136,44 +138,66 @@ object BufferedValue extends Transformer[BufferedValue] {
   }
 
   case class Str(value0: String) extends BufferedValue
+
   case class Obj(value0: (String, BufferedValue)*) extends BufferedValue
+
   case class Arr(value: BufferedValue*) extends BufferedValue
-  case class Num(s: String, decIndex: Int, expIndex: Int) extends BufferedValue
-  case class NumLong(l: Long) extends BufferedValue
-  case class NumDouble(d: Double) extends BufferedValue
-  case class Binary(b: Array[Byte]) extends BufferedValue
-  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue
-  case class Timestamp(i: Instant) extends BufferedValue
-  case object False extends BufferedValue {
-    def value = false
+
+  sealed trait AnyNum extends BufferedValue {
+    def value: BigDecimal
   }
-  case object True extends BufferedValue {
-    def value = true
+  case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(s)
+  }
+  case class NumLong(l: Long) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(l)
+  }
+  case class NumDouble(d: Double) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(d)
+  }
+  object AnyNum {
+    def apply(d: BigDecimal): AnyNum = // precision sensitive
+      if (d.isValidLong) NumLong(d.longValue)
+      else if (d.isDecimalDouble) NumDouble(d.doubleValue)
+      else {
+        val s = d.toString
+        Num(
+          s,
+          s.indexOf('.'),
+          s.indexOf('E') match {
+            case -1 => s.indexOf('e')
+            case n => n
+          })
+      }
+  }
+
+  case class Binary(b: Array[Byte]) extends BufferedValue
+
+  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue
+
+  case class Timestamp(i: Instant) extends BufferedValue
+
+  sealed trait Bool extends BufferedValue {
+    def value: Boolean
+  }
+  case object False extends Bool {
+    override def value = false
+  }
+  case object True extends Bool {
+    override def value = true
   }
   object Bool {
     def apply(value: Boolean): BufferedValue = if (value) True else False
   }
+
   case object Null extends BufferedValue {
     def value = null
   }
 
-  def fromAttributes(items: Iterable[(String, BufferedValue)]): BufferedValue = Obj(items.toSeq: _*)
+  def fromAttributes(items: Iterable[(String, BufferedValue)]): Obj = Obj(items.toSeq: _*)
 
-  def fromElements(items: Iterable[BufferedValue]): BufferedValue = Arr(items.toSeq: _*)
+  def fromElements(items: Iterable[BufferedValue]): Arr = Arr(items.toSeq: _*)
 
-  def fromNumber(d: BigDecimal) = // precision sensitive
-    if (d.isValidLong) NumLong(d.longValue)
-    else if (d.isDecimalDouble) NumDouble(d.doubleValue)
-    else {
-      val s = d.toString
-      Num(
-        s,
-        s.indexOf('.'),
-        s.indexOf('E') match {
-          case -1 => s.indexOf('e')
-          case n => n
-        })
-    }
 
   /**
    * Thrown when weepickle tries to convert a JSON blob into a given data
