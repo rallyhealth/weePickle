@@ -7,7 +7,10 @@ noPublish
 crossScalaVersions := Nil // crossScalaVersions must be set to Nil on the aggregating project
 
 lazy val bench = project
-  .dependsOn(`weepickle-tests` % "compile;test")
+  .dependsOn(
+    `weepickle-tests` % "compile;test",
+    `weejson-upickle`,
+  )
   .enablePlugins(JmhPlugin)
   .settings(
     noPublish,
@@ -194,6 +197,20 @@ lazy val `weejson-play28` = playProject("2.8.1", Seq(scala213))
 lazy val `weejson-play29` = playProject("2.9.2", Seq(scala213))
 
 lazy val `weejson-play210` = playProject("2.10.0-RC5", Seq(scala3))
+
+lazy val `weejson-upickle` = project
+  .dependsOn(weepickle)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "upickle" % "1.4.0",
+    ),
+    mimaPreviousArtifacts := {
+      if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.6.0")))
+        Set.empty
+      else
+        mimaPreviousArtifacts.value
+    }
+  )
 
 lazy val weeyaml = project
   .dependsOn(`weejson-jackson`)
