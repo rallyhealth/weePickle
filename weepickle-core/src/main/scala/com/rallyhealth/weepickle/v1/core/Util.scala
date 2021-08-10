@@ -44,6 +44,7 @@ object Util {
     intPortion + decPortion
   }
   def parseLong(cs: CharSequence, start: Int, len: Int): Long = {
+    if ((start | len | (cs.length - (len + start)) | (start + len)) < 0) throw new IndexOutOfBoundsException
 
     // we store the inverse of the positive sum, to ensure we don't
     // incorrectly overflow on Long.MinValue. for positive numbers
@@ -51,26 +52,26 @@ object Util {
     var inverseSum: Long = 0L
     var inverseSign: Long = -1L
     var i: Int = start
+    val end = start + len
 
     if (cs.charAt(start) == '-') {
       inverseSign = 1L
       i += 1
     }
 
-    val size = len - i
-    if (i >= len) throw new NumberFormatException(cs.toString)
-    if (size > 19) throw new NumberFormatException(cs.toString)
+    val digitCount = end - i
+    if (digitCount <= 0 || digitCount > 19) throw new NumberFormatException(cs.toString.substring(start, end))
 
-    while (i < len) {
+    while (i < end) {
       val digit = cs.charAt(i).toInt - 48
-      if (digit < 0 || 9 < digit) throw new NumberFormatException(cs.toString)
+      if (digit < 0 || 9 < digit) throw new NumberFormatException(cs.toString.substring(start, end))
       inverseSum = inverseSum * 10L - digit
       i += 1
     }
 
     // detect and throw on overflow
-    if (size == 19 && (inverseSum >= 0 || (inverseSum == Long.MinValue && inverseSign < 0))) {
-      throw new NumberFormatException(cs.toString)
+    if (digitCount == 19 && (inverseSum >= 0 || (inverseSum == Long.MinValue && inverseSign < 0))) {
+      throw new NumberFormatException(cs.toString.substring(start, end))
     }
 
     inverseSum * inverseSign

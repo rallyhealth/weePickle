@@ -29,7 +29,7 @@ class UtilTests
       "padded" in {
         forAll { (head: String, l: Long, tail: String) =>
           val s = l.toString
-          Util.parseLong(s"$head$s$tail", head.length, head.length + s.length) should ===(l)
+          Util.parseLong(s"$head$s$tail", head.length, s.length) should ===(l)
         }
       }
     }
@@ -38,11 +38,14 @@ class UtilTests
   "failures" - {
     "strings" in {
       forAll { (s: String) =>
-        Try(s.toLong).isSuccess shouldBe Try(Util.parseLong(s, 0, s.length)).isSuccess
+        whenever(Try(s.toLong).isFailure) {
+          assert(Try(Util.parseLong(s, 0, s.length)).isFailure)
+        }
       }
     }
 
     "a" in (assert(Try(Util.parseLong("a", 0, 1)).isFailure))
     "-" in (assert(Try(Util.parseLong("-", 0, 1)).isFailure))
+    "᥌" in (assert(Try(Util.parseLong("᥌", 0, 1)).isFailure)) // invalid per https://datatracker.ietf.org/doc/html/rfc7159#section-6
   }
 }
