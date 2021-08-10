@@ -4,7 +4,7 @@ import java.util.UUID
 
 object Util {
 
-  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int) = {
+  def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int): Long = {
     val expMul =
       if (expIndex == -1) 1
       else {
@@ -54,7 +54,7 @@ object Util {
 
     if (cs.charAt(start) == '-') {
       inverseSign = 1L
-      i = 1
+      i += 1
     }
 
     val size = len - i
@@ -63,7 +63,7 @@ object Util {
 
     while (i < len) {
       val digit = cs.charAt(i).toInt - 48
-      if (digit < 0 || 9 < digit) new NumberFormatException(cs.toString)
+      if (digit < 0 || 9 < digit) throw new NumberFormatException(cs.toString)
       inverseSum = inverseSum * 10L - digit
       i += 1
     }

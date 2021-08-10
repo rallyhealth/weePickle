@@ -14,13 +14,13 @@ class UtilTests
     with TypeCheckedTripleEquals {
 
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
-    minSuccessful = 500
+    minSuccessful = 1000
   )
 
   "parseLong" - {
     "valid" - {
       "trimmed" in {
-        forAll { l: Long =>
+        forAll { (l: Long) =>
           val s = l.toString
           Util.parseLong(s, 0, s.length) should ===(l)
         }
@@ -29,15 +29,20 @@ class UtilTests
       "padded" in {
         forAll { (head: String, l: Long, tail: String) =>
           val s = l.toString
-          Util.parseLong(s"$head$s$tail", head.length, s.length) should ===(l)
+          Util.parseLong(s"$head$s$tail", head.length, head.length + s.length) should ===(l)
         }
       }
     }
   }
 
-  "failures" in {
-    forAll { (s: String) =>
-      Try(s.toLong).isSuccess shouldBe Try(Util.parseLong(s, 0, s.length)).isSuccess
+  "failures" - {
+    "strings" in {
+      forAll { (s: String) =>
+        Try(s.toLong).isSuccess shouldBe Try(Util.parseLong(s, 0, s.length)).isSuccess
+      }
     }
+
+    "a" in (assert(Try(Util.parseLong("a", 0, 1)).isFailure))
+    "-" in (assert(Try(Util.parseLong("-", 0, 1)).isFailure))
   }
 }
