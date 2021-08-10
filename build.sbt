@@ -205,7 +205,7 @@ lazy val `weejson-upickle` = project
       "com.lihaoyi" %% "upickle" % "1.4.0",
     ),
     mimaPreviousArtifacts := {
-      if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.6.0")))
+      if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<=1.6.0")))
         Set.empty
       else
         mimaPreviousArtifacts.value
