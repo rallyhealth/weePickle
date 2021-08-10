@@ -1,5 +1,4 @@
 package com.rallyhealth.weepickle.v1
-
 import utest._
 import acyclic.file
 import com.rallyhealth.weepickle.v1.TestUtil.rw
@@ -40,26 +39,23 @@ object All {
     implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Out1] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
   }
 
-//  import shared.that._
-//  import shared.common._
-//  sealed trait Inners extends Outers
-//  object Inners {
-//    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inners] =
-//      com.rallyhealth.weepickle.v1.WeePickle.FromTo.merge(
-//        Inner1.rw,
-//        Inner2.rw
-//      )
-//  }
-//  case class Inner1(b: That) extends Inners
-//  object Inner1 {
-//    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inner1] =
-//      com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
-//  }
-//  case class Inner2(a: Message) extends Inners
-//  object Inner2 {
-//    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inner2] =
-//      com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
-//  }
+  import shared.that._
+  import shared.common._
+  sealed trait Inners extends Outers
+  object Inners{
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inners] = com.rallyhealth.weepickle.v1.WeePickle.FromTo.merge(
+      Inner1.rw,
+      Inner2.rw
+    )
+  }
+  case class Inner1(b: That) extends Inners
+  object Inner1{
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inner1] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+  }
+  case class Inner2(a: Message) extends Inners
+  object Inner2{
+    implicit def rw: com.rallyhealth.weepickle.v1.WeePickle.FromTo[Inner2] = com.rallyhealth.weepickle.v1.WeePickle.macroFromTo
+  }
 }
 
 import com.rallyhealth.weepickle.v1.WeePickle.{FromTo, macroFromTo}
@@ -84,32 +80,34 @@ object Gadt{
   }
 }
 
-//sealed trait Gadt2[T, V]
-//object Gadt2 {
-//  implicit def rw[T, V: FromTo]: FromTo[Gadt2[T, V]] =
-//    macroFromTo[Gadt2[_, V]].asInstanceOf[FromTo[Gadt2[T, V]]]
-//
-//  case class IsDir[V](v: V) extends Gadt2[Boolean, V]
-//  object IsDir {
-//    implicit def rw[V: FromTo]: FromTo[IsDir[V]] = macroFromTo
-//  }
-//  case class Exists[V](v: V) extends Gadt2[Boolean, V]
-//  object Exists {
-//    implicit def rw[V: FromTo]: FromTo[Exists[V]] = macroFromTo
-//  }
-//  case class ReadBytes[V](v: V) extends Gadt2[Array[Byte], V]
-//  object ReadBytes {
-//    implicit def rw[V: FromTo]: FromTo[ReadBytes[V]] = macroFromTo
-//  }
-//  case class CopyOver[V](src: Seq[Byte], v: String) extends Gadt2[Int, V]
-//  object CopyOver {
-//    implicit def rw[V]: FromTo[CopyOver[V]] = macroFromTo
-//  }
-//}
+sealed trait Gadt2[T, V]
+object Gadt2{
+  implicit def rw[T, V: FromTo]: FromTo[Gadt2[T, V]] =
+    macroFromTo[Gadt2[_, V]].asInstanceOf[FromTo[Gadt2[T, V]]]
+
+  case class IsDir[V](v: V) extends Gadt2[Boolean, V]
+  object IsDir{
+    implicit def rw[V: FromTo]: FromTo[IsDir[V]] = macroFromTo
+  }
+  case class Exists[V](v: V) extends Gadt2[Boolean, V]
+  object Exists{
+    implicit def rw[V: FromTo]: FromTo[Exists[V]] = macroFromTo
+  }
+  case class ReadBytes[V](v: V) extends Gadt2[Array[Byte], V]
+  object ReadBytes{
+    implicit def rw[V: FromTo]: FromTo[ReadBytes[V]] = macroFromTo
+  }
+  case class CopyOver[V](src: Seq[Byte], v: String) extends Gadt2[Int, V]
+  object CopyOver{
+    implicit def rw[V]: FromTo[CopyOver[V]] = macroFromTo
+  }
+}
 
 /*
  * Scala 3 does not support all AdvancedTests. TBD how some/all of these can be addressed.
- * E.g., not supporting case classes with type parameters seems like a potentially big miss.
+ * See comments below starting with //TODO:compile
+ * In fact, what remains may just be Scala 3 language differences. And it may not be super
+ * valuable anyway to support things like FromTo[Gadt[_]] directly, so maybe live with it?
  */
 object AdvancedTests extends TestSuite {
   import All._
@@ -120,56 +118,56 @@ object AdvancedTests extends TestSuite {
       assert(reader != null)
       assert(writer != null)
     }
-//TODO: all GenericDataTypes tests failing in Scala 3
-//    test("GenericDataTypes"){
-//      test("simple"){
-//        import Generic.A
-//        test - rw(A(1), """{"t":1}""")
-//        test - rw(A("1"), """{"t":"1"}""")
-//        //TODO:compile test - rw(A(Seq("1", "2", "3")), """{"t":["1","2","3"]}""")
-//        test - rw(A(A(A(A(A(A(A(1))))))), """{"t":{"t":{"t":{"t":{"t":{"t":{"t":1}}}}}}}""")
-//      }
-//      test("large"){
-//        import Generic.ADT
-//        rw(ADT(1, 2, 3, 4, 5, 6), """{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6}""")
-//        rw(
-//          ADT(
-//            ADT(1, 2, 3, 4, 5, 6),
-//            ADT(1, 2, 3, 4, 5, 6),
-//            ADT(1, 2, 3, 4, 5, 6),
-//            ADT(1, 2, 3, 4, 5, 6),
-//            ADT(1, 2, 3, 4, 5, 6),
-//            ADT(1, 2, 3, 4, 5, 6)
-//          ),
-//          """{"a":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"b":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"c":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"d":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"e":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"f":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6}}"""
-//        )
-//      }
-//      test("ADT"){
-//        import GenericADTs._
-//        test - {
-//          val pref1 = "com.rallyhealth.weepickle.v1.GenericADTs.Delta"
-//          val D1 = Delta
-//          type D1[+A, +B] = Delta[A, B]
-//          rw(D1.Insert(1, 1), s"""{"$$type":"$pref1.Insert","key":1,"value":1}""")
-//          rw(D1.Insert(1, 1): D1[Int, Int], s"""{"$$type":"$pref1.Insert","key":1,"value":1}""")
-//          rw(D1.Remove(1), s"""{"$$type":"$pref1.Remove","key":1}""")
-//          rw(D1.Remove(1): D1[Int, Int], s"""{"$$type":"$pref1.Remove","key":1}""")
-//          rw(D1.Clear(), s"""{"$$type":"$pref1.Clear"}""")
-//          rw(D1.Clear(): D1[Int, Int], s"""{"$$type":"$pref1.Clear"}""")
-//        }
-//        test - {
-//          val pref2 = "com.rallyhealth.weepickle.v1.GenericADTs.DeltaInvariant"
-//          val D2 = DeltaInvariant
-//          type D2[A, B] = DeltaInvariant[A, B]
-//          rw(D2.Insert(1, 1), s"""{"$$type":"$pref2.Insert","key":1,"value":1}""")
-//          rw(D2.Insert(1, 1): D2[Int, Int], s"""{"$$type":"$pref2.Insert","key":1,"value":1}""")
-//          rw(D2.Remove(1), s"""{"$$type":"$pref2.Remove","key":1}""")
-//          rw(D2.Remove(1): D2[Int, Int], s"""{"$$type":"$pref2.Remove","key":1}""")
-//          rw(D2.Clear(), s"""{"$$type":"$pref2.Clear"}""")
-//          rw(D2.Clear(): D2[Int, Int], s"""{"$$type":"$pref2.Clear"}""")
-//        }
-//      }
-//    }
+    test("GenericDataTypes"){
+      test("simple"){
+        import Generic.A
+        test - rw(A(1), """{"t":1}""")
+        test - rw(A("1"), """{"t":"1"}""")
+        //Making type explicit because Scala 3 infers a different type from `test - rw(A(Seq("1", "2", "3")), """{"t":["1","2","3"]}""")`
+        test - rw(A[Seq[String]](Seq("1", "2", "3")), """{"t":["1","2","3"]}""")
+        test - rw(A(A(A(A(A(A(A(1))))))), """{"t":{"t":{"t":{"t":{"t":{"t":{"t":1}}}}}}}""")
+      }
+      test("large"){
+        import Generic.ADT
+        rw(ADT(1, 2, 3, 4, 5, 6), """{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6}""")
+        rw(
+          ADT(
+            ADT(1, 2, 3, 4, 5, 6),
+            ADT(1, 2, 3, 4, 5, 6),
+            ADT(1, 2, 3, 4, 5, 6),
+            ADT(1, 2, 3, 4, 5, 6),
+            ADT(1, 2, 3, 4, 5, 6),
+            ADT(1, 2, 3, 4, 5, 6)
+          ),
+          """{"a":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"b":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"c":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"d":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"e":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6},"f":{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6}}"""
+        )
+      }
+      test("ADT"){
+        import GenericADTs._
+        test - {
+          val pref1 = "com.rallyhealth.weepickle.v1.GenericADTs.Delta"
+          val D1 = Delta
+          type D1[+A, +B] = Delta[A, B]
+          rw(D1.Insert(1, 1), s"""{"$$type":"$pref1.Insert","key":1,"value":1}""")
+          rw(D1.Insert(1, 1): D1[Int, Int], s"""{"$$type":"$pref1.Insert","key":1,"value":1}""")
+          rw(D1.Remove(1), s"""{"$$type":"$pref1.Remove","key":1}""")
+          rw(D1.Remove(1): D1[Int, Int], s"""{"$$type":"$pref1.Remove","key":1}""")
+          rw(D1.Clear(), s"""{"$$type":"$pref1.Clear"}""")
+          rw(D1.Clear(): D1[Int, Int], s"""{"$$type":"$pref1.Clear"}""")
+        }
+        test - {
+          val pref2 = "com.rallyhealth.weepickle.v1.GenericADTs.DeltaInvariant"
+          val D2 = DeltaInvariant
+          type D2[A, B] = DeltaInvariant[A, B]
+          rw(D2.Insert(1, 1), s"""{"$$type":"$pref2.Insert","key":1,"value":1}""")
+          rw(D2.Insert(1, 1): D2[Int, Int], s"""{"$$type":"$pref2.Insert","key":1,"value":1}""")
+          rw(D2.Remove(1), s"""{"$$type":"$pref2.Remove","key":1}""")
+          rw(D2.Remove(1): D2[Int, Int], s"""{"$$type":"$pref2.Remove","key":1}""")
+          rw(D2.Clear(), s"""{"$$type":"$pref2.Clear"}""")
+          rw(D2.Clear(): D2[Int, Int], s"""{"$$type":"$pref2.Clear"}""")
+        }
+      }
+    }
 
     test("recursiveDataTypes"){
       import Recursive._
@@ -240,7 +238,7 @@ object AdvancedTests extends TestSuite {
         }""")
 
     }
-    test("gadt") {
+    test("gadt"){
 //TODO: the simple tests that compile also succeed in Scala 3, but the ones expressed with wildcard type parameters do not compile.
       test("simple") {
         test - rw(Gadt.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.Exists","path":"hello"}""")
@@ -249,22 +247,20 @@ object AdvancedTests extends TestSuite {
         //TODO:compile test - rw(Gadt.IsDir(" "): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.IsDir","path":" "}""")
         test - rw(Gadt.ReadBytes("\""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
         //TODO:compile test - rw(Gadt.ReadBytes("\""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.ReadBytes","path":"\""}""")
-        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""),
-                  """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
+        test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
         //TODO:compile test - rw(Gadt.CopyOver(Seq(1, 2, 3), ""): Gadt[_], """{"$type":"com.rallyhealth.weepickle.v1.Gadt.CopyOver","src":[1,2,3],"path":""}""")
       }
-//TODO: the partial tests that compile also fail in Scala 3. The ones expressed with wildcard type parameters.
-//      test("partial") {
-//        test - rw(Gadt2.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
-//        //TODO:compile test - rw(Gadt2.Exists("hello"): Gadt2[_, String], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
-//        test - rw(Gadt2.IsDir(123), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
-//        //TODO:compile test - rw(Gadt2.IsDir(123): Gadt2[_, Int], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
-//        test - rw(Gadt2.ReadBytes('h'), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
-//        //TODO:compile test - rw(Gadt2.ReadBytes('h'): Gadt2[_, Char], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
-//        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""),
-//                  """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
-//        //TODO:compile test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
-//      }
+//TODO: the partial tests that compile also succeed in Scala 3, but the ones expressed with wildcard type parameters do not compile.
+      test("partial") {
+        test - rw(Gadt2.Exists("hello"), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
+        //TODO:compile test - rw(Gadt2.Exists("hello"): Gadt2[_, String], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.Exists","v":"hello"}""")
+        test - rw(Gadt2.IsDir(123), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
+        //TODO:compile test - rw(Gadt2.IsDir(123): Gadt2[_, Int], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.IsDir","v":123}""")
+        test - rw(Gadt2.ReadBytes('h'), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
+        //TODO:compile test - rw(Gadt2.ReadBytes('h'): Gadt2[_, Char], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.ReadBytes","v":"h"}""")
+        test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""), """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
+        //TODO:compile test - rw(Gadt2.CopyOver(Seq(1, 2, 3), ""): Gadt2[_, Unit], """{"$type":"com.rallyhealth.weepickle.v1.Gadt2.CopyOver","src":[1,2,3],"v":""}""")
+      }
     }
     test("issues"){
       test("issue95"){

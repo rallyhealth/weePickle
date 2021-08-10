@@ -1,8 +1,7 @@
 package com.rallyhealth.weejson.v1
 
 import java.time.Instant
-
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, JsVisitor, ObjVisitor, Visitor}
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, JsVisitor, ObjVisitor, Visitor}
 
 import scala.collection.mutable
 
@@ -15,26 +14,200 @@ import scala.collection.mutable
   */
 sealed trait BufferedValue
 
+object BufferedValueOps {
+  implicit class ValueLike(bv: BufferedValue) extends FromInput {
+
+    import BufferedValue._
+
+    /**
+     * Returns the `String` value of this [[BufferedValue]], fails if it is not
+     * a [[Str]]
+     */
+    def str: String = strOpt.getOrElse(throw BufferedValue.InvalidData(bv, "Expected Str"))
+
+    /**
+     * Returns an Optional `String` value of this [[BufferedValue]] in case this [[BufferedValue]] is a 'String'.
+     */
+    def strOpt: Option[String] = bv match {
+      case Str(value) => Some(value)
+      case _ => None
+    }
+
+    /**
+     * Returns the key/value map of this [[BufferedValue]], fails if it is not
+     * a [[Obj]]
+     */
+    def obj: Seq[(String, BufferedValue)] = objOpt.getOrElse(throw BufferedValue.InvalidData(bv, "Expected Obj"))
+
+    /**
+     * Returns an Optional key/value map of this [[BufferedValue]] in case this [[BufferedValue]] is a 'Obj'.
+     */
+    def objOpt: Option[Seq[(String, BufferedValue)]] = bv match {
+      case Obj(items@_*) => Some(items)
+      case _ => None
+    }
+
+    /**
+     * Returns the elements of this [[BufferedValue]], fails if it is not
+     * a [[Arr]]
+     */
+    def arr: Seq[BufferedValue] = arrOpt.getOrElse(throw BufferedValue.InvalidData(bv, "Expected Arr"))
+
+    /**
+     * Returns The optional elements of this [[BufferedValue]] in case this [[BufferedValue]] is a 'Arr'.
+     */
+    def arrOpt: Option[Seq[BufferedValue]] = bv match {
+      case Arr(items@_*) => Some(items)
+      case _ => None
+    }
+
+    /**
+     * Returns the `BigDecimal` value of this [[BufferedValue]], fails if it is not
+     * a [[Num]]
+     */
+    def num: BigDecimal = numOpt.getOrElse(throw BufferedValue.InvalidData(bv, "Expected Num*"))
+
+    /**
+     * Returns an Option[BigDecimal] in case this [[BufferedValue]] is a 'Num'.
+     */
+    def numOpt: Option[BigDecimal] = bv match {
+      case a: AnyNum => Some(a.value)
+      case _ => None
+    }
+
+    /**
+     * Returns the `BigDecimal` value of this [[BufferedValue]], fails if it is not
+     * a [[Num]]
+     */
+    def timestamp: Instant = timestampOpt.getOrElse(throw BufferedValue.InvalidData(bv, "Expected Timestamp"))
+
+    /**
+     * Returns an Option[Instant] in case this [[BufferedValue]] is a 'Timestamp'.
+     */
+    def timestampOpt: Option[Instant] = bv match {
+      case Timestamp(i) => Some(i)
+      case _ => None
+    }
+
+    /**
+     * Returns the `Boolean` value of this [[BufferedValue]], fails if it is not
+     * a [[Bool]]
+     */
+    def bool: Boolean = boolOpt.getOrElse(throw BufferedValue.InvalidData(bv, "Expected Bool"))
+
+    /**
+     * Returns an Optional `Boolean` value of this [[BufferedValue]] in case this [[BufferedValue]] is a 'Bool'.
+     */
+    def boolOpt: Option[Boolean] = bv match {
+      case b: Bool => Some(b.value)
+      case _ => None
+    }
+
+    /**
+     * Returns true if the value of this [[BufferedValue]] is Null, false otherwise
+     */
+    def isNull: Boolean = bv match {
+      case Null => true
+      case _ => false
+    }
+
+    def apply(s: BufferedValue.Selector): BufferedValue = s(bv)
+
+    override def transform[T](to: Visitor[_, T]): T = BufferedValue.transform(bv, to)
+  }
+}
+
 object BufferedValue extends Transformer[BufferedValue] {
+  import BufferedValueOps._
+  sealed trait Selector {
+    def apply(x: BufferedValue): BufferedValue
+  }
+  /*
+   * Note that, because objects are represented internally using a sequence of attributes rather than
+   * a dictionary-style map, access time may suffer for objects with a large number of attributes. In
+   * these cases, it may be best to fetch the sequence and convert it into a map locally (using `.obj.toMap`).
+   */
+  object Selector {
+    implicit class IntSelector(i: Int) extends Selector {
+      def apply(x: BufferedValue): BufferedValue = x.arr(i)
+    }
+    implicit class StringSelector(i: String) extends Selector {
+      def apply(x: BufferedValue): BufferedValue =
+        x.obj.find(_._1 == i).map(_._2).getOrElse(throw BufferedValue.InvalidData(x, s"No value for $i"))
+    }
+  }
 
   case class Str(value0: String) extends BufferedValue
+
   case class Obj(value0: (String, BufferedValue)*) extends BufferedValue
+
   case class Arr(value: BufferedValue*) extends BufferedValue
-  case class Num(s: String, decIndex: Int, expIndex: Int) extends BufferedValue
-  case class NumLong(l: Long) extends BufferedValue
-  case class NumDouble(d: Double) extends BufferedValue
+
+  sealed trait AnyNum extends BufferedValue {
+    def value: BigDecimal
+  }
+  case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(s)
+  }
+  case class NumLong(l: Long) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(l)
+  }
+  case class NumDouble(d: Double) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(d)
+  }
+  object AnyNum {
+    def apply(d: BigDecimal): AnyNum = // precision sensitive
+      if (d.isValidLong) NumLong(d.longValue)
+      else if (d.isDecimalDouble) NumDouble(d.doubleValue)
+      else {
+        val s = d.toString
+        Num(
+          s,
+          s.indexOf('.'),
+          s.indexOf('E') match {
+            case -1 => s.indexOf('e')
+            case n => n
+          })
+      }
+  }
+
   case class Binary(b: Array[Byte]) extends BufferedValue
+
   case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue
+
   case class Timestamp(i: Instant) extends BufferedValue
-  case object False extends BufferedValue {
-    def value = false
+
+  sealed trait Bool extends BufferedValue {
+    def value: Boolean
   }
-  case object True extends BufferedValue {
-    def value = true
+  case object False extends Bool {
+    override def value = false
   }
+  case object True extends Bool {
+    override def value = true
+  }
+  object Bool {
+    def apply(value: Boolean): BufferedValue = if (value) True else False
+  }
+
   case object Null extends BufferedValue {
     def value = null
   }
+
+  def fromAttributes(items: Iterable[(String, BufferedValue)]): Obj = Obj(items.toSeq: _*)
+
+  def fromElements(items: Iterable[BufferedValue]): Arr = Arr(items.toSeq: _*)
+
+
+  /**
+   * Thrown when weepickle tries to convert a JSON blob into a given data
+   * structure but fails because part the blob is invalid
+   *
+   * @param data The section of the JSON blob that weepickle tried to convert.
+   *             This could be the entire blob, or it could be some subtree.
+   * @param msg Human-readable text saying what went wrong
+   */
+  case class InvalidData(data: BufferedValue, msg: String) extends Exception(s"$msg (data: $data)")
 
   def transform[T](i: BufferedValue, to: Visitor[_, T]): T = {
     i match {

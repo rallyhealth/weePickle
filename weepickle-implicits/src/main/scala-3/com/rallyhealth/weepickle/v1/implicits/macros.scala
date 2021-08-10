@@ -3,11 +3,19 @@ package com.rallyhealth.weepickle.v1.implicits.macros
 import scala.quoted.{ given, _ }
 import deriving._, compiletime._
 
-inline def getDefaultParams[T]: String => Option[() => AnyRef] = ${ getDefaultParmasImpl[T] }
-def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[String => Option[() => AnyRef]] =
+inline def getDefaultParams[T]: String => Option[() => AnyRef] = ${ getDefaultParamsImpl[T] }
+def getDefaultParamsImpl[T](using Quotes, Type[T]): Expr[String => Option[() => AnyRef]] =
   import quotes.reflect._
-  val sym = TypeTree.of[T].symbol
 
+  /*
+   * Classes with parameterized types do not have direct symbol translations. For these we
+   * get the type symbol from the type instead.
+   */
+  val sym =
+    if (TypeTree.of[T].symbol.isNoSymbol)
+      TypeTree.of[T].tpe.typeSymbol
+    else
+      TypeTree.of[T].symbol
   /*
    * TBD if there is a better way. Also can the s.tree call ever fail for a case class? From
    * https://docs.scala-lang.org/scala3/guides/macros/best-practices.html -- Avoid "Symbol.tree":
@@ -55,7 +63,7 @@ def getDefaultParmasImpl[T](using Quotes, Type[T]): Expr[String => Option[() => 
   } else {
     '{ Map.empty.get }
   }
-end getDefaultParmasImpl
+end getDefaultParamsImpl
 
 inline def summonList[T <: Tuple]: List[_] =
   inline erasedValue[T] match
@@ -63,69 +71,59 @@ inline def summonList[T <: Tuple]: List[_] =
     case _: (t *: ts) => summonInline[t] :: summonList[ts]
 end summonList
 
-def extractKey[A](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
+private def annotationString[T: Type](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
   import quotes.reflect._
   sym
     .annotations
-    .find(_.tpe =:= TypeRepr.of[com.rallyhealth.weepickle.v1.implicits.key])
-    .map{case Apply(_, Literal(StringConstant(s)) :: Nil) => s}
-end extractKey
+    .find(_.tpe =:= TypeRepr.of[T])
+    .collect { case Apply(_, Literal(StringConstant(s)) :: Nil) => s }
+end annotationString
+
+private def annotationExists[T: Type](using Quotes)(sym: quotes.reflect.Symbol): Boolean =
+  import quotes.reflect._
+  sym
+    .annotations
+    .exists(_.tpe =:= TypeRepr.of[T])
+end annotationExists
+
+def extractKey[A](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
+  annotationString[com.rallyhealth.weepickle.v1.implicits.key](sym)
 
 /*
  * Returns the custom discriminator we should use instead of "$type", if there is one.
  */
 def extractDiscriminator[A](using Quotes)(sym: quotes.reflect.Symbol): Option[String] =
-  import quotes.reflect._
-  sym
-    .annotations
-    .find(_.tpe =:= TypeRepr.of[com.rallyhealth.weepickle.v1.implicits.discriminator])
-    .map{case Apply(_, Literal(StringConstant(s)) :: Nil) => s}
-end extractDiscriminator
+  annotationString[com.rallyhealth.weepickle.v1.implicits.discriminator](sym)
 
 /*
  * Returns if dropDefault is present. Could be defined at the class or field level.
  */
 def extractDropDefault[A](using Quotes)(sym: quotes.reflect.Symbol): Boolean =
-  import quotes.reflect._
-  sym
-    .annotations
-    .exists(_.tpe =:= TypeRepr.of[com.rallyhealth.weepickle.v1.implicits.dropDefault])
-end extractDropDefault
+  annotationExists[com.rallyhealth.weepickle.v1.implicits.dropDefault](sym)
 
 /*
  * Return associated field labels and an indication of if individual field defaults should be dropped.
- *
- * There is a lot of debug code commented out below, used to try to determine why some classes
- * yield empty field lists. Issue seems to be if a class takes type parameters, then rather than
- * being represented as a TypeRef, it comes back as a AppliedType with a type parameter
- * (either the supplied type or a placeholder name, depending on how it was declared).
- * This seems like a pretty huge limitation of this derivation code, and something we will
- * need to revisit. Because of this limitation, many of the AdvancedTests fail, so the bulk
- * of these are moved to scala-2. TODO: solve this in a general way such that the Scala 3
- * implementation can pass all (or at least most) AdvancedTests. (May be a Scala 3 limitation
- * that is addressed in a future version, not sure.)
  */
 inline def fieldLabels[T]: List[(String, Boolean)] = ${fieldLabelsImpl[T]}
 def fieldLabelsImpl[T](using Quotes, Type[T]): Expr[List[(String, Boolean)]] =
   import quotes.reflect._
-  // println(s"TypeTree.of[T].tpe.show = ${TypeTree.of[T].tpe.show}")
-  // println(s"TypeTree.of[T].tpe.simplified = ${TypeTree.of[T].tpe.simplified}")
-  // println(s"TypeTree.of[T].tpe.classSymbol = ${TypeTree.of[T].tpe.classSymbol}")
-  // println(s"TypeTree.of[T].tpe.typeSymbol = ${TypeTree.of[T].tpe.typeSymbol}")
-  // println(s"TypeTree.of[T].tpe.termSymbol = ${TypeTree.of[T].tpe.termSymbol}")
-  // println(s"TypeTree.of[T].tpe.isSingleton = ${TypeTree.of[T].tpe.isSingleton}")
-  // println(s"TypeTree.of[T].tpe.baseClasses = ${TypeTree.of[T].tpe.baseClasses}")
-  // println(s"TypeTree.of[T].tpe.isFunctionType = ${TypeTree.of[T].tpe.isFunctionType}")
-  // println(s"TypeTree.of[T].tpe.isContextFunctionType = ${TypeTree.of[T].tpe.isContextFunctionType}")
-  // println(s"TypeTree.of[T].tpe.isErasedFunctionType = ${TypeTree.of[T].tpe.isErasedFunctionType}")
-  // println(s"TypeTree.of[T].tpe.isDependentFunctionType = ${TypeTree.of[T].tpe.isDependentFunctionType}")
-  // println(s"TypeTree.of[T].symbol.isNoSymbol = ${TypeTree.of[T].symbol.isNoSymbol}")
 
-  val fields: List[Symbol] = TypeTree.of[T].symbol
-     // .caseFields -- not sure why we aren't using .caseFields here
-    .primaryConstructor
-    .paramSymss
-    .flatten
+  /*
+   * Classes with parameterized types do not have direct symbol translations. For these we
+   * get the type symbol from the type instead. Using .caseFields here prevents the type
+   * parameters themselves from being returned as part of the field list, but since
+   * .caseFields won't work on case objects, we keep the .primaryConstructor logic for
+   * everything else.
+   */
+  val fields: List[Symbol] =
+    if (TypeTree.of[T].symbol.isNoSymbol)
+      TypeTree.of[T].tpe.typeSymbol
+        .caseFields
+    else
+      TypeTree.of[T].symbol
+        .primaryConstructor
+        .paramSymss
+        .flatten
 
   val names = fields.map{ sym =>
     extractKey(sym) match {
@@ -163,8 +161,18 @@ inline def fullClassName[T]: (String, Boolean) = ${ fullClassNameImpl[T] }
 def fullClassNameImpl[T](using Quotes, Type[T]): Expr[(String, Boolean)] =
   import quotes.reflect._
 
-  val sym = TypeTree.of[T].symbol
+  /*
+   * Classes with parameterized types do not have direct symbol translations. For these we
+   * get the type symbol from the type instead. We can pass all tests if we just use .tpe.typeSymbol
+   * for everything, but keeping this logic consistent with getDefaultParams above (just in case).
+   */
+  val sym =
+    if (TypeTree.of[T].symbol.isNoSymbol)
+      TypeTree.of[T].tpe.typeSymbol
+    else
+      TypeTree.of[T].symbol
   // println(s"fullClassName symbol = $sym")
+
   val key = extractKey(sym) match {
     case Some(name) =>
       // println(s"fullClassName key found = $name")

@@ -22,6 +22,8 @@ import org.openjdk.jmh.infra.Blackhole
 //        "-XX:+UnlockCommercialFeatures",
 //        "-XX:+FlightRecorder",
 //        "-XX:StartFlightRecording=delay=10s,duration=20s,filename=recording.jfr,settings=profile",
+    "-XX:-BackgroundCompilation",
+    "-XX:-TieredCompilation",
     "-Xms350m",
     "-Xmx350m",
     "-XX:+HeapDumpOnOutOfMemoryError"
