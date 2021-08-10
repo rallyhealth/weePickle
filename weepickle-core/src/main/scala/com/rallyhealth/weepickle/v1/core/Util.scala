@@ -44,8 +44,6 @@ object Util {
     intPortion + decPortion
   }
   def parseLong(cs: CharSequence, start: Int, len: Int): Long = {
-    if ((start | len | (cs.length - (len + start)) | (start + len)) < 0) throw new IndexOutOfBoundsException
-
     // we store the inverse of the positive sum, to ensure we don't
     // incorrectly overflow on Long.MinValue. for positive numbers
     // this inverse sum will be inverted before being returned.
@@ -53,6 +51,8 @@ object Util {
     var inverseSign: Long = -1L
     var i: Int = start
     val end = start + len
+
+    if ((start | len | (cs.length - end) | end) < 0) throw new IndexOutOfBoundsException
 
     if (cs.charAt(start) == '-') {
       inverseSign = 1L
