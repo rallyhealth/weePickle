@@ -44,8 +44,15 @@ class UtilTests
       }
     }
 
-    "a" in (assert(Try(Util.parseLong("a", 0, 1)).isFailure))
-    "-" in (assert(Try(Util.parseLong("-", 0, 1)).isFailure))
-    "᥌" in (assert(Try(Util.parseLong("᥌", 0, 1)).isFailure)) // invalid per https://datatracker.ietf.org/doc/html/rfc7159#section-6
+    def invalid(s: String) = {
+      assert(Try(Util.parseLong(s, 0, s.length)).isFailure)
+      assert(Try(Util.parseLong(" " + s, 1, s.length)).isFailure)
+      assert(Try(Util.parseLong(s + " ", 0, s.length)).isFailure)
+      assert(Try(Util.parseLong(" " + s + " ", 1, s.length)).isFailure)
+    }
+    "a" in invalid("a")
+    "-" in invalid("-")
+    "᥌" in invalid("᥌")
+    "too long" in invalid(Long.MaxValue.toString + "1")
   }
 }
