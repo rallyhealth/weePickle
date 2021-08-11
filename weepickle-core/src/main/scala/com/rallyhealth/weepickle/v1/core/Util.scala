@@ -52,7 +52,7 @@ object Util {
     var i: Int = start
     val end = start + len
 
-    if ((start | len | (cs.length - end) | end) < 0) throw new IndexOutOfBoundsException
+    if ((start | len | (cs.length - end)) < 0) throw new IndexOutOfBoundsException
 
     if (cs.charAt(start) == '-') {
       inverseSign = 1L

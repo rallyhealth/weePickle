@@ -54,5 +54,23 @@ class UtilTests
     "-" in invalid("-")
     "᥌" in invalid("᥌")
     "too long" in invalid(Long.MaxValue.toString + "1")
+
+    "bounds" in {
+      val s = "111"
+      for {
+        start <- -1 to 5
+        len <- -1 to 5
+        if len != 0 // NFE, not IndexOutOfBoundsException
+      } {
+        withClue(s"$s, $start, $len") {
+          if (Try(s.substring(start, start + len)).isSuccess) {
+            Util.parseLong(s, start, len)
+          } else {
+            intercept[IndexOutOfBoundsException](Util.parseLong(s, start, len))
+          }
+        }
+      }
+
+    }
   }
 }
