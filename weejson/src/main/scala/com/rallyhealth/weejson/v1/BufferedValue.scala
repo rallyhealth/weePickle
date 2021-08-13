@@ -4,6 +4,7 @@ import java.time.Instant
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, JsVisitor, ObjVisitor, Visitor}
 
 import scala.collection.mutable
+import scala.util.Try
 
 /**
   * A version of [[com.rallyhealth.weejson.v1.Value]] used to buffer data in raw form.
@@ -11,6 +12,23 @@ import scala.collection.mutable
   * This is used by the case class macros to buffer data for polymorphic types
   * when the discriminator is not the first element, e.g. `{"foo": 1, "\$type": "discriminator"}`.
   * It is important that all types be immutable.
+  *
+  * May be superior to use in client code as well under some circumstances, e.g.,
+  * when representing data from and to non-JSON types. For example, when piped through a
+  * `Value`, `java.time.Instant` will come out the other side as `visitString` rather than
+  * `visitTimestamp`, leading to potentially wasteful parsing/formatting. Other advantages
+  * are: immutable, more efficient number representation (BigDecimal has a lot of performance
+  * overhead when applied to smaller numeric types), and direct representation of binary
+  * and extension types (without assumed JSON byte array encoding).
+  *
+  * Most Visitor methods are represented by their own case classes. Exceptions are:
+  * - Float64String and UInt64 - along with Float64StringParts, represented as Num
+  * - Int32 - along with Int64, represented as NumLong
+  * - Float32 - along with Float64, represented as NumDouble
+  * - Char - along with String, represented as Str
+  *
+  * Therefore, when transforming from a [[BufferedValue]], the specific visit methods for these
+  * will never be called (e.g., for integers, visitInt32 will never be called, only visitInt64).
   */
 sealed trait BufferedValue
 
@@ -83,9 +101,11 @@ object BufferedValueOps {
 
     /**
      * Returns an Option[Instant] in case this [[BufferedValue]] is a 'Timestamp'.
+     * (or a string that can be parsed as a timestamp.)
      */
     def timestampOpt: Option[Instant] = bv match {
       case Timestamp(i) => Some(i)
+      case Str(s) => Try(Instant.parse(s)).toOption // so it won't blow up if you round-trip through JSON
       case _ => None
     }
 
@@ -209,6 +229,21 @@ object BufferedValue extends Transformer[BufferedValue] {
    */
   case class InvalidData(data: BufferedValue, msg: String) extends Exception(s"$msg (data: $data)")
 
+  implicit def BufferableSeq[T](items: Iterable[T])(implicit f: T => BufferedValue): Arr = fromElements(items.map(f))
+  implicit def BufferableDict[T](items: Iterable[(String, T)])(implicit f: T => BufferedValue): Obj =
+    fromAttributes(items.map(x => (x._1, f(x._2))))
+  implicit def BufferableBoolean(i: Boolean): Bool = if (i) True else False
+  implicit def BufferableByte(i: Byte): NumLong = NumLong(i.longValue)
+  implicit def BufferableShort(i: Short): NumLong = NumLong(i.longValue)
+  implicit def BufferableInt(i: Int): NumLong = NumLong(i.longValue)
+  implicit def BufferableLong(i: Long): NumLong = NumLong(i)
+  implicit def BufferableFloat(i: Float): NumDouble = NumDouble(i.doubleValue)
+  implicit def BufferableDouble(i: Double): NumDouble = NumDouble(i)
+  implicit def BufferableBigDecimal(i: BigDecimal): AnyNum = AnyNum(i)
+  implicit def BufferableNull(i: Null): Null.type = Null
+  implicit def BufferableString(s: CharSequence): Str = Str(s.toString)
+  implicit def BufferableInstant(dt: Instant): Timestamp = Timestamp(dt)
+
   def transform[T](i: BufferedValue, to: Visitor[_, T]): T = {
     i match {
       case BufferedValue.Null         => to.visitNull()
@@ -222,11 +257,11 @@ object BufferedValue extends Transformer[BufferedValue] {
       case BufferedValue.Ext(tag, b)  => to.visitExt(tag, b, 0, b.length)
       case BufferedValue.Timestamp(i) => to.visitTimestamp(i)
       case BufferedValue.Arr(items @ _*) =>
-        val ctx = to.visitArray(-1).narrow
+        val ctx = to.visitArray(items.size).narrow
         for (item <- items) ctx.visitValue(transform(item, ctx.subVisitor))
         ctx.visitEnd()
       case BufferedValue.Obj(items @ _*) =>
-        val ctx = to.visitObject(-1).narrow
+        val ctx = to.visitObject(items.length).narrow
         for ((k, item) <- items) {
           val keyVisitor = ctx.visitKey()
 
@@ -237,6 +272,10 @@ object BufferedValue extends Transformer[BufferedValue] {
     }
   }
 
+  /**
+   * Extending JsVisitor here for bin compat reasons only. Overrides all methods,
+   * essentially extending Visitor without hidden JSON "baggage".
+   */
   object Builder extends JsVisitor[BufferedValue, BufferedValue] {
     def visitArray(length: Int): ArrVisitor[BufferedValue, BufferedValue] =
       new ArrVisitor[BufferedValue, BufferedValue.Arr] {
@@ -269,6 +308,7 @@ object BufferedValue extends Transformer[BufferedValue] {
 
     override def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): BufferedValue =
       BufferedValue.Num(cs.toString, decIndex, expIndex)
+
     override def visitFloat64(d: Double): BufferedValue = BufferedValue.NumDouble(d)
 
     override def visitInt64(l: Long): BufferedValue = NumLong(l)
@@ -287,5 +327,31 @@ object BufferedValue extends Transformer[BufferedValue] {
       offset: Int,
       len: Int
     ): BufferedValue = BufferedValue.Ext(tag, bytes.slice(offset, len))
+
+    /*
+     * Not represented by their own case cases. Restates what is in `JsVisitor` for clarity
+     * (would prefer not to extend JsVisitor at all).
+     */
+    override def visitFloat64String(s: String): BufferedValue = visitFloat64StringParts(
+      cs = s,
+      decIndex = s.indexOf('.'),
+      expIndex = s.indexOf('E') match {
+        case -1 => s.indexOf('e')
+        case n  => n
+      }
+    )
+
+    override def visitUInt64(ul: Long): BufferedValue = visitFloat64StringParts(
+      cs = java.lang.Long.toUnsignedString(ul),
+      decIndex = -1,
+      expIndex = -1
+    )
+
+    override def visitInt32(i: Int): BufferedValue = visitInt64(i)
+
+    override def visitFloat32(f: Float): BufferedValue = visitFloat64(f)
+
+    override def visitChar(c: Char): BufferedValue = visitString(c.toString)
+
   }
 }
