@@ -332,8 +332,8 @@ object BufferedValue extends Transformer[BufferedValue] {
      * Not represented by their own case cases. Restates what is in `JsVisitor` for clarity
      * (would prefer not to extend JsVisitor at all).
      */
-    override def visitFloat64String(s: String): BufferedValue = visitFloat64StringParts(
-      cs = s,
+    override def visitFloat64String(s: String): BufferedValue = BufferedValue.Num(
+      s = s,
       decIndex = s.indexOf('.'),
       expIndex = s.indexOf('E') match {
         case -1 => s.indexOf('e')
@@ -341,17 +341,17 @@ object BufferedValue extends Transformer[BufferedValue] {
       }
     )
 
-    override def visitUInt64(ul: Long): BufferedValue = visitFloat64StringParts(
-      cs = java.lang.Long.toUnsignedString(ul),
+    override def visitUInt64(ul: Long): BufferedValue = BufferedValue.Num(
+      s = java.lang.Long.toUnsignedString(ul),
       decIndex = -1,
       expIndex = -1
     )
 
-    override def visitInt32(i: Int): BufferedValue = visitInt64(i)
+    override def visitInt32(i: Int): BufferedValue = BufferedValue.NumLong(i.longValue)
 
-    override def visitFloat32(f: Float): BufferedValue = visitFloat64(f)
+    override def visitFloat32(f: Float): BufferedValue = BufferedValue.NumDouble(f.doubleValue)
 
-    override def visitChar(c: Char): BufferedValue = visitString(c.toString)
+    override def visitChar(c: Char): BufferedValue = BufferedValue.Str(c.toString)
 
   }
 }
