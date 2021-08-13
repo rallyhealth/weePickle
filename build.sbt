@@ -221,7 +221,10 @@ lazy val weeyaml = project
   )
 
 lazy val weexml = project
-  .dependsOn(`weejson-jackson`)
+  .dependsOn(
+    `weejson-jackson`,
+    weejson % Test,
+  )
   .settings(
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % "2.12.3",

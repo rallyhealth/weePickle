@@ -3,11 +3,13 @@ package com.rallyhealth.weejson.v1.play
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.{FreeSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json._
 
 class PlayJsonImplicitsSpec
-  extends FreeSpec
+  extends AnyFreeSpec
   with Matchers
   with Inside
   with TypeCheckedTripleEquals {
