@@ -1,10 +1,12 @@
 package com.rallyhealth.weejson.v1.xml
 
-import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.{FreeSpec, Inside, Matchers}
 import com.rallyhealth.weejson.v1.{Str, Value}
+import org.scalactic.TypeCheckedTripleEquals
+import org.scalatest.Inside
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
-class XmlTests extends FreeSpec with Matchers with Inside with TypeCheckedTripleEquals {
+class XmlTests extends AnyFreeSpec with Matchers with Inside with TypeCheckedTripleEquals {
 
   "tests" - {
     val ugly =
