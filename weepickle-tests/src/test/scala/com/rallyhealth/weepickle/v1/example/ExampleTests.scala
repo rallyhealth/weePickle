@@ -1,7 +1,6 @@
 package com.rallyhealth.weepickle.v1.example
 
 import java.io.{File, FileOutputStream}
-
 import acyclic.file
 import com.rallyhealth.weepickle.v1.{TestUtil, WeePickle}
 import utest._
@@ -13,6 +12,8 @@ import com.rallyhealth.weejson.v1.yaml.{FromYaml, ToYaml}
 import com.rallyhealth.weepack.v1.{FromMsgPack, Msg, ToMsgPack, WeePack}
 import com.rallyhealth.weepickle.v1.core.{NoOpVisitor, Visitor}
 import com.rallyhealth.weepickle.v1.implicits.{discriminator, dropDefault}
+
+import java.time.Instant
 object Simple {
   case class Thing(myFieldA: Int, myFieldB: String)
   object Thing {
@@ -353,6 +354,22 @@ object ExampleTests extends TestSuite {
 
         FromScala(Bar(123, "abc")).transform(ToJson.string) ==> """["abc",123]"""
         FromJson("""["abc",123]""").transform(ToScala[Bar]) ==> Bar(123, "abc")
+      }
+      test("BufferedValue") {
+        import com.rallyhealth.weepickle.v1.WeePickle._
+        import com.rallyhealth.weejson.v1.BufferedValue
+        import com.rallyhealth.weejson.v1.BufferedValueOps._
+        case class Bar(i: Int, s: String, d: Instant)
+        implicit val fooReadWrite: FromTo[Bar] =
+          fromTo[BufferedValue].bimap[Bar](
+            x => BufferedValue.Arr(x.s, x.i, x.d),
+            buffer => Bar(buffer(1).num.toInt, buffer(0).str, buffer(2).timestamp)
+          )
+        val now = Instant.now()
+        val nowString = now.toString
+
+        FromScala(Bar(123, "abc", now)).transform(ToJson.string) ==> s"""["abc",123,"$nowString"]"""
+        FromJson(s"""["abc",123,"$nowString"]""").transform(ToScala[Bar]) ==> Bar(123, "abc", now)
       }
     }
     test("keyed") {

@@ -329,5 +329,35 @@ object StructTests extends TestSuite {
       test("false") - rw(com.rallyhealth.weejson.v1.Bool(false), """false""")
       test("null") - rw(com.rallyhealth.weejson.v1.Null, """null""")
     }
+    test("BufferedValue") {
+      test("value") {
+        val value: com.rallyhealth.weejson.v1.BufferedValue = com.rallyhealth.weejson.v1.BufferedValue.Str("test")
+        rw(value, """ "test" """.trim)
+      }
+      test("str") - rw(com.rallyhealth.weejson.v1.BufferedValue.Str("test"), """"test"""")
+      test("num") - rw(com.rallyhealth.weejson.v1.BufferedValue.AnyNum(7), """7""")
+      test("obj") {
+        test("nested") - rw(
+          com.rallyhealth.weejson.v1.BufferedValue.Obj(
+            "foo" -> com.rallyhealth.weejson.v1.BufferedValue.Null,
+            "bar" -> com.rallyhealth.weejson.v1.BufferedValue.Obj("baz" -> com.rallyhealth.weejson.v1.BufferedValue.Str("str"))
+          ),
+          """{"foo":null,"bar":{"baz":"str"}}"""
+        )
+        test("empty") - rw(com.rallyhealth.weejson.v1.BufferedValue.Obj(), """{}""")
+      }
+      test("arr") {
+        test("nonEmpty") - rw(
+          com.rallyhealth.weejson.v1.BufferedValue.Arr(com.rallyhealth.weejson.v1.BufferedValue.AnyNum(5), com.rallyhealth.weejson.v1.BufferedValue.AnyNum(6)),
+          """[5,6]"""
+        )
+        test("empty") - rw(com.rallyhealth.weejson.v1.BufferedValue.Arr(), """[]""")
+      }
+      test("true") - rw(com.rallyhealth.weejson.v1.BufferedValue.True, """true""")
+      test("true") - rw(com.rallyhealth.weejson.v1.BufferedValue.Bool(true), """true""")
+      test("false") - rw(com.rallyhealth.weejson.v1.BufferedValue.False, """false""")
+      test("false") - rw(com.rallyhealth.weejson.v1.BufferedValue.Bool(false), """false""")
+      test("null") - rw(com.rallyhealth.weejson.v1.BufferedValue.Null, """null""")
+    }
   }
 }
