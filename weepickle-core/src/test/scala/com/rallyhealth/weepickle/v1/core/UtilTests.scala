@@ -29,48 +29,48 @@ class UtilTests
       "padded" in {
         forAll { (head: String, l: Long, tail: String) =>
           val s = l.toString
-          Util.parseLong(s"$head$s$tail", head.length, s.length) should ===(l)
-        }
-      }
-    }
-  }
-
-  "failures" - {
-    "strings" in {
-      forAll { (s: String) =>
-        whenever(Try(s.toLong).isFailure) {
-          assert(Try(Util.parseLong(s, 0, s.length)).isFailure)
+          Util.parseLong(s"$head$s$tail", head.length, head.length + s.length) should ===(l)
         }
       }
     }
 
-    def invalid(s: String) = {
-      assert(Try(Util.parseLong(s, 0, s.length)).isFailure)
-      assert(Try(Util.parseLong(" " + s, 1, s.length)).isFailure)
-      assert(Try(Util.parseLong(s + " ", 0, s.length)).isFailure)
-      assert(Try(Util.parseLong(" " + s + " ", 1, s.length)).isFailure)
-    }
-    "a" in invalid("a")
-    "-" in invalid("-")
-    "᥌" in invalid("᥌")
-    "too long" in invalid(Long.MaxValue.toString + "1")
-
-    "bounds" in {
-      val s = "111"
-      for {
-        start <- -1 to 5
-        len <- -1 to 5
-        if len != 0 // NFE, not IndexOutOfBoundsException
-      } {
-        withClue(s"$s, $start, $len") {
-          if (Try(s.substring(start, start + len)).isSuccess) {
-            Util.parseLong(s, start, len)
-          } else {
-            intercept[IndexOutOfBoundsException](Util.parseLong(s, start, len))
+    "failures" - {
+      "strings" in {
+        forAll { (s: String) =>
+          whenever(Try(s.toLong).isFailure) {
+            assert(Try(Util.parseLong(s, 0, s.length)).isFailure)
           }
         }
       }
 
+      def invalid(s: String) = {
+        assert(Try(Util.parseLong(s, 0, s.length)).isFailure)
+        assert(Try(Util.parseLong(" " + s, 1, 1 + s.length)).isFailure)
+        assert(Try(Util.parseLong(s + " ", 0, s.length)).isFailure)
+        assert(Try(Util.parseLong(" " + s + " ", 1, 1 + s.length)).isFailure)
+      }
+      "a" in invalid("a")
+      "-" in invalid("-")
+      "᥌" in invalid("᥌")
+      "too long" in invalid(Long.MaxValue.toString + "1")
+
+      "bounds" in {
+        val s = "111"
+        for {
+          start <- -1 to s.length + 1
+            end <- -1 to s.length + 1
+          if end != start // NFE, not IndexOutOfBoundsException
+        } {
+          withClue(s"$s, $start, $end") {
+            if (Try(s.substring(start, end)).isSuccess) {
+              Util.parseLong(s, start, end)
+            } else {
+              intercept[IndexOutOfBoundsException](Util.parseLong(s, start, end))
+            }
+          }
+        }
+
+      }
     }
   }
 }
