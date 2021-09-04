@@ -28,7 +28,7 @@ object Fi {
   */
 object FailureTests extends TestSuite {
 
-  def tests = Tests {
+  val tests = Tests {
 //    test("test"){
 //      read[com.rallyhealth.weejson.v1.Value](""" {unquoted_key: "keys must be quoted"} """)
 //    }
