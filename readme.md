@@ -1,4 +1,4 @@
-# weePickle ![version](https://img.shields.io/github/v/release/rallyhealth/weepickle)
+# weePickle ![version](https://img.shields.io/github/v/release/rallyhealth/weepickle) ![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 
 A *stable* JSON, YAML, MsgPack, XML, etc. serialization framework based on [uPickle](https://com-lihaoyi.github.io/upickle/).
 
@@ -27,12 +27,10 @@ weePickle combines some of the best parts of the serialization ecosystem.
 - Fast serialization to/from [MessagePack](#messagepack)
 
 ## sbt
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 ```scala
-resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
 libraryDependencies += "com.rallyhealth" %% "weepickle-v1" % "version"
 ```
-version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg) ](https://bintray.com/rallyhealth/maven/weePickle/_latestVersion)
-
 
 ## Getting Started
 JSON to Scala:
@@ -57,8 +55,8 @@ FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 
 Files & YAML:
 #### sbt
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 ```scala
-resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
 libraryDependencies ++= Seq(
   "com.rallyhealth" %% "weepickle-v1" % "version",
   "com.rallyhealth" %% "weeyaml-v1" % "version"
@@ -321,11 +319,10 @@ FromScala(User(None)).transform(ToJson.string) ==> "{}"
 weePack is weePickle's [MessagePack](https://msgpack.org/index.html) implementation, largely unchanged from the upstream [uPack](https://com-lihaoyi.github.io/upickle/#uPack).
 
 ### sbt
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepack-v1_2.13)
 ```scala
-resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
 libraryDependencies += "com.rallyhealth" %% "weepack-v1" % "version"
 ```
-version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg) ](https://bintray.com/rallyhealth/maven/weePickle/_latestVersion)
 
 ### Benchmarks
 `FromMsgPack`/`ToMsgPack` perform exceptionally well under benchmarks, yielding higher throughput than JSON or the official [jackson-dataformat-msgpack](https://github.com/msgpack/msgpack-java/blob/develop/msgpack-jackson/README.md).
