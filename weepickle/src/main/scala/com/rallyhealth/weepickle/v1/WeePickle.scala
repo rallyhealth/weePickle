@@ -1,12 +1,15 @@
 package com.rallyhealth.weepickle.v1
 
+import com.rallyhealth.weepickle.v1.core.ops.FromInputOpsImplicits
 import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 
 /**
   * Converters for default scala types.
   * Macros to generate converters for case classes.
   */
-object WeePickle extends LowPriorityImplicits {
+object WeePickle
+  extends LowPriorityImplicits
+  with FromInputOpsImplicits {
 
   object ToScala {
 
