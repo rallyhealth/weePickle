@@ -55,16 +55,4 @@ abstract class LowPriorityImplicits extends AttributeTagged {
     implicit ev: V =:= e.Value): FromTo[V] = {
     FromTo.join(ToInt.map(e.apply(_).asInstanceOf[V]), FromInt.comap(_.id))
   }
-
-  //  Native Scala 3 enums extend scala.reflect.Enum transparently.
-  //  By name encoding provided in default derives, so only id encoding provided here.
-  // TODO: do we even need this? If we do, should it be here (it isn't implicit)?
-
-  abstract class FromToById[V <: scala.reflect.Enum] {
-    // implemented by the companion of an enum
-    def fromOrdinal(i: Int): V
-
-    implicit val fromId: From[V] = FromInt.comap(_.ordinal)
-    implicit val toId: To[V] = ToInt.map(fromOrdinal)
-  }
 }

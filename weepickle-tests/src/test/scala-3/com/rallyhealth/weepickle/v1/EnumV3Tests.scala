@@ -20,7 +20,10 @@ object EnumV3Tests extends TestSuite {
   enum SuitNum {
     case Spades, Hearts, Diamonds, Clubs
   }
-  object SuitNum extends FromToById[SuitNum]
+  object SuitNum {
+    implicit val fromId: From[SuitNum] = FromInt.comap(_.ordinal)
+    implicit val toId: To[SuitNum] = ToInt.map(fromOrdinal)
+  }
 
   enum Charm(val color: String, val introduced: Int = 1964) derives FromTo {
     case Heart     extends Charm("pink")
