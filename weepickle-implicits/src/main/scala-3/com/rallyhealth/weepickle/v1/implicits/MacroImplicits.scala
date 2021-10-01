@@ -1,6 +1,7 @@
 package com.rallyhealth.weepickle.v1.implicits
 
 import deriving.Mirror
+import scala.compiletime.erasedValue
 import scala.reflect.ClassTag
 import com.rallyhealth.weepickle.v1.core.{Annotator, Types}
 
@@ -13,6 +14,13 @@ trait MacroImplicits extends CaseClassToPiece with CaseClassFromPiece:
       macroFrom[T]
     )
   end macroFromTo
+
+  inline def macroEnumFromTo[T: ClassTag](using Mirror.Of[T]): FromTo[T] =
+    FromTo.join(
+      macroEnumTo[T],
+      macroEnumFrom[T]
+    )
+  end macroEnumFromTo
 
 
   // Usually, we would use an extension method to add `derived` to FromTo's
@@ -47,7 +55,9 @@ trait MacroImplicits extends CaseClassToPiece with CaseClassFromPiece:
   // Until that is the case, we'll have to resort to using Scala 2's implicit
   // classes to emulate extension methods for deriving readers and writers.
   implicit class FromToExtension(r: FromTo.type):
-    inline def derived[T](using Mirror.Of[T], ClassTag[T]): FromTo[T] = macroFromTo[T]
+    inline def derived[T](using Mirror.Of[T], ClassTag[T]): FromTo[T] = inline erasedValue[T] match
+      case _: scala.reflect.Enum => macroEnumFromTo[T]
+      case _ => macroFromTo[T]
   end FromToExtension
 
 end MacroImplicits
