@@ -35,7 +35,7 @@ def getDefaultParamsImpl[T](using Quotes, Type[T]): Expr[String => Option[() => 
 
 
   if (sym.isClassDef) {
-    val comp = if (sym.isClassDef) sym.companionClass else sym
+    val comp = sym.companionClass
     val names =
       for p <- sym.caseFields if p.flags.is(Flags.HasDefault)
       yield p.name
@@ -153,6 +153,35 @@ def isMemberOfSealedHierarchyImpl[T](using Quotes, Type[T]): Expr[(Boolean, Opti
   // println(s"sealedParents = $sealedParents, discriminator = $discriminator")
   Expr((isSealed, discriminator))
 end isMemberOfSealedHierarchyImpl
+
+/*
+ * Finds the valueOf method (a DefDef) in the companion of the sealed trait for this enum which
+ * is used to decode a string as an enum value.
+ */
+inline def enumValueOf[T]: String => T = ${ enumValueOfImpl[T] }
+def enumValueOfImpl[T](using Quotes, Type[T]): Expr[String => T] =
+  import quotes.reflect._
+
+  // println(s"enumValueOf isNoSymbol = ${TypeTree.of[T].symbol.isNoSymbol}")
+  if (TypeTree.of[T].symbol.isNoSymbol) throw Exception("Enumeration default derivation not supported: type is not a symbol")
+
+  val sym = TypeTree.of[T].symbol
+  // println(s"enumValueOf sym = $sym, isClassDef = ${sym.isClassDef}, isNoSymbol = ${TypeTree.of[T].symbol.isNoSymbol}")
+  if (!sym.isClassDef) throw Exception("Enumeration default derivation not supported: type is not a class definition")
+
+  val companion = sym.companionClass.tree.asInstanceOf[ClassDef]
+  // println(s"enumValueOf companion.symbol = ${companion.symbol}")
+
+  val valueOfMethods: List[DefDef] = companion.body.collect{
+    case dd @ DefDef("valueOf", _, _, _) => dd
+  }
+  // println(s"enumValueOf valueOfMethods = valueOfMethods")
+  if (valueOfMethods.size != 1) throw Exception("Enumeration default derivation not supported: companion valueOf method not found")
+
+  val methodSymbol = valueOfMethods.head.symbol
+  // println(s"enumValueOf methodSymbol = $methodSymbol, methodSymbol.owner = ${methodSymbol.owner}")
+  Ref(methodSymbol).etaExpand(methodSymbol.owner).asExpr.asInstanceOf[Expr[String => T]]
+end enumValueOfImpl
 
 /*
  * Return class name and an indication of if all field defaults should be dropped.
