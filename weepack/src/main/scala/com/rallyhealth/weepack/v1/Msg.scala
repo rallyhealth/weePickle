@@ -1,13 +1,13 @@
 package com.rallyhealth.weepack.v1
 
+import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, ObjVisitor, Visitor}
+
 import java.io.ByteArrayOutputStream
 import java.time.Instant
-
-import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, FromInput, Visitor}
-
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.util.hashing.MurmurHash3
 
 /**
   * In-memory representation of the MessagePack data model
@@ -128,7 +128,15 @@ object Obj {
 
   def apply(): Obj = Obj(new mutable.LinkedHashMap[Msg, Msg]())
 }
-case class Ext(tag: Byte, data: Array[Byte]) extends Msg
+case class Ext(tag: Byte, data: Array[Byte]) extends Msg {
+  override def equals(other: Any): Boolean = other match {
+    case Ext(tagOther, dataOther) =>
+      tag == tagOther && java.util.Arrays.equals(data, dataOther)
+    case _ => false
+  }
+
+  override def hashCode: Int = MurmurHash3.bytesHash(data, tag.toInt)
+}
 
 sealed abstract class Bool extends Msg {
   def value: Boolean
