@@ -112,7 +112,15 @@ case class UInt64(value: Long) extends Msg
 case class Float32(value: Float) extends Msg
 case class Float64(value: Double) extends Msg
 case class Str(value: String) extends Msg
-case class Binary(value: Array[Byte]) extends Msg
+case class Binary(value: Array[Byte]) extends Msg {
+
+  override def equals(obj: Any): Boolean = obj match {
+    case Binary(other) => java.util.Arrays.equals(value, other)
+    case _ => false
+  }
+
+  override def hashCode(): Int = MurmurHash3.bytesHash(value)
+}
 case class Arr(value: mutable.ArrayBuffer[Msg]) extends Msg
 object Arr {
   def apply(items: Msg*): Arr = Arr(items.to(mutable.ArrayBuffer))

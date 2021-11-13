@@ -63,37 +63,14 @@ object UnitTests extends TestSuite{
       val parsed = FromMsgPack(bytes).transform(Msg)
       assert(msg == parsed)
     }
-    test("extInMap"){
-      val msg = Obj(Str("foo") -> Ext(33, new Array[Byte](12)), Str("bar") -> Null)
-      val out = new ByteArrayOutputStream()
-      msg.transform(ToMsgPack.outputStream(out))
-      val bytes = out.toByteArray
-      val parsed = FromMsgPack(bytes).transform(Msg)
-      assert(msg == parsed)
+    def roundtrip(msg1: Msg) = {
+      val bytes1 = msg1.transform(ToMsgPack.bytes)
+      val msg2 = FromMsgPack(bytes1).transform(Msg)
+      msg2 ==> msg1
+      val bytes2 = msg2.transform(ToMsgPack.bytes)
+      assert(bytes1.sameElements(bytes2))
     }
-    test("extInList"){
-      val msg = Arr(Ext(33, new Array[Byte](4)), False)
-      val out = new ByteArrayOutputStream()
-      msg.transform(ToMsgPack.outputStream(out))
-      val bytes = out.toByteArray
-      val parsed = FromMsgPack(bytes).transform(Msg)
-      assert(msg == parsed)
-    }
-    test("extInMap"){
-      val msg = Obj(Str("foo") -> Ext(33, new Array[Byte](12)), Str("bar") -> Null)
-      val out = new ByteArrayOutputStream()
-      msg.transform(ToMsgPack.outputStream(out))
-      val bytes = out.toByteArray
-      val parsed = FromMsgPack(bytes).transform(Msg)
-      assert(msg == parsed)
-    }
-    test("extInList"){
-      val msg = Arr(Ext(33, new Array[Byte](4)), False)
-      val out = new ByteArrayOutputStream()
-      msg.transform(ToMsgPack.outputStream(out))
-      val bytes = out.toByteArray
-      val parsed = FromMsgPack(bytes).transform(Msg)
-      assert(msg == parsed)
-    }
+    test("extInList")(roundtrip(Arr(Ext(33, new Array[Byte](4)), False)))
+    test("extInMap")(Obj(Str("foo") -> Ext(33, new Array[Byte](12)), Str("bar") -> Null))
   }
 }
