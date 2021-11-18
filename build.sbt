@@ -16,13 +16,12 @@ lazy val bench = project
     noPublish,
     crossScalaVersions := Seq(scala213, scala3),
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.0-rc1",
-      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.13.0-rc1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.0-rc1",
-      "com.lihaoyi" %% "upickle" % "1.4.0",
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.0",
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.13.0",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.0",
       "io.circe" %% "circe-generic" % "0.14.1",
       "io.circe" %% "circe-parser" % "0.14.1",
-      "org.msgpack" % "jackson-dataformat-msgpack" % "0.8.22",
+      "org.msgpack" % "jackson-dataformat-msgpack" % "0.9.0",
       "com.lihaoyi" %% "sourcecode" % "0.2.7",
     )
   )
@@ -131,7 +130,7 @@ lazy val `weejson-jackson` = project
   .dependsOn(`weepickle-core`)
   .settings(
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.3"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.0"
     ),
     mimaBinaryIssueFilters ++= Seq(
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.rallyhealth.weejson.v1.jackson.TextBufferCharSequence.isEmpty")
@@ -150,14 +149,14 @@ lazy val `weejson-json4s` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-ast" % (if (scalaBinaryVersion.value == "3") "4.0.1" else "3.6.10"),
+      "org.json4s" %% "json4s-ast" % (if (scalaBinaryVersion.value == "3") "4.0.3" else "3.6.10"),
     )
   )
 lazy val `weejson-argonaut` = project
   .dependsOn(weejson)
   .settings(
     libraryDependencies ++= Seq(
-      "io.argonaut" %% "argonaut" % (if (scalaBinaryVersion.value == "3") "6.3.6" else "6.2.5") ,
+      "io.argonaut" %% "argonaut" % (if (scalaBinaryVersion.value == "3") "6.3.7" else "6.2.5") ,
     )
   )
 
@@ -202,7 +201,7 @@ lazy val `weejson-upickle` = project
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "1.4.0",
+      "com.lihaoyi" %% "upickle" % "1.4.2",
     ),
     mimaPreviousArtifacts := {
       if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.6.0")))
@@ -216,7 +215,7 @@ lazy val weeyaml = project
   .dependsOn(`weejson-jackson`)
   .settings(
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.12.3",
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.13.0",
     )
   )
 
@@ -227,7 +226,7 @@ lazy val weexml = project
   )
   .settings(
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % "2.12.3",
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % "2.13.0",
     )
   )
 
