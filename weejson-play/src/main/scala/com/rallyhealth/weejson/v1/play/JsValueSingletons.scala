@@ -7,7 +7,7 @@ import play.api.libs.json.{JsBoolean, JsObject}
   */
 object JsValueSingletons {
 
-  val jsTrue = JsBoolean(true)
-  val jsFalse = JsBoolean(false)
-  val jsObjectEmpty = JsObject.empty
+  final val jsTrue = JsBoolean(true)
+  final val jsFalse = JsBoolean(false)
+  final val jsObjectEmpty = JsObject(List.empty)
 }
