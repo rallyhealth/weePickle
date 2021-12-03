@@ -10,13 +10,9 @@ import scala.jdk.CollectionConverters._
 
 object PlayJson extends PlayJson {
 
-  // common singletons to avoid heap bloat
-  private[this] val jsTrue = JsBoolean(true)
-  private[this] val jsFalse = JsBoolean(false)
+  override def visitTrue(): JsValue = JsValueSingletons.jsTrue
 
-  override def visitTrue(): JsValue = jsTrue
-
-  override def visitFalse(): JsValue = jsFalse
+  override def visitFalse(): JsValue = JsValueSingletons.jsFalse
 }
 
 class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
@@ -45,7 +41,10 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
       override def visitValue(v: JsValue): Unit = vs.put(key, v)
 
-      override def visitEnd(): JsValue = JsObject(vs)
+      override def visitEnd(): JsValue = {
+        if (vs.isEmpty) JsValueSingletons.jsObjectEmpty
+        else JsObject(vs)
+      }
     }
 
   def visitNull(): JsValue = JsNull
