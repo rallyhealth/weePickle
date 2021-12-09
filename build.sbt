@@ -15,7 +15,7 @@ lazy val bench = project
   .enablePlugins(JmhPlugin)
   .settings(
     noPublish,
-    crossScalaVersions := Seq(scala213, scala3),
+    crossScalaVersions := Seq(scala213),
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.0",
       "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.13.0",
