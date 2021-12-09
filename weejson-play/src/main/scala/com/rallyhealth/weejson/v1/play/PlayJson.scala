@@ -1,11 +1,13 @@
 package com.rallyhealth.weejson.v1.play
 
+import com.rallyhealth.weejson.v1.AstTransformer
 import com.rallyhealth.weepickle.v1.WeePickle
 import com.rallyhealth.weepickle.v1.WeePickle._
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, StringVisitor, Visitor}
 import play.api.libs.json._
 
 import java.util.{LinkedHashMap => JLinkedHashMap}
+import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 
 object PlayJson extends PlayJson {
@@ -15,7 +17,7 @@ object PlayJson extends PlayJson {
   override def visitFalse(): JsValue = JsValueSingletons.jsFalse
 }
 
-class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
+class PlayJson extends AstTransformer[JsValue] {
   def transform[T](i: JsValue, to: Visitor[_, T]): T = (i: @unchecked) match {
     case JsArray(xs)   => transformArray(to, xs)
     case JsBoolean(b)  => if (b) to.visitTrue() else to.visitFalse()
@@ -24,14 +26,30 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
     case JsObject(kvs) => transformObject(to, kvs)
     case JsString(s)   => to.visitString(s)
   }
-  def visitArray(length: Int): ArrVisitor[JsValue, JsValue] = new AstArrVisitor[Array](JsArray(_))
+
+  def visitArray(length: Int): ArrVisitor[JsValue, JsValue] = {
+    new ArrVisitor[JsValue, JsValue] {
+      // initCapacity=4 covers 90% of real-world objs. Faster overall. (JsValueBench)
+      private[this] val buf = new ArrayBuffer[JsValue](if (length >= 0) length else 4)
+
+      override def subVisitor: Visitor[_, _] = PlayJson.this
+
+      override def visitValue(v: JsValue): Unit = buf += v
+
+      override def visitEnd(): JsValue = {
+        if (buf.isEmpty) JsValueSingletons.EmptyJsArray
+        else JsArray(buf.toArray[JsValue])
+      }
+    }
+  }
 
   def visitObject(
     length: Int
   ): ObjVisitor[JsValue, JsValue] =
     new ObjVisitor[JsValue, JsValue] {
-      private[this] var key: String = null
-      private[this] val vs = new JLinkedHashMap[String, JsValue](math.max(length, 2)).asScala
+      private[this] var key: String = _
+      // initCapacity=4 covers 88% of real-world objs. Faster overall. (JsValueBench)
+      private[this] val buf = new ArrayBuffer[(String, JsValue)](if (length >= 0) length else 4)
 
       override def visitKey(): Visitor[_, _] = StringVisitor
 
@@ -39,11 +57,12 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
       override def subVisitor: Visitor[_, _] = PlayJson.this
 
-      override def visitValue(v: JsValue): Unit = vs.put(key, v)
+      override def visitValue(v: JsValue): Unit = buf += (key -> v)
 
       override def visitEnd(): JsValue = {
-        if (vs.isEmpty) JsValueSingletons.jsObjectEmpty
-        else JsObject(vs)
+        if (buf.isEmpty) JsValueSingletons.EmptyJsObject
+        else if (buf.size <= 4) JsObject(buf.toMap) // preserves order
+        else JsObject(new JLinkedHashMap[String, JsValue](buf.size).asScala ++= buf)
       }
     }
 

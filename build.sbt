@@ -10,6 +10,7 @@ lazy val bench = project
   .dependsOn(
     `weepickle-tests` % "compile;test",
     `weejson-upickle`,
+    `weejson-play29`,
   )
   .enablePlugins(JmhPlugin)
   .settings(
