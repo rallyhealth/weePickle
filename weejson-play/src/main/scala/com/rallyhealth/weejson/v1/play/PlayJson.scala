@@ -7,6 +7,7 @@ import com.rallyhealth.weepickle.v1.core.{ArrVisitor, ObjVisitor, StringVisitor,
 import play.api.libs.json._
 
 import java.util.{LinkedHashMap => JLinkedHashMap}
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 
@@ -30,7 +31,7 @@ class PlayJson extends AstTransformer[JsValue] {
   def visitArray(length: Int): ArrVisitor[JsValue, JsValue] = {
     new ArrVisitor[JsValue, JsValue] {
       // initCapacity=4 covers 90% of real-world objs. Faster overall. (JsValueBench)
-      private[this] val buf = new ArrayBuffer[JsValue](if (length >= 0) length else 4)
+      private[this] val buf = new ArrayBuffer[AnyRef](if (length >= 0) length else 4)
 
       override def subVisitor: Visitor[_, _] = PlayJson.this
 
@@ -38,7 +39,7 @@ class PlayJson extends AstTransformer[JsValue] {
 
       override def visitEnd(): JsValue = {
         if (buf.isEmpty) JsValueSingletons.EmptyJsArray
-        else JsArray(buf.toArray[JsValue])
+        else JsArray(ArraySeq.unsafeWrapArray(buf.toArray).asInstanceOf[ArraySeq[JsValue]])
       }
     }
   }
