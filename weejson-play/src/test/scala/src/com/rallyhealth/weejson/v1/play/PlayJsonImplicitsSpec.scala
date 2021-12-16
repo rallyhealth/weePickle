@@ -162,7 +162,6 @@ class PlayJsonImplicitsSpec extends AnyFreeSpec with Matchers with Inside with T
     JsNumber(-1.1e11) <--> -1.1e11.toLong
     JsNumber(-1.1e30) <--> -1.1e30
     JsNumber(2.097152E+14) <--> 2.097152E+14.toLong // decimal part with leading zero
-    // JsNumber(1.922438E+19) --> 1.922438E+19.toLong // fails
     JsNumber(8.635005E-10) --> 8.635005E-10.toLong // no underflow
   }
 }

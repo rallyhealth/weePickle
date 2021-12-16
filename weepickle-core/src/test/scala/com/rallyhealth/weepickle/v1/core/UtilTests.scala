@@ -32,10 +32,7 @@ class UtilTests extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyC
       }
       "truncated" in {
         forAll { (bd: BigDecimal) =>
-          // unfortunately there is still a gap where the parsing method doesn't support numbers between 1e+19 and Long.MaxValue,
-          // e.g., 1.922438E+19 would fail with Abort("expected integer")
-          // whenever(bd.abs < Double.MaxValue) {
-          whenever(bd.abs < 1e+19) {
+          whenever(bd.abs < Long.MaxValue) {
             val sBd = bd.toString
             Util.parseIntegralNum(sBd, decIndex(sBd), expIndex(sBd)) should ===(bd.toLong)
           }
