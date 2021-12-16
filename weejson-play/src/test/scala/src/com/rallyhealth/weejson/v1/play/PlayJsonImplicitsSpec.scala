@@ -1,18 +1,16 @@
 package com.rallyhealth.weejson.v1.play
 
+import com.rallyhealth.weejson.v1.Null
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
 import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.Inside
+import org.scalatest.{Assertion, Inside}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.libs.json._
+import com.rallyhealth.weepickle.v1.WeePickle._
 
-class PlayJsonImplicitsSpec
-  extends AnyFreeSpec
-  with Matchers
-  with Inside
-  with TypeCheckedTripleEquals {
+class PlayJsonImplicitsSpec extends AnyFreeSpec with Matchers with Inside with TypeCheckedTripleEquals {
 
   "valid" - {
     val string = """{"enveloped":{"ciphertext":"pony"}}"""
@@ -104,5 +102,66 @@ class PlayJsonImplicitsSpec
     implicit val reads: Reads[NoCompanion] = Reads(v => JsSuccess(NoCompanion("")))
     val jsValue = Json.obj("msg" -> "")
     jsValue.as[NoCompanion]
+  }
+
+  "primitive translations" in {
+    implicit class CheckJsValue(jsValue: JsValue) {
+      def -->[T: To](toValue: T): Assertion =
+        assert(PlayJson.FromJsValue.transform(jsValue, to[T]) === toValue)
+
+      def <--[T: From](fromValue: T): Assertion =
+        assert(FromScala(fromValue).transform(PlayJson.ToJsValue) === jsValue)
+
+      def <-->[T: To: From](expected: T): Assertion = {
+        -->(expected)
+        <--(expected)
+      }
+    }
+
+    val jsPony = JsString("pony")
+
+    JsNull <--> Null
+    JsBoolean(true) <--> true // JsTrue in Play > 2.5
+    JsBoolean(false) <--> false // JsFalse in Play > 2.5
+    jsPony <--> "pony"
+    JsObject(Seq("ciphertext" -> jsPony)) <--> WeePickleCiphertext("pony")
+    JsArray(Seq(jsPony, jsPony, jsPony)) <--> Seq("pony", "pony", "pony")
+
+    // Cover various common numeric representations (not comprehensive)
+    // and proper truncation when represented as an int
+
+    JsArray(
+      Seq(JsNumber(-1.1e11),
+          JsNumber(-1.1),
+          JsNumber(-1),
+          JsNumber(0),
+          JsNumber(1.toDouble),
+          JsNumber(1.1),
+          JsNumber(1.1e11))) <-->
+      Seq(-1.1e11, -1.1, -1, 0, 1, 1.1, 1.1e11)
+    JsNumber(0) <--> 0 // number from int (no frac) to/from int
+    JsNumber(1.toDouble) <--> 1 // number from double (no frac) to/from int
+    JsNumber(1.toDouble) <--> 1.0 // number from double (no frac) to/from double
+    JsNumber(1.toDouble) <--> 1L // number from double (no frac) to/from long
+    JsNumber(1.1) <--> 1.1 // number from double (w/frac) to/from double
+    JsNumber(1.1) --> 1 // number from double (w/frac) to int (truncated)
+    JsNumber(1.1) --> 1L // number from double (w/frac) to long (truncated)
+    JsNumber(1.99999) --> 1 // number from double (w/frac) to int (truncated)
+    JsNumber(1.99999) --> 1L // number from double (w/frac) to int (truncated)
+    JsNumber(1.1e+11) <--> 1.1e+11 // number from double (w/frac+exp) to/from double
+    JsNumber(1.1e+11.toLong) <--> 1.1e+11.toLong // number from long (w/frac+exp) to/from long
+    JsNumber(1.1e+11) <--> 1.1e+11.toLong // number from double (w/frac+exp) to/from long
+    JsNumber(1.1e30) <--> 1.1e30 // number from double (w/frac+exp) to/from double
+    JsNumber(1.1e-11) <--> 1.1e-11
+    JsNumber(1.1e-11) --> 0 // Truncates
+    JsNumber(-1.1e-11) --> 0 // Truncates
+    JsNumber(-1) <--> -1
+    JsNumber(-1.1) <--> -1.1
+    JsNumber(-1.1) --> -1 // Truncates
+    JsNumber(-1.99999) --> -1 // Truncates
+    JsNumber(-1.1e11) <--> -1.1e11.toLong
+    JsNumber(-1.1e30) <--> -1.1e30
+    JsNumber(2.097152E+14) <--> 2.097152E+14.toLong // decimal part with leading zero
+    JsNumber(8.635005E-10) --> 8.635005E-10.toLong // no underflow
   }
 }

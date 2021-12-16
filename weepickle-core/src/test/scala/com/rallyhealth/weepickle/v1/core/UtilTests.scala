@@ -7,15 +7,58 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.util.Try
 
-class UtilTests
-  extends AnyFreeSpec
-    with Matchers
-    with ScalaCheckDrivenPropertyChecks
-    with TypeCheckedTripleEquals {
+class UtilTests extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with TypeCheckedTripleEquals {
 
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
     minSuccessful = 1000
   )
+
+  "parseIntegralNum" - {
+    def decIndex(s: String): Int = s.indexOf('.')
+
+    def expIndex(s: String): Int = s.indexOf('E') match {
+      case -1 => s.indexOf('e')
+      case n  => n
+    }
+
+    "long" - {
+      "exact" in {
+        forAll { (l: Long) =>
+          val sLong = l.toString
+          Util.parseIntegralNum(sLong, decIndex(sLong), expIndex(sLong)) should ===(l)
+          val sBd = BigDecimal(l).toString
+          Util.parseIntegralNum(sBd, decIndex(sBd), expIndex(sBd)) should ===(l)
+        }
+      }
+      "truncated" in {
+        forAll { (bd: BigDecimal) =>
+          whenever(bd.abs < Long.MaxValue) {
+            val sBd = bd.toString
+            Util.parseIntegralNum(sBd, decIndex(sBd), expIndex(sBd)) should ===(bd.toLong)
+          }
+        }
+      }
+    }
+
+    "int" - {
+      "exact" in {
+        forAll { (i: Int) =>
+          val sInt = i.toString
+          Util.parseIntegralNum(sInt, decIndex(sInt), expIndex(sInt)).toInt should ===(i)
+          val sBd = BigDecimal(i).toString
+          Util.parseIntegralNum(sBd, decIndex(sBd), expIndex(sBd)).toInt should ===(i)
+        }
+      }
+      "truncated" in {
+        forAll { (bd: BigDecimal) =>
+          whenever(bd.abs < Int.MaxValue) {
+            val sBd = bd.toString
+            Util.parseIntegralNum(sBd, decIndex(sBd), expIndex(sBd)).toInt should ===(bd.toInt)
+          }
+        }
+      }
+    }
+  }
 
   "parseLong" - {
     "valid" - {
@@ -58,7 +101,7 @@ class UtilTests
         val s = "111"
         for {
           start <- -1 to s.length + 1
-            end <- -1 to s.length + 1
+          end <- -1 to s.length + 1
           if end != start // NFE, not IndexOutOfBoundsException
         } {
           withClue(s"$s, $start, $end") {
