@@ -5,6 +5,22 @@ import java.util.UUID
 object Util {
 
   def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int): Long = {
+    val intPortionRaw = {
+      val end =
+        if (decIndex != -1) decIndex
+        else if (expIndex != -1) expIndex
+        else s.length
+
+      parseLong(s, 0, end)
+    }
+
+    val decPortionRaw =
+      if (decIndex == -1) 0
+      else {
+        val end = if (expIndex != -1) expIndex else s.length
+        parseLong(s, decIndex + 1, math.min(end, decIndex + 19))
+      }
+
     val (expMul, expPositive) = // when not expPositive, treat expMul as a divisor
       if (expIndex == -1) (1L, true)
       else {
@@ -13,36 +29,40 @@ object Util {
         val e = math.abs(eRaw)
         var i = 0
         while (i < e) {
-          if (mult >= Long.MaxValue / 10) throw new Abort("expected integer")
+          if (mult >= Long.MaxValue / 10)
+            if (eRaw > 0 && (intPortionRaw != 0 || decPortionRaw != 0)) throw new Abort("expected integer")
+            else mult = 0 // underflow or zero value
           mult = mult * 10
           i += 1
         }
         (mult, eRaw > 0)
       }
 
-    val intPortion = {
-      val end =
-        if (decIndex != -1) decIndex
-        else if (expIndex != -1) expIndex
-        else s.length
+    val intPortion =
+      if (expPositive || expMul == 0) intPortionRaw * expMul
+      else intPortionRaw / expMul
 
-      val rawInt = parseLong(s, 0, end)
-      if (expPositive) rawInt * expMul else rawInt / expMul
-    }
-
-    val decPortion =
-      if (decIndex == -1) 0
-      else {
-        val end = if (expIndex != -1) expIndex else s.length
-        val rawValue = parseLong(s, decIndex + 1, end)
-        var value = if (expPositive) rawValue * expMul else rawValue / expMul
-        var i = end - (decIndex + 1)
-        while (i > 0) {
-          value = value / 10
-          i -= 1
+    val decPortion = {
+      val value =
+        if (expMul == 0 || !expPositive) 0L // if exponent is negative, dec portion should just be truncated
+        else {
+          // avoid overflow due to leading zeros by decreasing the multiplier first
+          val end = if (expIndex != -1) expIndex else s.length
+          var expValue = expMul
+          var i = end - (decIndex + 1)
+          while (i > 0 && expValue > 1) {
+            expValue = expValue / 10
+            i -= 1
+          }
+          var residue = decPortionRaw * expValue
+          while (i > 0) {
+            residue = residue / 10
+            i -= 1
+          }
+          residue
         }
-        if (s.charAt(0) == '-') -value else value
-      }
+      if (s.charAt(0) == '-') -value else value
+    }
 
     intPortion + decPortion
   }
