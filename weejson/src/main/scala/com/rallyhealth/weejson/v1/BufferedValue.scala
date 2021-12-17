@@ -159,9 +159,15 @@ object BufferedValue extends Transformer[BufferedValue] {
 
   case class Str(value0: String) extends BufferedValue
 
-  case class Obj(value0: (String, BufferedValue)*) extends BufferedValue
+  case class Obj(value0: (String, BufferedValue)*) extends BufferedValue {
 
-  case class Arr(value: BufferedValue*) extends BufferedValue
+    override def toString: String = value0.map { case (k, v) => s""""$k": $v""" }.mkString("Obj(", ", ", ")")
+  }
+
+  case class Arr(value: BufferedValue*) extends BufferedValue {
+
+    override def toString: String = value.mkString("Arr(", ", ", ")")
+  }
 
   sealed trait AnyNum extends BufferedValue {
     def value: BigDecimal
