@@ -14,7 +14,7 @@ object JsonParserException {
       index = parserBase.map(_.getTokenCharacterOffset),
       line = parserBase.map(_.getTokenLineNr),
       col = parserBase.map(_.getTokenColumnNr),
-      token = parserBase.map(_.getCurrentToken.toString()),
+      token = parserBase.map(p => String.valueOf(p.currentToken())),
       cause = t
     )
   }
