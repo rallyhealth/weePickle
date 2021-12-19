@@ -1,7 +1,7 @@
 package com.rallyhealth.weejson.v1
 
 import com.rallyhealth.weejson.v1._
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -53,5 +53,13 @@ trait GenValue {
 
   implicit val arbNum: Arbitrary[Num] = Arbitrary {
     Arbitrary.arbitrary[Double].map(Num(_))
+  }
+
+  implicit val shrinkValue: Shrink[Value] = Shrink[Value] {
+    case Obj(map) => Shrink.shrink(map).map(Obj(_))
+    case Arr(buf) => Shrink.shrink(buf).map(Arr(_))
+    case Num(bd) => Shrink.shrink(bd).map(Num(_))
+    case Str(s) => Shrink.shrink(s).map(Str(_))
+    case _ => Stream.empty
   }
 }

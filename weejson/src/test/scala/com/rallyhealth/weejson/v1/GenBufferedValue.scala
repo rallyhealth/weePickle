@@ -1,11 +1,11 @@
 package com.rallyhealth.weejson.v1
 
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 import scala.collection.mutable.ArrayBuffer
 
 trait GenBufferedValue {
-  import BufferedValue.{Arr, Obj, Str, Bool, Null, AnyNum}
+  import com.rallyhealth.weejson.v1.BufferedValue._
 
   def genArray(depth: Int): Gen[Arr] = {
     for {
@@ -52,6 +52,17 @@ trait GenBufferedValue {
   }
 
   implicit val arbNum: Arbitrary[AnyNum] = Arbitrary {
-    Arbitrary.arbitrary[Double].map(BigDecimal(_)).map(AnyNum(_))
+    Arbitrary.arbitrary[Double].map(BigDecimal(_)).map(AnyNum(_)) // TODO open to all BigDecimals after #102
+  }
+
+  implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] {
+    case Obj(map) => Shrink.shrink(map).map(Obj(_))
+    case Arr(buf) => Shrink.shrink(buf).map(Arr(_))
+    case NumDouble(d) => NumLong(d.longValue) +: Shrink.shrink(d).map(NumDouble(_))
+    case NumLong(long) => Shrink.shrink(long).map(NumLong(_))
+    case Str(s) => Shrink.shrink(s).map(Str(_))
+    case Timestamp(s) => Shrink.shrink(s).map(Timestamp(_))
+    case Ext(tag, bytes) => Shrink.shrink(bytes).map(Ext(tag, _))
+    case _ => Stream.empty
   }
 }
