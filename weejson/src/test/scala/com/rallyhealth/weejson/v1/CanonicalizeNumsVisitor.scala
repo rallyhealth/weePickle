@@ -15,7 +15,7 @@ object CanonicalizeNumsVisitor {
 
 /**
   * Forces numbers to their smallest possible representations
-  * for reproducible tests.
+  * for better equivalence in test assertions.
   */
 class CanonicalizeNumsVisitor[T, J](underlying: Visitor[T, J])
   extends Visitor.Delegate[T, J](underlying) {
