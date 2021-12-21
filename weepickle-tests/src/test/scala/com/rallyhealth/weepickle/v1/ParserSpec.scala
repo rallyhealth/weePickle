@@ -3,14 +3,16 @@ package com.rallyhealth.weepickle.v1
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue}
-import com.rallyhealth.weepickle.v1.core.FromInput
+import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import java.io.{ByteArrayInputStream, StringReader}
+import java.io.{ByteArrayInputStream, File, StringReader}
 import java.nio.file.Files
+import scala.concurrent.duration._
 import scala.language.{existentials, implicitConversions}
+import scala.util.Try
 
 abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100)
   extends AnyFreeSpec
@@ -30,6 +32,29 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   "roundtrip" in testJson()
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
+
+  "net/JSONTestSuite" - {
+    for {
+      file <- new File("weepickle-tests/src/test/test_parsing").listFiles()
+        name = file.getName
+        if name.endsWith(".json")
+    } {
+      def parse() = FromJson(file).transform(NoOpVisitor)
+
+      name in {
+        val start = System.currentTimeMillis()
+
+        def duration = (System.currentTimeMillis() - start).nanos
+
+        name.head match {
+          case 'i' => Try(parse())
+          case 'y' => parse()
+          case 'n' => intercept[Exception](parse())
+        }
+        assert(duration < 5.seconds, s"parsing $name exceeded than the 5s time limit")
+      }
+    }
+  }
 
   private def testJson(tweak: BufferedValue => BufferedValue = identity) = {
     forAll { (b: BufferedValue) =>
