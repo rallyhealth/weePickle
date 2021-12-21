@@ -99,9 +99,13 @@ class JsonFromInput(parser: JsonParser) extends FromInput {
       case ID_EMBEDDED_OBJECT =>
         copyStackSafe(v)
       case ID_STRING =>
-        val start = p.getTextOffset
-        val end = start + p.getTextLength
-        val cs = new runtime.ArrayCharSequence(p.getTextCharacters, start, end)
+        val cs: CharSequence =
+          if (p.getTextLength == 0) ""
+          else {
+            val start = p.getTextOffset
+            val end = start + p.getTextLength
+            new runtime.ArrayCharSequence(p.getTextCharacters, start, end)
+          }
         v.visitString(cs)
       case ID_FIELD_NAME =>
         v.visitString(p.getCurrentName)
