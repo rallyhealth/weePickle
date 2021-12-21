@@ -51,7 +51,7 @@ class CanonicalizeNumsVisitor[T, J](underlying: Visitor[T, J])
   override def visitInt64(l: Long): J = {
     val i = l.toInt
     if (i == l) visitInt32(i)
-    else super.visitFloat64(l)
+    else super.visitInt64(l)
   }
 
   override def visitFloat64String(s: String): J = {
