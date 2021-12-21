@@ -1,5 +1,6 @@
 package com.rallyhealth.weepickle.v1
 
+import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue}
 import com.rallyhealth.weepickle.v1.core.FromInput
@@ -20,6 +21,10 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   import com.rallyhealth.weejson.v1.BufferedValue._
   import com.rallyhealth.weejson.v1.BufferedValueOps._
 
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
+    minSuccessful = 500
+  )
+
   private implicit def toBytes(s: String): Array[Byte] = s.getBytes
 
   "roundtrip" in testJson()
@@ -37,7 +42,7 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
       testInput(s"\n $expected \n ")
       testInput(value.transform(ToPrettyJson.bytes))
 
-      assert(parse(expected.getBytes()).transform(BufferedValue.Builder) === value)
+      assert(parse(expected.getBytes()).transform(BufferedValue.Builder.canonicalize) === value)
     }
   }
 

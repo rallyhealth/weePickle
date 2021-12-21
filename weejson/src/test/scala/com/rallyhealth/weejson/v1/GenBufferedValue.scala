@@ -1,10 +1,13 @@
 package com.rallyhealth.weejson.v1
 
+import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 import scala.collection.mutable.ArrayBuffer
 
 trait GenBufferedValue {
+
+  import BufferedValueOps._
   import com.rallyhealth.weejson.v1.BufferedValue._
 
   def genArray(depth: Int): Gen[Arr] = {
@@ -42,7 +45,8 @@ trait GenBufferedValue {
     }
 
     val generators: List[Gen[BufferedValue]] = nonRecursive ++ maybeRecursive
-    Gen.oneOf(generators(0), generators(1), generators.drop(2): _*) // scalacheck API :\
+    Gen.oneOf(generators(0), generators(1), generators.drop(2): _*)
+      .map(b => b.transform(BufferedValue.Builder.canonicalize))
   }
 
   implicit val arbValue: Arbitrary[BufferedValue] = Arbitrary {
@@ -52,17 +56,36 @@ trait GenBufferedValue {
   }
 
   implicit val arbNum: Arbitrary[AnyNum] = Arbitrary {
-    Arbitrary.arbitrary[Double].map(BigDecimal(_)).map(AnyNum(_)) // TODO open to all BigDecimals after #102
+    Arbitrary.arbitrary[BigDecimal].map(AnyNum(_))
   }
 
-  implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] {
-    case Obj(map) => Shrink.shrink(map).map(Obj(_))
-    case Arr(buf) => Shrink.shrink(buf).map(Arr(_))
-    case NumDouble(d) => NumLong(d.longValue) +: Shrink.shrink(d).map(NumDouble(_))
-    case NumLong(long) => Shrink.shrink(long).map(NumLong(_))
-    case Str(s) => Shrink.shrink(s).map(Str(_))
-    case Timestamp(s) => Shrink.shrink(s).map(Timestamp(_))
-    case Ext(tag, bytes) => Shrink.shrink(bytes).map(Ext(tag, _))
-    case _ => Stream.empty
+  implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] { bv =>
+    import BufferedValue._
+    bv match {
+      case obj: BufferedValue.Obj =>
+        obj.value0.size match {
+          case 1 =>
+            val unwrappedValue = Stream(obj.value0.head._2)
+            val shrunkContents = obj.value0.toStream.flatMap { case (k, v) => shrinkValue.shrink(v).map(v => BufferedValue.Obj(k -> v)) }
+            unwrappedValue ++ shrunkContents
+          case _ => Shrink.shrink(obj.value0).map(BufferedValue.Obj(_: _*)) // each element individually
+        }
+      case arr: BufferedValue.Arr =>
+        arr.value.length match {
+          case 1 =>
+            val unwrappedValue = arr.value.head
+            val shrunkContents = arr.value.toStream.flatMap(v => shrinkValue.shrink(v).map(BufferedValue.Arr(_)))
+            unwrappedValue +: shrunkContents
+          case _ =>
+            Shrink.shrink(arr.value).map(BufferedValue.Arr(_)) // each element individually
+        }
+      case NumDouble(d) => NumLong(d.longValue) +: Shrink.shrink(d).map(NumDouble(_))
+      case NumLong(long) => Null +: Shrink.shrink(long).map(NumLong(_))
+      case Str(s) => Shrink.shrink(s).map(Str(_))
+      case Timestamp(s) => Shrink.shrink(s).map(Timestamp(_))
+      case Ext(tag, bytes) => Shrink.shrink(bytes).map(Ext(tag, _))
+      case _ =>
+        Stream.empty
+    }
   }
 }
