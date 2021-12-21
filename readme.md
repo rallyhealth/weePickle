@@ -367,3 +367,5 @@ uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
 If you use uPickle/weePickle and like it, please support it by donating to lihaoyi's Patreon:
 
 - [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
+
+Thanks to [JSONTestSuite](https://github.com/nst/JSONTestSuite) for the comprehensive collection of interesting JSON test files.
