@@ -32,7 +32,7 @@ object WeePickleJsonValueCodecs {
     pointer: List[String],
     cause: Throwable
   ) extends RuntimeException(cause)
-    with NoStackTrace {
+      with NoStackTrace {
 
     override def getMessage: String = pointer.mkString("/")
   }
@@ -104,7 +104,7 @@ object WeePickleJsonValueCodecs {
           in.rollbackToken()
           var key: String = "?"
           try {
-            while ( {
+            while ({
               key = in.readKeyAsString()
               obj.visitKeyValue(obj.visitKey().visitString(key))
               obj.visitValue(decodeValue(in, obj.subVisitor, depthM1))
@@ -126,34 +126,96 @@ object WeePickleJsonValueCodecs {
       v: Visitor[_, J]
     ): J = {
       in.setMark()
+      // Identify all important indexes before choosing parsing strategy.
+      var hasLeadingZero = false
+      var hasMoreInput = false
+      var pos = 0
+      var decIndex = -1
+      var expIndex = -1
       var digits = 0
+      var decDigits = 0
+      var expDigits = 0
       var b = in.nextByte()
-      if (b == '-') b = in.nextByte()
+      if (b == '-') {
+        b = in.nextByte()
+        pos += 1
+      }
       try {
+        hasLeadingZero = b == '0'
         while (b >= '0' && b <= '9') {
-          b = in.nextByte()
           digits += 1
+          b = in.nextByte()
         }
+        pos += digits
+
+        if (b == '.') {
+          decIndex = pos
+          b = in.nextByte()
+          pos += 1
+
+          while (b >= '0' && b <= '9') {
+            decDigits += 1
+            b = in.nextByte()
+          }
+          pos += decDigits
+        }
+
+        if ((b | 0x20) == 'e') {
+          expIndex = pos // don't need pos anymore.
+          b = in.nextByte()
+          if (b == '+' || b == '-') {
+            b = in.nextByte()
+          }
+          while (b >= '0' && b <= '9') {
+            expDigits += 1
+            b = in.nextByte()
+          }
+        }
+        hasMoreInput = true
       } catch {
         case _: JsonReaderException => // ignore the end of input error for now
-      }
-      finally in.rollbackToMark()
+      } finally in.rollbackToMark()
 
-      if ((b | 0x20) != 'e' && b != '.') {
-        if (digits < 19) {
-          val l = in.readLong()
-          val i = l.toInt
-          if (l == i) v.visitInt32(i)
-          else v.visitInt64(l)
+      // reject cases like 1e1e1 which in.readRawValAsBytes()/skipNumber() would treat as valid
+
+      // If we can _trivially_ parse to a primitive, then do so.
+      // Otherwise, CharSequence and the visitor can deal with it.
+      if (decIndex == -1 && digits < 19) {
+        if (expIndex == -1) {
+          v.visitInt64(in.readLong())
+        } else if (expDigits <= 3) {
+          // 3-char base10 exponents all fit within the bounds of −1022 to 1023 (11 bits)
+          v.visitFloat64(in.readDouble())
         } else {
-          // TODO what happens with `123foobar`?
-          val str = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII)
-          v.visitFloat64StringParts(str, -1, -1)
+          if (hasMoreInput && ((b >= '0' && b <= '9') || b == '.' || (b | 0x20) == 'e' || b == '-' || b == '+'))
+            in.decodeError("invalid number")
+
+          if (digits == 0) in.decodeError("invalid number")
+          if (hasLeadingZero && digits != 1) in.decodeError("invalid number")
+          if (decIndex != -1 && decDigits == 0) in.decodeError("invalid number")
+          if (expIndex != -1 && expDigits == 0) in.decodeError("invalid number")
+          v.visitFloat64StringParts(asAsciiCharSequence(in.readRawValAsBytes), decIndex, expIndex)
         }
       } else {
-        // TODO find decIndex and expIndex for visitFloat64StringParts(). We're already close.
-        val str = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII)
-        v.visitFloat64String(str)
+        if (hasMoreInput && ((b >= '0' && b <= '9') || b == '.' || (b | 0x20) == 'e' || b == '-' || b == '+'))
+          in.decodeError("invalid number")
+        if (digits == 0) in.decodeError("invalid number")
+        if (hasLeadingZero && digits != 1) in.decodeError("invalid number")
+        if (decIndex != -1 && decDigits == 0) in.decodeError("invalid number")
+        if (expIndex != -1 && expDigits == 0) in.decodeError("invalid number")
+        v.visitFloat64StringParts(asAsciiCharSequence(in.readRawValAsBytes), decIndex, expIndex)
+      }
+    }
+
+    private def asAsciiCharSequence(asciiBytes: Array[Byte]): CharSequence = {
+      new CharSequence {
+        override def length(): Int = asciiBytes.length
+
+        override def charAt(index: Int): Char = asciiBytes(index).toChar
+
+        override def subSequence(start: Int, end: Int): CharSequence = toString.subSequence(start, end)
+
+        override def toString: String = new String(asciiBytes, StandardCharsets.US_ASCII)
       }
     }
 

@@ -3,8 +3,9 @@ package com.rallyhealth.weepickle.v1
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.wee_jsoniter_scala.FromJsoniterScala
-import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue}
-import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor}
+import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue, Value}
+import com.rallyhealth.weepickle.v1.NumberSoup.ValidJsonNum
+import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor, Visitor}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -34,14 +35,18 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   "roundtrip" in testJson()
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
-
+  "number soup" in forAll { soup: NumberSoup =>
+    val isValid = ValidJsonNum.matches(soup.value)
+    val parseSuccess = Try(parse(soup.value.getBytes()).transform(NoOpVisitor)).isSuccess
+    assert(parseSuccess === isValid)
+  }
   "net/JSONTestSuite" - {
     for {
       file <- new File("weepickle-tests/src/test/test_parsing").listFiles()
       name = file.getName
       if name.endsWith(".json")
     } {
-      def parse() = FromJson(file).transform(NoOpVisitor)
+      def parse[J](v: Visitor[_, J]) = FromJson(file).transform(v)
 
       name in {
         val start = System.currentTimeMillis()
@@ -49,9 +54,15 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
         def duration = (System.currentTimeMillis() - start).nanos
 
         name.head match {
-          case 'i' => Try(parse())
-          case 'y' => parse()
-          case 'n' => intercept[Exception](parse())
+          case 'i' =>
+            // check for fatal exceptions
+            Try(parse(NoOpVisitor))
+            Try(parse(Value))
+          case 'y' =>
+            // parser allows values AND `Value` understands them
+            parse(Value)
+          case 'n' =>
+            intercept[Exception](parse(NoOpVisitor)) // parser should reject
         }
         assert(duration < 5.seconds, s"parsing $name exceeded than the 5s time limit")
       }
