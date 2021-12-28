@@ -95,6 +95,7 @@ lazy val `weepickle-tests` = project
     `weejson-argonaut`,
     `weejson-circe`,
     `weejson-json4s`,
+    `weejson-jsoniter-scala`,
     `weejson-play-base`,
     `weejson` % "compile;test->test",
     `weepack` % "compile;test->test",

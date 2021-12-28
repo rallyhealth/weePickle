@@ -2,6 +2,7 @@ package com.rallyhealth.weepickle.v1
 
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
+import com.rallyhealth.weejson.v1.wee_jsoniter_scala.FromJsoniterScala
 import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue}
 import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor}
 import org.scalactic.TypeCheckedTripleEquals
@@ -9,13 +10,14 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import java.io.{ByteArrayInputStream, File, StringReader}
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import scala.concurrent.duration._
 import scala.language.{existentials, implicitConversions}
 import scala.util.Try
 
 abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100)
-  extends AnyFreeSpec
+    extends AnyFreeSpec
     with ScalaCheckPropertyChecks
     with GenBufferedValue
     with TypeCheckedTripleEquals {
@@ -36,8 +38,8 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   "net/JSONTestSuite" - {
     for {
       file <- new File("weepickle-tests/src/test/test_parsing").listFiles()
-        name = file.getName
-        if name.endsWith(".json")
+      name = file.getName
+      if name.endsWith(".json")
     } {
       def parse() = FromJson(file).transform(NoOpVisitor)
 
@@ -88,11 +90,18 @@ class FromJsonInputStreamSpec extends ParserSpec(b => FromJson(new ByteArrayInpu
 
 class FromJsonReaderSpec extends ParserSpec(b => FromJson(new StringReader(new String(b))))
 
-class FromJsonPathSpec extends ParserSpec(
-  b => FromJson(Files.write(Files.createTempFile("FromJsonPathSpec", ".json"), b))
-)
+class FromJsonPathSpec
+    extends ParserSpec(
+      b => FromJson(Files.write(Files.createTempFile("FromJsonPathSpec", ".json"), b))
+    )
 
-class FromJsonFileSpec extends ParserSpec(
-  b => FromJson(Files.write(Files.createTempFile("FromJsonFileSpec", ".json"), b).toFile)
-)
+class FromJsonFileSpec
+    extends ParserSpec(
+      b => FromJson(Files.write(Files.createTempFile("FromJsonFileSpec", ".json"), b).toFile)
+    )
 
+class FromJsoniterScalaBytesSpec extends ParserSpec(FromJsoniterScala(_), 62)
+
+class FromJsoniterScalaInputStreamSpec extends ParserSpec(b => FromJsoniterScala(new ByteArrayInputStream(b)), 62)
+
+class FromJsoniterScalaByteBufferSpec extends ParserSpec(b => FromJsoniterScala(ByteBuffer.wrap(b)), 62)
