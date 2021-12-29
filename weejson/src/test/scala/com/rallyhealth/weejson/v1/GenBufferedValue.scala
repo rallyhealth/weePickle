@@ -74,7 +74,7 @@ trait GenBufferedValue {
   }
 
   implicit val arbTimestamp: Arbitrary[Timestamp] = Arbitrary {
-    Gen.choose(Instant.MIN, Instant.MAX).map(Timestamp(_))
+    Arbitrary.arbitrary[Instant](Arbitrary.arbInstant).map(Timestamp(_))
   }
 
   implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] { bv =>
