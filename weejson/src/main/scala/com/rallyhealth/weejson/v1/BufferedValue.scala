@@ -173,6 +173,9 @@ object BufferedValue extends Transformer[BufferedValue] {
           }
       case _ => super.equals(that)
     }
+
+    // expensive but reliable
+    override def hashCode(): Int = this.value0.sortBy(_._1).hashCode()
   }
 
   case class Arr(value: BufferedValue*) extends BufferedValue {
@@ -191,6 +194,9 @@ object BufferedValue extends Transformer[BufferedValue] {
       case other: AnyNum => this.value == other.value
       case _ => super.equals(that)
     }
+
+    // expensive but reliable
+    override def hashCode(): Int = this.value.hashCode()
   }
 
   case class NumLong(l: Long) extends AnyNum {
@@ -202,6 +208,9 @@ object BufferedValue extends Transformer[BufferedValue] {
       case other: AnyNum => this.value == other.value
       case _ => super.equals(that)
     }
+
+    // expensive but reliable
+    override def hashCode(): Int = this.value.hashCode()
   }
 
   case class NumDouble(d: Double) extends AnyNum {
@@ -213,6 +222,9 @@ object BufferedValue extends Transformer[BufferedValue] {
       case other: AnyNum => this.value == other.value
       case _ => super.equals(that)
     }
+
+    // expensive but reliable
+    override def hashCode(): Int = this.value.hashCode()
   }
 
   object AnyNum {
@@ -233,10 +245,13 @@ object BufferedValue extends Transformer[BufferedValue] {
 
   case class Binary(b: Array[Byte]) extends BufferedValue {
     override def toString: String = s"Binary(${b.toSeq})"
+
     override def equals(that: Any): Boolean = that match {
       case Binary(thatB) => Arrays.equals(this.b, thatB)
       case _ => super.equals(that)
     }
+
+    override def hashCode(): Int = Arrays.hashCode(this.b)
   }
 
   case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue {
@@ -247,6 +262,9 @@ object BufferedValue extends Transformer[BufferedValue] {
         this.tag == thatTag && Arrays.equals(this.b, thatB)
       case _ => super.equals(that)
     }
+
+    // collision when only tag is different (rare)
+    override def hashCode(): Int = Arrays.hashCode(this.b)
   }
 
   case class Timestamp(i: Instant) extends BufferedValue
