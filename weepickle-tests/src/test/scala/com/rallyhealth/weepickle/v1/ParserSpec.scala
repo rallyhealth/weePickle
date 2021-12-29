@@ -1,5 +1,6 @@
 package com.rallyhealth.weepickle.v1
 
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter, readFromArray}
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.wee_jsoniter_scala.FromJsoniterScala
@@ -35,10 +36,33 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   "roundtrip" in testJson()
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
+  "example" in testValue(NumDouble(1.3424780377262655E-5))
   "number soup" in forAll { soup: NumberSoup =>
     val isValid = ValidJsonNum.matches(soup.value)
-    val parseSuccess = Try(parse(soup.value.getBytes()).transform(NoOpVisitor)).isSuccess
-    assert(parseSuccess === isValid)
+    whenever(!isValid) {
+      intercept[Exception] {
+        parse(soup.value.getBytes()).transform(NoOpVisitor)
+      }
+    }
+  }
+  "number soup test" in {
+    val soup: NumberSoup = NumberSoup("96553560648619.1826-+.E59592860268957408.039294393856+e")
+    intercept[Exception] {
+      parse(soup.value.getBytes()).transform(NoOpVisitor)
+    }
+  }
+  "mmm" in {
+    implicit val codec = new JsonValueCodec[BigDecimal] {
+      override def decodeValue(in: JsonReader, default: BigDecimal): BigDecimal = {
+        in.readBigDecimal(null)
+      }
+
+      override def encodeValue(x: BigDecimal, out: JsonWriter): Unit = ???
+
+      override def nullValue: BigDecimal = null
+    }
+
+    readFromArray[BigDecimal]("4821954884020056889177390769786858.2839256153498221179+-")
   }
   "net/JSONTestSuite" - {
     for {
@@ -71,17 +95,21 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
 
   private def testJson(tweak: BufferedValue => BufferedValue = identity) = {
     forAll { (b: BufferedValue) =>
-      val value = tweak(b)
-      val expected = value.transform(ToJson.string)
-
-      def testInput(s: Array[Byte]) = assert(parse(s).transform(ToJson.string) === expected)
-
-      testInput(expected)
-      testInput(s"\n $expected \n ")
-      testInput(value.transform(ToPrettyJson.bytes))
-
-      assert(parse(expected.getBytes()).transform(BufferedValue.Builder.canonicalize) === value)
+      val value = BufferedValue.transform(tweak(b), BufferedValue.Builder.canonicalize)
+      testValue(value)
     }
+  }
+
+  private def testValue(value: BufferedValue) = {
+    val expected = value.transform(ToJson.string)
+
+    def testInput(s: Array[Byte]) = assert(parse(s).transform(ToJson.string) === expected)
+
+    testInput(expected)
+    testInput(s"\n $expected \n ")
+    testInput(value.transform(ToPrettyJson.bytes))
+
+    assert(parse(expected.getBytes()).transform(BufferedValue.Builder.canonicalize) === value)
   }
 
   private def testDepth(f: BufferedValue => BufferedValue) = {

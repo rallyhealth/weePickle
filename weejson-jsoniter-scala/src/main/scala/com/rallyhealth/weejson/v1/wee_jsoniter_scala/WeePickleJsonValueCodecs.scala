@@ -126,84 +126,33 @@ object WeePickleJsonValueCodecs {
       v: Visitor[_, J]
     ): J = {
       in.setMark()
-      // Identify all important indexes before choosing parsing strategy.
-      var hasLeadingZero = false
-      var hasMoreInput = false
-      var pos = 0
-      var decIndex = -1
-      var expIndex = -1
       var digits = 0
-      var decDigits = 0
-      var expDigits = 0
       var b = in.nextByte()
-      if (b == '-') {
-        b = in.nextByte()
-        pos += 1
-      }
+      if (b == '-') b = in.nextByte()
       try {
-        hasLeadingZero = b == '0'
         while (b >= '0' && b <= '9') {
+          b = in.nextByte()
           digits += 1
-          b = in.nextByte()
         }
-        pos += digits
-
-        if (b == '.') {
-          decIndex = pos
-          b = in.nextByte()
-          pos += 1
-
-          while (b >= '0' && b <= '9') {
-            decDigits += 1
-            b = in.nextByte()
-          }
-          pos += decDigits
-        }
-
-        if ((b | 0x20) == 'e') {
-          expIndex = pos // don't need pos anymore.
-          b = in.nextByte()
-          if (b == '+' || b == '-') {
-            b = in.nextByte()
-          }
-          while (b >= '0' && b <= '9') {
-            expDigits += 1
-            b = in.nextByte()
-          }
-        }
-        hasMoreInput = true
       } catch {
         case _: JsonReaderException => // ignore the end of input error for now
       } finally in.rollbackToMark()
 
-      // reject cases like 1e1e1 which in.readRawValAsBytes()/skipNumber() would treat as valid
-
-      // If we can _trivially_ parse to a primitive, then do so.
-      // Otherwise, CharSequence and the visitor can deal with it.
-      if (decIndex == -1 && digits < 19) {
-        if (expIndex == -1) {
-          v.visitInt64(in.readLong())
-        } else if (expDigits <= 3) {
-          // 3-char base10 exponents all fit within the bounds of −1022 to 1023 (11 bits)
-          v.visitFloat64(in.readDouble())
+      if ((b | 0x20) != 'e' && b != '.') {
+        if (digits < 19) {
+          val l = in.readLong()
+          v.visitInt64(l)
         } else {
-          if (hasMoreInput && ((b >= '0' && b <= '9') || b == '.' || (b | 0x20) == 'e' || b == '-' || b == '+'))
-            in.decodeError("invalid number")
-
-          if (digits == 0) in.decodeError("invalid number")
-          if (hasLeadingZero && digits != 1) in.decodeError("invalid number")
-          if (decIndex != -1 && decDigits == 0) in.decodeError("invalid number")
-          if (expIndex != -1 && expDigits == 0) in.decodeError("invalid number")
-          v.visitFloat64StringParts(asAsciiCharSequence(in.readRawValAsBytes), decIndex, expIndex)
+          val x = in.readBigInt(null)
+          if (x.bitLength < 64) v.visitInt64(x.longValue)
+          else v.visitFloat64StringParts(x.toString, -1, -1)
         }
       } else {
-        if (hasMoreInput && ((b >= '0' && b <= '9') || b == '.' || (b | 0x20) == 'e' || b == '-' || b == '+'))
-          in.decodeError("invalid number")
-        if (digits == 0) in.decodeError("invalid number")
-        if (hasLeadingZero && digits != 1) in.decodeError("invalid number")
-        if (decIndex != -1 && decDigits == 0) in.decodeError("invalid number")
-        if (expIndex != -1 && expDigits == 0) in.decodeError("invalid number")
-        v.visitFloat64StringParts(asAsciiCharSequence(in.readRawValAsBytes), decIndex, expIndex)
+        in.setMark()
+        val bd: BigDecimal = in.readBigDecimal(null)
+        in.rollbackToMark()
+        val cs = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII) // TODO problem: readRawValAsBytes captures too much
+        v.visitFloat64String(cs)
       }
     }
 
