@@ -64,17 +64,17 @@ trait GenBufferedValue {
   }
 
   implicit val arbBinary: Arbitrary[Binary] = Arbitrary {
-    Arbitrary.arbitrary[Array[Byte]].map(b => Binary(b))
+    Arbitrary.arbitrary[Array[Byte]].map(Binary(_))
   }
 
   implicit val arbExt: Arbitrary[Ext] = Arbitrary {
-    Gen.choose[Byte](Byte.MinValue, Byte.MaxValue).flatMap { tag =>
-      Arbitrary.arbitrary[Array[Byte]].map(b => Ext(tag, b))
+    Arbitrary.arbitrary[Byte].flatMap { tag =>
+      Arbitrary.arbitrary[Array[Byte]].map(Ext(tag, _))
     }
   }
 
   implicit val arbTimestamp: Arbitrary[Timestamp] = Arbitrary {
-    Gen.choose[Instant](Instant.MIN, Instant.MAX).map(Timestamp(_))
+    Arbitrary.arbitrary[Instant].map(Timestamp(_))
   }
 
   implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] { bv =>
