@@ -3,16 +3,16 @@ package com.rallyhealth.weejson.v1
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.propspec.AnyPropSpecLike
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.util.Random
 
 class BufferedValueSpec
-    extends AnyPropSpec
+    extends GenBufferedValue(jsonReversible = false)
+    with AnyPropSpecLike
     with Matchers
     with ScalaCheckPropertyChecks
-    with GenBufferedValue
     with TypeCheckedTripleEquals {
   import BufferedValueOps._
 

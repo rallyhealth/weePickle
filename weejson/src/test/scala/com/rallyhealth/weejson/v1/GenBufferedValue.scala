@@ -6,7 +6,14 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
 
-trait GenBufferedValue {
+/**
+ * Generator for BufferedValue
+ *
+ * @param jsonReversible if you are piping the arbitrary BufferedValue through JSON, set this to true so that
+ *                       only reversible types are used (i.e., excludes Timestamp, Ext, and Binary, which are
+ *                       encoded in such a way that they are not reversible)
+ */
+abstract class GenBufferedValue(jsonReversible: Boolean) {
 
   import BufferedValueOps._
   import com.rallyhealth.weejson.v1.BufferedValue._
@@ -29,11 +36,21 @@ trait GenBufferedValue {
     } yield obj
 
   def genValue(depth: Int): Gen[BufferedValue] = {
-    val nonRecursive: List[Gen[BufferedValue]] = List(
+    /*
+     * These round-trip through JSON fine, at least with the canonicalization of numbers
+     */
+    def nonRecursiveJsonReversible: List[Gen[BufferedValue]] = List(
       Gen.alphaNumStr.map(Str.apply),
       arbNum.arbitrary,
       Arbitrary.arbitrary[Boolean].map(Bool(_)),
-      Gen.const(Null),
+      Gen.const(Null)
+    )
+
+    /*
+     * These don't round-trip through JSON properly (e.g., timestamps are encoded as strings),
+     * and proper BufferedValue types cannot be reliably canonicalized
+     */
+    def nonRecursiveAny: List[Gen[BufferedValue]] = nonRecursiveJsonReversible ++ List(
       arbBinary.arbitrary,
       arbExt.arbitrary,
       arbTimestamp.arbitrary
@@ -48,6 +65,7 @@ trait GenBufferedValue {
         )
     }
 
+    val nonRecursive = if (jsonReversible) nonRecursiveJsonReversible else nonRecursiveAny
     val generators: List[Gen[BufferedValue]] = nonRecursive ++ maybeRecursive
     Gen.oneOf(generators(0), generators(1), generators.drop(2): _*)
       .map(b => b.transform(BufferedValue.Builder.canonicalize))

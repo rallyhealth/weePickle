@@ -5,7 +5,7 @@ import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue}
 import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor}
 import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.freespec.AnyFreeSpecLike
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import java.io.{ByteArrayInputStream, File, StringReader}
@@ -15,9 +15,9 @@ import scala.language.{existentials, implicitConversions}
 import scala.util.Try
 
 abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100)
-  extends AnyFreeSpec
+  extends GenBufferedValue(jsonReversible = true)
+    with AnyFreeSpecLike
     with ScalaCheckPropertyChecks
-    with GenBufferedValue
     with TypeCheckedTripleEquals {
 
   import com.rallyhealth.weejson.v1.BufferedValue._

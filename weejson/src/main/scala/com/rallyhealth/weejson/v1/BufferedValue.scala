@@ -232,7 +232,7 @@ object BufferedValue extends Transformer[BufferedValue] {
   }
 
   case class Binary(b: Array[Byte]) extends BufferedValue {
-
+    override def toString: String = s"Binary(${b.toSeq})"
     override def equals(that: Any): Boolean = that match {
       case Binary(thatB) => Arrays.equals(this.b, thatB)
       case _ => super.equals(that)
@@ -240,6 +240,7 @@ object BufferedValue extends Transformer[BufferedValue] {
   }
 
   case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue {
+    override def toString: String = s"Ext($tag, ${b.toSeq})"
 
     override def equals(that: Any): Boolean = that match {
       case Ext(thatTag, thatB) =>
