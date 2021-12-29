@@ -73,8 +73,10 @@ trait GenBufferedValue {
     }
   }
 
+  // can't use Arbitrary.arbitrary[Instant] because it isn't available in Scala 2.11 libs :'(
   implicit val arbTimestamp: Arbitrary[Timestamp] = Arbitrary {
-    Arbitrary.arbitrary[Instant](Arbitrary.arbInstant).map(Timestamp(_))
+    Gen.chooseNum[Long](Long.MinValue, Long.MaxValue)
+      .map(ms => Timestamp(Instant.ofEpochMilli(ms)))
   }
 
   implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] { bv =>
