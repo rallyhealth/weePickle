@@ -182,15 +182,15 @@ object BufferedValue extends Transformer[BufferedValue] {
 
   sealed trait AnyNum extends BufferedValue {
     def value: BigDecimal
+  }
+
+  case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
+    override def value: BigDecimal = BigDecimal(s)
 
     override def equals(that: Any): Boolean = that match {
       case other: AnyNum => this.value == other.value
       case _ => super.equals(that)
     }
-  }
-
-  case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
-    override def value: BigDecimal = BigDecimal(s)
   }
 
   case class NumLong(l: Long) extends AnyNum {
@@ -199,6 +199,7 @@ object BufferedValue extends Transformer[BufferedValue] {
     override def equals(that: Any): Boolean = that match {
       case NumLong(otherL) => this.l == otherL
       case NumDouble(otherD) => this.l.toDouble == otherD
+      case other: AnyNum => this.value == other.value
       case _ => super.equals(that)
     }
   }
@@ -209,6 +210,7 @@ object BufferedValue extends Transformer[BufferedValue] {
     override def equals(that: Any): Boolean = that match {
       case NumLong(otherL) => this.d == otherL.toDouble
       case NumDouble(otherD) => this.d == otherD
+      case other: AnyNum => this.value == other.value
       case _ => super.equals(that)
     }
   }

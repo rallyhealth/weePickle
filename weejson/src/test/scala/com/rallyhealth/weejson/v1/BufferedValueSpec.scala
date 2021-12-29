@@ -26,7 +26,7 @@ class BufferedValueSpec
     }
   }
 
-  property("roundtrip: Visitor with object attributes shuffled") {
+  property("roundtrip: Visitor with object shuffling") {
     forAll { (value: BufferedValue) =>
       shuffleObjs(value.transform(BufferedValue.Builder)) should ===(value)
     }
