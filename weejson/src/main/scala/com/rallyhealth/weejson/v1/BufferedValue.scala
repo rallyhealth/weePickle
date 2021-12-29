@@ -195,8 +195,8 @@ object BufferedValue extends Transformer[BufferedValue] {
       case _ => super.equals(that)
     }
 
-    // expensive but reliable
-    override def hashCode(): Int = this.value.hashCode()
+    // all values outside of Double range hash to the same value
+    override def hashCode(): Int = this.value.toDouble.hashCode()
   }
 
   case class NumLong(l: Long) extends AnyNum {
@@ -209,8 +209,7 @@ object BufferedValue extends Transformer[BufferedValue] {
       case _ => super.equals(that)
     }
 
-    // expensive but reliable
-    override def hashCode(): Int = this.value.hashCode()
+    override def hashCode(): Int = this.l.toDouble.hashCode()
   }
 
   case class NumDouble(d: Double) extends AnyNum {
@@ -223,8 +222,7 @@ object BufferedValue extends Transformer[BufferedValue] {
       case _ => super.equals(that)
     }
 
-    // expensive but reliable
-    override def hashCode(): Int = this.value.hashCode()
+    override def hashCode(): Int = this.d.hashCode()
   }
 
   object AnyNum {
