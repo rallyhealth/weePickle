@@ -3,6 +3,7 @@ package com.rallyhealth.weejson.v1
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
+import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
 
 trait GenBufferedValue {
@@ -32,7 +33,10 @@ trait GenBufferedValue {
       Gen.alphaNumStr.map(Str.apply),
       arbNum.arbitrary,
       Arbitrary.arbitrary[Boolean].map(Bool(_)),
-      Gen.const(Null)
+      Gen.const(Null),
+      arbBinary.arbitrary,
+      arbExt.arbitrary,
+      arbTimestamp.arbitrary
     )
 
     val maybeRecursive: List[Gen[BufferedValue]] = depth match {
@@ -57,6 +61,20 @@ trait GenBufferedValue {
 
   implicit val arbNum: Arbitrary[AnyNum] = Arbitrary {
     Arbitrary.arbitrary[BigDecimal].map(AnyNum(_))
+  }
+
+  implicit val arbBinary: Arbitrary[Binary] = Arbitrary {
+    Arbitrary.arbitrary[Array[Byte]].map(b => Binary(b))
+  }
+
+  implicit val arbExt: Arbitrary[Ext] = Arbitrary {
+    Gen.choose[Byte](Byte.MinValue, Byte.MaxValue).flatMap { tag =>
+      Arbitrary.arbitrary[Array[Byte]].map(b => Ext(tag, b))
+    }
+  }
+
+  implicit val arbTimestamp: Arbitrary[Timestamp] = Arbitrary {
+    Gen.choose[Instant](Instant.MIN, Instant.MAX).map(Timestamp(_))
   }
 
   implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] { bv =>
@@ -84,8 +102,8 @@ trait GenBufferedValue {
       case Str(s) => Shrink.shrink(s).map(Str(_))
       case Timestamp(s) => Shrink.shrink(s).map(Timestamp(_))
       case Ext(tag, bytes) => Shrink.shrink(bytes).map(Ext(tag, _))
-      case _ =>
-        Stream.empty
+      case Binary(bytes) => Shrink.shrink(bytes).map(Binary(_))
+      case _ => Stream.empty // Null, True, False, Num
     }
   }
 }

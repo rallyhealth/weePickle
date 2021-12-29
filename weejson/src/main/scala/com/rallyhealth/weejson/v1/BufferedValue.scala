@@ -3,6 +3,7 @@ package com.rallyhealth.weejson.v1
 import java.time.Instant
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, JsVisitor, ObjVisitor, Visitor}
 
+import java.util.Arrays
 import scala.collection.mutable
 import scala.util.Try
 
@@ -162,6 +163,16 @@ object BufferedValue extends Transformer[BufferedValue] {
   case class Obj(value0: (String, BufferedValue)*) extends BufferedValue {
 
     override def toString: String = value0.map { case (k, v) => s""""$k": $v""" }.mkString("Obj(", ", ", ")")
+
+    override def equals(that: Any): Boolean = that match {
+      case Obj(thatValue0 @ _*) =>
+        this.value0.size == thatValue0.size &&
+          this.value0.sortBy(_._1).zip(thatValue0.sortBy(_._1)).forall {
+            case ((thisKey, thisValue), (thatKey, thatValue)) =>
+              thisKey == thatKey && thisValue == thatValue
+          }
+      case _ => super.equals(that)
+    }
   }
 
   case class Arr(value: BufferedValue*) extends BufferedValue {
@@ -171,16 +182,37 @@ object BufferedValue extends Transformer[BufferedValue] {
 
   sealed trait AnyNum extends BufferedValue {
     def value: BigDecimal
+
+    override def equals(that: Any): Boolean = that match {
+      case other: AnyNum => this.value == other.value
+      case _ => super.equals(that)
+    }
   }
+
   case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
     override def value: BigDecimal = BigDecimal(s)
   }
+
   case class NumLong(l: Long) extends AnyNum {
     override def value: BigDecimal = BigDecimal(l)
+
+    override def equals(that: Any): Boolean = that match {
+      case NumLong(otherL) => this.l == otherL
+      case NumDouble(otherD) => this.l.toDouble == otherD
+      case _ => super.equals(that)
+    }
   }
+
   case class NumDouble(d: Double) extends AnyNum {
     override def value: BigDecimal = BigDecimal(d)
+
+    override def equals(that: Any): Boolean = that match {
+      case NumLong(otherL) => this.d == otherL.toDouble
+      case NumDouble(otherD) => this.d == otherD
+      case _ => super.equals(that)
+    }
   }
+
   object AnyNum {
     def apply(d: BigDecimal): AnyNum = // precision sensitive
       if (d.isValidLong) NumLong(d.longValue)
@@ -197,21 +229,37 @@ object BufferedValue extends Transformer[BufferedValue] {
       }
   }
 
-  case class Binary(b: Array[Byte]) extends BufferedValue
+  case class Binary(b: Array[Byte]) extends BufferedValue {
 
-  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue
+    override def equals(that: Any): Boolean = that match {
+      case Binary(thatB) => Arrays.equals(this.b, thatB)
+      case _ => super.equals(that)
+    }
+  }
+
+  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue {
+
+    override def equals(that: Any): Boolean = that match {
+      case Ext(thatTag, thatB) =>
+        this.tag == thatTag && Arrays.equals(this.b, thatB)
+      case _ => super.equals(that)
+    }
+  }
 
   case class Timestamp(i: Instant) extends BufferedValue
 
   sealed trait Bool extends BufferedValue {
     def value: Boolean
   }
+
   case object False extends Bool {
     override def value = false
   }
+
   case object True extends Bool {
     override def value = true
   }
+
   object Bool {
     def apply(value: Boolean): BufferedValue = if (value) True else False
   }
