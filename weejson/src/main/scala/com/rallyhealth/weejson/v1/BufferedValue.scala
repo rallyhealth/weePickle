@@ -188,15 +188,25 @@ object BufferedValue extends Transformer[BufferedValue] {
   }
 
   case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
-    override def value: BigDecimal = BigDecimal(s)
+    override lazy val value: BigDecimal = BigDecimal(s)
 
     override def equals(that: Any): Boolean = that match {
-      case other: AnyNum => this.value == other.value
+      case NumLong(l) => value == l.value
+      case NumDouble(d) =>
+        val thisD = value.toDouble // may chop precision or go infinite
+        if (thisD.isFinite) thisD == d else value == d.value
+      case other: Num => value == other.value
       case _ => super.equals(that)
     }
 
-    // all values outside of Double range hash to the same value
-    override def hashCode(): Int = this.value.toDouble.hashCode()
+    override def hashCode(): Int = {
+      /*
+       * All values outside of Double's range hash to the same values
+       * (i.e., Double.PositiveInfinity.## and Double.NegativeInfinity.##),
+       * but these gigantic numbers are rarely encountered.
+       */
+      this.value.toDouble.##
+    }
   }
 
   case class NumLong(l: Long) extends AnyNum {
@@ -205,11 +215,11 @@ object BufferedValue extends Transformer[BufferedValue] {
     override def equals(that: Any): Boolean = that match {
       case NumLong(otherL) => this.l == otherL
       case NumDouble(otherD) => this.l.toDouble == otherD
-      case other: AnyNum => this.value == other.value
+      case other: Num => this.l.value == other.value
       case _ => super.equals(that)
     }
 
-    override def hashCode(): Int = this.l.toDouble.hashCode()
+    override def hashCode(): Int = this.l.toDouble.##
   }
 
   case class NumDouble(d: Double) extends AnyNum {
@@ -218,11 +228,13 @@ object BufferedValue extends Transformer[BufferedValue] {
     override def equals(that: Any): Boolean = that match {
       case NumLong(otherL) => this.d == otherL.toDouble
       case NumDouble(otherD) => this.d == otherD
-      case other: AnyNum => this.value == other.value
+      case other: Num =>
+        val otherD = other.value.toDouble // may chop precision or go infinite
+        if (otherD.isFinite) this.d == otherD else this.value == other.value
       case _ => super.equals(that)
     }
 
-    override def hashCode(): Int = this.d.hashCode()
+    override def hashCode(): Int = this.d.##
   }
 
   object AnyNum {

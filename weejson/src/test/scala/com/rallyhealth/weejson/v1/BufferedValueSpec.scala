@@ -32,11 +32,55 @@ class BufferedValueSpec
     }
   }
 
-  property("roundtrip: String") {
-    forAll { (value: BufferedValue) =>
-      FromJson(value.transform(ToJson.string)).transform(BufferedValue.Builder) === (value)
+  // covered by com.rallyhealth.weepickle.v1.ParserSpec, where jsonReversible = true
+  //  property("roundtrip: String") {
+  //    forAll { (value: BufferedValue) =>
+  //      FromJson(value.transform(ToJson.string)).transform(BufferedValue.Builder) should ===(value)
+  //    }
+  //  }
+
+  property("numeric equivalence: Long range/precision") {
+    forAll { (value: Long) =>
+      assert(equalsAndHashCode(
+        () => BufferedValue.Num(value.toString, -1, -1),
+        () => BufferedValue.NumDouble(value.toDouble),
+        () => BufferedValue.NumLong(value)
+      ))
     }
   }
+
+  property("numeric equivalence: Double range/precision") {
+    forAll { (value: Double) =>
+      assert(equalsAndHashCode(
+        () => BufferedValue.Num(value.toString, -1, -1),
+        () => BufferedValue.NumDouble(value)
+      ))
+    }
+  }
+
+  property("numeric equivalence: BigDecimal range/precision") {
+    forAll { (value: BigDecimal) =>
+      assert(
+        if (value.toDouble.isFinite) equalsAndHashCode(
+          () => BufferedValue.Num(value.toString, -1, -1),
+          () => BufferedValue.NumDouble(value.toDouble)
+        )
+        else equalsAndHashCode(
+          () => BufferedValue.Num(value.toString, -1, -1)
+        )
+      )
+    }
+  }
+
+  private def equalsAndHashCode(v1: () => BufferedValue, v2: () => BufferedValue, v3: () => BufferedValue): Boolean =
+    equalsAndHashCode(v1, v2) && equalsAndHashCode(v1, v3) && equalsAndHashCode(v2, v3)
+
+  private def equalsAndHashCode(v1: () => BufferedValue, v2: () => BufferedValue): Boolean =
+    equalsAndHashCode(v1) && equalsAndHashCode(v2) &&
+    (v1() === v2()) && (v2() === v1()) && (v1().hashCode === v2().hashCode)
+
+  private def equalsAndHashCode(v1: () => BufferedValue): Boolean =
+    (v1() === v1()) && (v1().hashCode === v1().hashCode)
 
   private def shuffleObjs(v: BufferedValue): BufferedValue = v match {
     case BufferedValue.Obj(attributes @ _*) =>
