@@ -188,13 +188,11 @@ object BufferedValue extends Transformer[BufferedValue] {
   }
 
   case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
-    override lazy val value: BigDecimal = BigDecimal(s)
+    override def value: BigDecimal = BigDecimal(s)
 
     override def equals(that: Any): Boolean = that match {
-      case NumLong(l) => value == l.value
-      case NumDouble(d) =>
-        val thisD = value.toDouble // may chop precision or go infinite
-        if (thisD.isInfinite) value == d.value else thisD == d
+      case NumLong(otherL) => value == otherL
+      case NumDouble(otherD) => value.toDouble == otherD
       case other: Num => value == other.value
       case _ => super.equals(that)
     }
@@ -214,8 +212,8 @@ object BufferedValue extends Transformer[BufferedValue] {
 
     override def equals(that: Any): Boolean = that match {
       case NumLong(otherL) => this.l == otherL
-      case NumDouble(otherD) => this.l.toDouble == otherD
-      case other: Num => this.l.value == other.value
+      case NumDouble(otherD) => this.l == otherD
+      case other: Num => this.l == other.value
       case _ => super.equals(that)
     }
 
@@ -228,9 +226,7 @@ object BufferedValue extends Transformer[BufferedValue] {
     override def equals(that: Any): Boolean = that match {
       case NumLong(otherL) => this.d == otherL.toDouble
       case NumDouble(otherD) => this.d == otherD
-      case other: Num =>
-        val otherD = other.value.toDouble // may chop precision or go infinite
-        if (otherD.isInfinite) this.value == other.value else this.d == otherD
+      case other: Num => this.d == other.value.toDouble
       case _ => super.equals(that)
     }
 
