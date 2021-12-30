@@ -61,12 +61,12 @@ class BufferedValueSpec
   property("numeric equivalence: BigDecimal range/precision") {
     forAll { (value: BigDecimal) =>
       assert(
-        if (value.toDouble.isFinite) equalsAndHashCode(
-          () => BufferedValue.Num(value.toString, -1, -1),
-          () => BufferedValue.NumDouble(value.toDouble)
+        if (value.toDouble.isInfinite) equalsAndHashCode(
+          () => BufferedValue.Num(value.toString, -1, -1)
         )
         else equalsAndHashCode(
-          () => BufferedValue.Num(value.toString, -1, -1)
+          () => BufferedValue.Num(value.toString, -1, -1),
+          () => BufferedValue.NumDouble(value.toDouble)
         )
       )
     }

@@ -194,7 +194,7 @@ object BufferedValue extends Transformer[BufferedValue] {
       case NumLong(l) => value == l.value
       case NumDouble(d) =>
         val thisD = value.toDouble // may chop precision or go infinite
-        if (thisD.isFinite) thisD == d else value == d.value
+        if (thisD.isInfinite) value == d.value else thisD == d
       case other: Num => value == other.value
       case _ => super.equals(that)
     }
@@ -230,7 +230,7 @@ object BufferedValue extends Transformer[BufferedValue] {
       case NumDouble(otherD) => this.d == otherD
       case other: Num =>
         val otherD = other.value.toDouble // may chop precision or go infinite
-        if (otherD.isFinite) this.d == otherD else this.value == other.value
+        if (otherD.isInfinite) this.value == other.value else this.d == otherD
       case _ => super.equals(that)
     }
 
