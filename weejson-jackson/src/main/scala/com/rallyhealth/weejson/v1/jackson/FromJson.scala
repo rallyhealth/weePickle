@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonParser.NumberType
 import com.fasterxml.jackson.core.JsonToken._
 import com.fasterxml.jackson.core.JsonTokenId._
 import com.fasterxml.jackson.core.{JsonFactory, JsonParser, JsonToken, JsonTokenId}
-import com.rallyhealth.weepickle.v1.core.{CallbackVisitor, FromInput, TransformException, Visitor}
+import com.rallyhealth.weepickle.v1.core.{Abort, CallbackVisitor, FromInput, TransformException, Visitor}
 
 import java.io.{File, InputStream, Reader}
 import java.nio.file.Path
@@ -29,19 +29,21 @@ object FromJson extends JsonParserOps {
 
 abstract class JsonParserOps(factory: JsonFactory = DefaultJsonFactory.Instance) {
 
-  def apply(string: String): FromInput = fromParser(factory.createParser(string))
+  def apply(string: String): FromInput = fromReplayableParser(() => factory.createParser(string))
 
-  def apply(bytes: Array[Byte]): FromInput = fromParser(factory.createParser(bytes))
+  def apply(bytes: Array[Byte]): FromInput = fromReplayableParser(() => factory.createParser(bytes))
 
   def apply(in: InputStream): FromInput = fromParser(factory.createParser(in))
 
   def apply(reader: Reader): FromInput = fromParser(factory.createParser(reader))
 
-  def apply(file: File): FromInput = fromParser(factory.createParser(file))
+  def apply(file: File): FromInput = fromReplayableParser(() => factory.createParser(file))
 
-  def apply(path: Path): FromInput = fromParser(factory.createParser(path.toFile))
+  def apply(path: Path): FromInput = fromReplayableParser(() => factory.createParser(path.toFile))
 
   protected def fromParser(parser: JsonParser): FromInput = new JsonFromInput(parser)
+
+  protected def fromReplayableParser(parser: () => JsonParser): FromInput = new JsonFromInput(parser)
 }
 
 /**
@@ -49,12 +51,16 @@ abstract class JsonParserOps(factory: JsonFactory = DefaultJsonFactory.Instance)
   *
   * @see https://github.com/FasterXML/jackson
   */
-class JsonFromInput(parser: JsonParser) extends FromInput {
+class JsonFromInput(createParser: () => JsonParser) extends FromInput {
+
+  def this(parser: JsonParser) = this(() => parser)
 
   override def transform[J](
     to: Visitor[_, J]
   ): J = {
+    val parser = createParser()
     try {
+      if (parser.isClosed) throw new Abort("Parser is closed.")
       parser.nextToken()
       val result = parseRec(to, 64)(parser)
       if (parser.nextToken() != null) {
