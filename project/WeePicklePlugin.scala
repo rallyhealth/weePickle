@@ -127,6 +127,10 @@ object WeePicklePlugin extends AutoPlugin {
         case _ => Nil
       }
     },
+    Test / scalacOptions := {
+      // FromJsonTests.scala:34:3 "A pure expression does nothing in statement position"
+      (Test / scalacOptions).value.filterNot(_ == "-Xfatal-warnings")
+    },
     testFrameworks += new TestFramework("utest.runner.Framework"),
   )
 }
