@@ -11,9 +11,9 @@ import java.nio.ByteBuffer
   * A very fast UTF-8-only JSON parser.
   *
   * This integration:
-  *  - tracks paths and returns as JsonPointer
-  *  - does not deduplicate strings
-  *  - throws below a fixed depth limit
+  *  - tracks paths and returns a JsonPointer on error
+  *  - does not deduplicate string keys (as jackson-core does)
+  *  - throws when a fixed depth limit is reached
   *
   * @see https://github.com/plokhotnyuk/jsoniter-scala
   */

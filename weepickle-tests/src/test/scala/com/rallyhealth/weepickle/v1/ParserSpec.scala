@@ -109,15 +109,13 @@ class FromJsonInputStreamSpec extends ParserSpec(b => FromJson(new ByteArrayInpu
 
 class FromJsonReaderSpec extends ParserSpec(b => FromJson(new StringReader(new String(b))))
 
-class FromJsonPathSpec
-    extends ParserSpec(
-      b => FromJson(Files.write(Files.createTempFile("FromJsonPathSpec", ".json"), b))
-    )
+class FromJsonPathSpec extends ParserSpec(
+  b => FromJson(Files.write(Files.createTempFile("FromJsonPathSpec", ".json"), b))
+)
 
-class FromJsonFileSpec
-    extends ParserSpec(
-      b => FromJson(Files.write(Files.createTempFile("FromJsonFileSpec", ".json"), b).toFile)
-    )
+class FromJsonFileSpec extends ParserSpec(
+  b => FromJson(Files.write(Files.createTempFile("FromJsonFileSpec", ".json"), b).toFile)
+)
 
 class FromJsoniterScalaBytesSpec extends ParserSpec(FromJsoniterScala(_), 62)
 
