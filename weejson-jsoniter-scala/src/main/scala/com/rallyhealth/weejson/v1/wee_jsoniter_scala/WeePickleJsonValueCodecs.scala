@@ -171,7 +171,7 @@ object WeePickleJsonValueCodecs {
           * trailing hyphens.
           *
           */
-        require(ValidJsonNum.matches(cs), "invalid number")
+        require(ValidJsonNum.pattern.matcher(cs).matches(), "invalid number")
         v.visitFloat64String(cs)
       }
     }

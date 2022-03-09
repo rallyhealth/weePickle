@@ -37,8 +37,7 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
   "number soup" in forAll { soup: NumberSoup =>
-    val isValid = ValidJsonNum.matches(soup.value)
-    whenever(!isValid) {
+    whenever(soup.isInvalid) {
       intercept[Exception] {
         parse(soup.value.getBytes()).transform(NoOpVisitor)
       }
