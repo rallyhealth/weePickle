@@ -2,7 +2,7 @@ package com.rallyhealth.weejson.v1.wee_jsoniter_scala
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonReaderException, JsonValueCodec, JsonWriter}
 import com.rallyhealth.weepickle.v1.core.JsonPointerVisitor.JsonPointerException
-import com.rallyhealth.weepickle.v1.core.{FromInput, Types, Visitor}
+import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 
 import java.nio.charset.StandardCharsets
 import scala.util.control.{NoStackTrace, NonFatal}
@@ -148,23 +148,31 @@ object WeePickleJsonValueCodecs {
           else v.visitFloat64StringParts(x.toString, -1, -1)
         }
       } else {
-        in.setMark()
-        val bd: BigDecimal = in.readBigDecimal(null)
-        in.rollbackToMark()
-        val cs = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII) // TODO problem: readRawValAsBytes captures too much
+        val cs = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII)
+
+        /**
+          * This regex performs rather badly, but gets the tests passing.
+          *
+          * We're looking for a value we can pass through the Visitor interface--
+          * either a primitive Double or a CharSequence representing a *valid*
+          * number conforming to https://datatracker.ietf.org/doc/html/rfc7159#page-6.
+          *
+          * `in.readRawValAsBytes()` does NOT do that validation. It will happily
+          * return a String of "------".
+          *
+          * `in.readBigDecimal(null).toString` is tempting, but will not provide the raw input.
+          * Instead, it transforms the input from "0.00000001" to "1.0E-8".
+          * This fails roundtrip tests.
+          *
+          * I tried combining the two approaches, `in.readBigDecimal(null)` for validation,
+          * then `in.rollbackToMark()` + `in.readRawValAsBytes()` to capture the raw input,
+          * but for a value like "1.0-----", `in.readBigDecimal(null)` will read "1.0",
+          * then `in.readRawValAsBytes()` will return the whole string, including the unwanted
+          * trailing hyphens.
+          *
+          */
+        require(ValidJsonNum.matches(cs), "invalid number")
         v.visitFloat64String(cs)
-      }
-    }
-
-    private def asAsciiCharSequence(asciiBytes: Array[Byte]): CharSequence = {
-      new CharSequence {
-        override def length(): Int = asciiBytes.length
-
-        override def charAt(index: Int): Char = asciiBytes(index).toChar
-
-        override def subSequence(start: Int, end: Int): CharSequence = toString.subSequence(start, end)
-
-        override def toString: String = new String(asciiBytes, StandardCharsets.US_ASCII)
       }
     }
 
@@ -186,4 +194,6 @@ object WeePickleJsonValueCodecs {
       throw new UnsupportedOperationException("only supports decoding")
     }
   }
+
+  private val ValidJsonNum = """-?(0|[1-9]\d*)(\.\d+)?([eE][-+]?\d+)?""".r // based on https://datatracker.ietf.org/doc/html/rfc7159#page-6
 }

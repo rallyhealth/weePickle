@@ -1,6 +1,5 @@
 package com.rallyhealth.weepickle.v1
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter, readFromArray}
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.wee_jsoniter_scala.FromJsoniterScala
@@ -34,9 +33,9 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   private implicit def toBytes(s: String): Array[Byte] = s.getBytes
 
   "roundtrip" in testJson()
+  "roundtrip example" in testValue(NumDouble(1.3424780377262655E-5))
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
-  "example" in testValue(NumDouble(1.3424780377262655E-5))
   "number soup" in forAll { soup: NumberSoup =>
     val isValid = ValidJsonNum.matches(soup.value)
     whenever(!isValid) {
@@ -44,25 +43,6 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
         parse(soup.value.getBytes()).transform(NoOpVisitor)
       }
     }
-  }
-  "number soup test" in {
-    val soup: NumberSoup = NumberSoup("96553560648619.1826-+.E59592860268957408.039294393856+e")
-    intercept[Exception] {
-      parse(soup.value.getBytes()).transform(NoOpVisitor)
-    }
-  }
-  "mmm" in {
-    implicit val codec = new JsonValueCodec[BigDecimal] {
-      override def decodeValue(in: JsonReader, default: BigDecimal): BigDecimal = {
-        in.readBigDecimal(null)
-      }
-
-      override def encodeValue(x: BigDecimal, out: JsonWriter): Unit = ???
-
-      override def nullValue: BigDecimal = null
-    }
-
-    readFromArray[BigDecimal]("4821954884020056889177390769786858.2839256153498221179+-")
   }
   "net/JSONTestSuite" - {
     for {
