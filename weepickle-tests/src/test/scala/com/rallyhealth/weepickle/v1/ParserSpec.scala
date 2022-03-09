@@ -4,7 +4,6 @@ import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson, ToPrettyJson}
 import com.rallyhealth.weejson.v1.wee_jsoniter_scala.FromJsoniterScala
 import com.rallyhealth.weejson.v1.{BufferedValue, GenBufferedValue, Value}
-import com.rallyhealth.weepickle.v1.NumberSoup.ValidJsonNum
 import com.rallyhealth.weepickle.v1.core.{FromInput, NoOpVisitor, Visitor}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.freespec.AnyFreeSpec
@@ -36,7 +35,7 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   "roundtrip example" in testValue(NumDouble(1.3424780377262655E-5))
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
-  "number soup" in forAll { soup: NumberSoup =>
+  "number soup" in forAll { (soup: NumberSoup) =>
     whenever(soup.isInvalid) {
       intercept[Exception] {
         parse(soup.value.getBytes()).transform(NoOpVisitor)

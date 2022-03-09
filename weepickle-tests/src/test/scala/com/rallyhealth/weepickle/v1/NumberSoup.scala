@@ -25,5 +25,5 @@ object NumberSoup {
     )
     Gen.listOf(numberParts).map(_.mkString).map(NumberSoup(_))
   }
-  implicit val arb = Arbitrary(gen)
+  implicit val arb: Arbitrary[NumberSoup] = Arbitrary(gen)
 }
