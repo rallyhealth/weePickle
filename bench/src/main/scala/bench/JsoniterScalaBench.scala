@@ -1,7 +1,7 @@
 package bench
 
+import com.rallyhealth.weejson.v1.BufferedValue
 import com.rallyhealth.weejson.v1.wee_jsoniter_scala.FromJsoniterScala
-import com.rallyhealth.weepickle.v1.WeePickle.ToScala
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -10,17 +10,17 @@ import java.util.concurrent.TimeUnit
   * Quick and dirty test to see how badly we're butchering performance of floats.
   *
   * ==Quick Run==
-  * bench / Jmh / run .*JsoniterScalabench
+  * bench / Jmh / run .*JsoniterScalaBench
   *
   * ==Profile with Flight Recorder==
-  * bench / Jmh / run -prof jfr .*JsoniterScalabench
+  * bench / Jmh / run -prof jfr .*JsoniterScalaBench
   *
   * ==Jmh Visualizer Report==
-  * bench / Jmh / run -prof gc -rf json -rff JsoniterScalabench-results.json .*JsoniterScalabench
+  * bench / Jmh / run -prof gc -rf json -rff JsoniterScalaBench-results.json .*JsoniterScalaBench
   *
   * @see https://github.com/ktoso/sbt-jmh
   */
-@Warmup(iterations = 15, time = 1, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 15, time = 1, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -31,11 +31,15 @@ import java.util.concurrent.TimeUnit
   value = 1
 )
 class JsoniterScalaBench {
-  private val input = "348249875e105".getBytes()
+
+  /**
+    * Values that end with a number throw an expensive exception internally when reaching EOF.
+    * The only time this would happen in the wild would be when parsing a JSON text of a single number.
+    * To make this more realistic, we're intentionally adding a whitespace suffix here.
+    */
+  private val piBytes = "-3.14 ".getBytes()
 
   @Benchmark
-  def parseDouble = {
-    FromJsoniterScala(input).transform(ToScala[Double])
-  }
+  def pi = FromJsoniterScala(piBytes).transform(BufferedValue.Builder)
 
 }

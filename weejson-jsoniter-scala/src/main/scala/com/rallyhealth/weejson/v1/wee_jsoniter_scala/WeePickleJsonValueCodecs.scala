@@ -74,7 +74,7 @@ object WeePickleJsonValueCodecs {
         if (in.readBoolean()) v.visitTrue() else v.visitFalse()
       } else if ((b >= '0' && b <= '9') || b == '-') {
         in.rollbackToken()
-        parseNumber(in, v)
+        parseNumberCounter(in, v)
       } else if (b == '[') {
         val depthM1 = depth - 1
         if (depthM1 < 0) in.decodeError("depth limit exceeded")
@@ -121,7 +121,69 @@ object WeePickleJsonValueCodecs {
       }
     }
 
-    private def parseNumber[J](
+    private def parseNumberCounter[J](
+      in: JsonReader,
+      v: Visitor[_, J]
+    ): J = {
+      in.setMark()
+      var b = in.nextByte()
+      var digits, index = 0
+      var decIndex, expIndex = -1
+      if (b == '-') {
+        b = in.nextByte()
+        index += 1
+      }
+      try {
+        digits -= index
+        while (b >= '0' && b <= '9') {
+          b = in.nextByte()
+          index += 1
+        }
+        digits += index
+        if (b == '.') {
+          decIndex = index
+          b = in.nextByte()
+          index += 1
+        }
+        digits -= index
+        while (b >= '0' && b <= '9') {
+          b = in.nextByte()
+          index += 1
+        }
+        digits += index
+        if ((b | 0x20) == 'e') {
+          expIndex = index
+          b = in.nextByte()
+          index += 1
+          if (b == '-' || b == '+') {
+            b = in.nextByte()
+            index += 1
+          }
+          while (b >= '0' && b <= '9') {
+            b = in.nextByte()
+            index += 1
+          }
+        }
+      } catch {
+        case _: JsonReaderException =>
+          index += 1 // for length calcs, pretend that nextByte() didn't hit EOF
+      } finally in.rollbackToMark()
+      if ((decIndex & expIndex) == -1) {
+        if (digits < 19) v.visitInt64(in.readLong())
+        else {
+          val x = in.readBigInt(null)
+          if (x.bitLength < 64) v.visitInt64(x.longValue)
+          else v.visitFloat64StringParts(x.toString, -1, -1)
+        }
+      } else {
+        val cs = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII)
+        require(cs.length == index, "invalid number")
+        v.visitFloat64StringParts(cs, decIndex, expIndex)
+      }
+    }
+
+
+    private def parseNumberRegex[J](
       in: JsonReader,
       v: Visitor[_, J]
     ): J = {
