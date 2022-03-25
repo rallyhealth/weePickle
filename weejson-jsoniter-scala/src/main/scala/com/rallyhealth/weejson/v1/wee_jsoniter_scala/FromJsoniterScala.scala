@@ -17,7 +17,10 @@ import java.nio.ByteBuffer
   *
   * @see https://github.com/plokhotnyuk/jsoniter-scala
   */
-object FromJsoniterScala extends FromJsoniterScala(ReaderConfig)
+object FromJsoniterScala extends FromJsoniterScala(
+  ReaderConfig
+    .withAppendHexDumpToParseException(false) // avoid leaking sensitive plaintext data
+)
 
 class FromJsoniterScala(config: ReaderConfig) {
 
