@@ -74,7 +74,7 @@ object WeePickleJsonValueCodecs {
         if (in.readBoolean()) v.visitTrue() else v.visitFalse()
       } else if ((b >= '0' && b <= '9') || b == '-') {
         in.rollbackToken()
-        parseNumberCounter(in, v)
+        parseNumber(in, v)
       } else if (b == '[') {
         val depthM1 = depth - 1
         if (depthM1 < 0) in.decodeError("depth limit exceeded")
@@ -121,120 +121,75 @@ object WeePickleJsonValueCodecs {
       }
     }
 
-    private def parseNumberCounter[J](
+    private def parseNumber[J](
       in: JsonReader,
       v: Visitor[_, J]
     ): J = {
       in.setMark()
       var b = in.nextByte()
-      var digits, index = 0
+      var intDigits, fracDigits, expDigits, punct = 0
       var decIndex, expIndex = -1
       if (b == '-') {
+        punct += 1
         b = in.nextByte()
-        index += 1
       }
       try {
-        digits -= index
-        while (b >= '0' && b <= '9') {
+        if (b == '0') {
+          intDigits += 1
           b = in.nextByte()
-          index += 1
+
+          if (b >= '0' && b <= '9') {
+            in.decodeError("invalid number")
+          }
         }
-        digits += index
+        while (b >= '0' && b <= '9') {
+          intDigits += 1
+          b = in.nextByte()
+        }
         if (b == '.') {
-          decIndex = index
+          decIndex = punct + intDigits
+          punct += 1
           b = in.nextByte()
-          index += 1
-        }
-        digits -= index
-        while (b >= '0' && b <= '9') {
-          b = in.nextByte()
-          index += 1
-        }
-        digits += index
-        if ((b | 0x20) == 'e') {
-          expIndex = index
-          b = in.nextByte()
-          index += 1
-          if (b == '-' || b == '+') {
+          while (b >= '0' && b <= '9') {
+            fracDigits += 1
             b = in.nextByte()
-            index += 1
+          }
+        }
+
+        if ((b | 0x20) == 'e') {
+          expIndex = punct + intDigits + fracDigits
+          punct += 1
+          b = in.nextByte()
+          if (b == '-' || b == '+') {
+            punct += 1
+            b = in.nextByte()
           }
           while (b >= '0' && b <= '9') {
+            expDigits += 1
             b = in.nextByte()
-            index += 1
           }
         }
       } catch {
         case _: JsonReaderException =>
-          index += 1 // for length calcs, pretend that nextByte() didn't hit EOF
       } finally in.rollbackToMark()
       if ((decIndex & expIndex) == -1) {
-        if (digits < 19) v.visitInt64(in.readLong())
+        if (intDigits < 19) v.visitInt64(in.readLong())
         else {
           val x = in.readBigInt(null)
           if (x.bitLength < 64) v.visitInt64(x.longValue)
           else v.visitFloat64StringParts(x.toString, -1, -1)
         }
       } else {
+        if (
+          intDigits == 0 ||
+          decIndex != -1 && fracDigits == 0 ||
+          expIndex != -1 && expDigits == 0
+        ) in.decodeError("invalid number")
+
         val cs = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII)
-        require(cs.length == index, "invalid number")
+        val len = intDigits + fracDigits + expDigits + punct
+        if (cs.length != len) in.decodeError("invalid number")
         v.visitFloat64StringParts(cs, decIndex, expIndex)
-      }
-    }
-
-
-    private def parseNumberRegex[J](
-      in: JsonReader,
-      v: Visitor[_, J]
-    ): J = {
-      in.setMark()
-      var digits = 0
-      var b = in.nextByte()
-      if (b == '-') b = in.nextByte()
-      try {
-        while (b >= '0' && b <= '9') {
-          b = in.nextByte()
-          digits += 1
-        }
-      } catch {
-        case _: JsonReaderException => // ignore the end of input error for now
-      } finally in.rollbackToMark()
-
-      if ((b | 0x20) != 'e' && b != '.') {
-        if (digits < 19) {
-          val l = in.readLong()
-          v.visitInt64(l)
-        } else {
-          val x = in.readBigInt(null)
-          if (x.bitLength < 64) v.visitInt64(x.longValue)
-          else v.visitFloat64StringParts(x.toString, -1, -1)
-        }
-      } else {
-        val cs = new String(in.readRawValAsBytes(), StandardCharsets.US_ASCII)
-
-        /**
-          * This regex performs rather badly, but gets the tests passing.
-          *
-          * We're looking for a value we can pass through the Visitor interface--
-          * either a primitive Double or a CharSequence representing a *valid*
-          * number conforming to https://datatracker.ietf.org/doc/html/rfc7159#page-6.
-          *
-          * `in.readRawValAsBytes()` does NOT do that validation. It will happily
-          * return a String of "------".
-          *
-          * `in.readBigDecimal(null).toString` is tempting, but will not provide the raw input.
-          * Instead, it transforms the input from "0.00000001" to "1.0E-8".
-          * This fails roundtrip tests.
-          *
-          * I tried combining the two approaches, `in.readBigDecimal(null)` for validation,
-          * then `in.rollbackToMark()` + `in.readRawValAsBytes()` to capture the raw input,
-          * but for a value like "1.0-----", `in.readBigDecimal(null)` will read "1.0",
-          * then `in.readRawValAsBytes()` will return the whole string, including the unwanted
-          * trailing hyphens.
-          *
-          */
-        require(ValidJsonNum.pattern.matcher(cs).matches(), "invalid number")
-        v.visitFloat64String(cs)
       }
     }
 
@@ -256,6 +211,4 @@ object WeePickleJsonValueCodecs {
       throw new UnsupportedOperationException("only supports decoding")
     }
   }
-
-  private val ValidJsonNum = """-?(0|[1-9]\d*)(\.\d+)?([eE][-+]?\d+)?""".r // based on https://datatracker.ietf.org/doc/html/rfc7159#page-6
 }

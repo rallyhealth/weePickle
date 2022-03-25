@@ -37,9 +37,12 @@ class JsoniterScalaBench {
     * The only time this would happen in the wild would be when parsing a JSON text of a single number.
     * To make this more realistic, we're intentionally adding a whitespace suffix here.
     */
-  private val piBytes = "-3.14 ".getBytes()
+  private val floatBytes = "-3.14159 ".getBytes()
+  private val intBytes = "186282 ".getBytes()
 
   @Benchmark
-  def pi = FromJsoniterScala(piBytes).transform(BufferedValue.Builder)
+  def parseFloat = FromJsoniterScala(floatBytes).transform(BufferedValue.Builder)
 
+  @Benchmark
+  def parseInt = FromJsoniterScala(intBytes).transform(BufferedValue.Builder)
 }

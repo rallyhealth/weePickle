@@ -32,11 +32,10 @@ abstract class ParserSpec(parse: Array[Byte] => FromInput, depthLimit: Int = 100
   private implicit def toBytes(s: String): Array[Byte] = s.getBytes
 
   "roundtrip" in testJson()
-  "roundtrip example" in testValue(NumDouble(1.3424780377262655E-5))
   "deep arr" in testDepth(Arr(_))
   "deep obj" in testDepth(b => Obj("k" -> b))
   "number soup" in forAll { (soup: NumberSoup) =>
-    whenever(soup.isInvalid) {
+    whenever(soup.isInvalidJson) {
       intercept[Exception] {
         parse(soup.value.getBytes()).transform(NoOpVisitor)
       }
