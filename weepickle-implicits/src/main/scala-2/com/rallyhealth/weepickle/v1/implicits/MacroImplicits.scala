@@ -168,7 +168,7 @@ private object MacroImplicits {
         if (isParamWithDefault) {
           Some(q"$companion.$defaultName")
         } else {
-          if (assumeDefaultNone) Some(q"${TermName("scala.None")}")
+          if (assumeDefaultNone) Some(q"scala.None")
           else None
         }
       }
