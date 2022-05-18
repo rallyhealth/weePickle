@@ -56,7 +56,7 @@ def getDefaultParamsImpl[T](using Quotes, Type[T]): Expr[String => Option[() => 
     val namesExpr: Expr[List[String]] = Expr.ofList((names ++ assumeDefaultNoneNames).map(Expr(_)))
     val identsExpr: Expr[List[() => AnyRef]] = Expr.ofList(
       idents.map(_.asExpr).map(i => '{ () => $i.asInstanceOf[AnyRef] }) ++
-      assumeDefaultNoneNames.map(_ => '{ () => scala.None })
+      assumeDefaultNoneNames.map(_ => '{ () => None })
     )
 
     '{ $namesExpr.zip($identsExpr).toMap.get }
