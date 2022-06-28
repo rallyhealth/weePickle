@@ -194,7 +194,7 @@ private object MacroImplicits {
         Argument(
           i = index,
           raw = argSym.name.toString,
-          mapped = customKey(argSym).getOrElse(argSym.name.toString),
+          mapped = customKey(argSym).getOrElse(argSym.name.decodedName.toString),
           argType = argTypeFromSignature(tpe, typeParams, argSym.typeSignature),
           typeConstructor = typeConstructor,
           omitDefault = maybeDefault.isDefined && shouldDropDefault(tpe.typeSymbol, argSym),
@@ -310,7 +310,7 @@ private object MacroImplicits {
           case Some(customName) => Literal(Constant(customName))
           case None             => q"${c.prefix}.tagName"
         }
-        val tag = customKey(tpe.typeSymbol).getOrElse(tpe.typeSymbol.fullName)
+        val tag = customKey(tpe.typeSymbol).getOrElse(TypeName(tpe.typeSymbol.fullName).decodedName.toString)
         q"""${c.prefix}.annotate($derived, $tagName, $tag)"""
       }
     }

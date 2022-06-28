@@ -66,6 +66,16 @@ object Pony {
   implicit val pickler: WeePickle.FromTo[Pony] = WeePickle.macroFromTo[Pony]
 }
 
+sealed trait SpecialChars
+
+object SpecialChars {
+  case class `+1`(`+1`: Int = 0) extends SpecialChars
+  case class `-1`(`-1`: Int = 0) extends SpecialChars
+  implicit def plusonerw: WeePickle.FromTo[`+1`] = WeePickle.macroFromTo
+  implicit def minusonerw: WeePickle.FromTo[`-1`] = WeePickle.macroFromTo
+  implicit def rw: WeePickle.FromTo[SpecialChars] = WeePickle.macroFromTo
+}
+
 object MacroTests extends TestSuite {
 
   // Doesn't work :(
@@ -258,6 +268,13 @@ object MacroTests extends TestSuite {
     test("varargs") {
       rw(Varargs.Sentence("a", "b", "c"), """{"a":"a","bs":["b","c"]}""")
       rw(Varargs.Sentence("a"), """{"a":"a","bs":[]}""")
+    }
+
+    test("specialchars"){
+      rw(SpecialChars.`+1`(), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.+1"}""")
+      rw(SpecialChars.`+1`(1), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.+1", "+1": 1}""")
+      rw(SpecialChars.`-1`(), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.-1"}""")
+      rw(SpecialChars.`-1`(1), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.-1", "-1": 1}""")
     }
 
     // format: off
