@@ -33,17 +33,17 @@ libraryDependencies += "com.rallyhealth" %% "weepickle-v1" % "version"
 ```
 
 ## Getting Started
-JSON to Scala:
+#### JSON to Scala
 ```scala
 FromJson("[1,2,3]").transform(ToScala[List[Int]])    ==> List(1, 2, 3)
 ```
 
-Scala to JSON:
+#### Scala to JSON
 ```scala
 FromScala(List(1, 2, 3)).transform(ToJson.string)    ==> "[1,2,3]"
 ```
 
-JSON to pretty JSON:
+#### JSON to pretty JSON
 ```scala
 FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 [
@@ -53,15 +53,29 @@ FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 ]
 ```
 
-Files & YAML:
-#### sbt
+#### Case Classes
+```scala
+import com.rallyhealth.weepickle.v1.WeePickle.{macroFromTo, FromTo}
+case class Foo(i: Int)
+
+object Foo {
+  implicit val rw: FromTo[Foo] = macroFromTo
+}
+
+FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
+FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
+```
+
+#### Files & YAML
 ![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
+
 ```scala
 libraryDependencies ++= Seq(
   "com.rallyhealth" %% "weepickle-v1" % "version",
   "com.rallyhealth" %% "weeyaml-v1" % "version"
 )
 ```
+
 ```scala
 import com.rallyhealth.weejson.v1.yaml.{FromYaml, ToYaml}
 import com.rallyhealth.weejson.v1.jackson.FromJson
@@ -74,18 +88,22 @@ val yamlFile = Files.newOutputStream(Paths.get("file.yml"))
 FromJson(jsonFile).transform(ToYaml.outputStream(yamlFile))
 ```
 
-Case Classes:
+#### XML
+
+XML and JSON feature sets don't translate one-to-one. The output is currently "whatever jackson does."
+
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 ```scala
-import com.rallyhealth.weepickle.v1.WeePickle.{macroFromTo, FromTo}
-case class Foo(i: Int)
+libraryDependencies ++= Seq(
+  "com.rallyhealth" %% "weepickle-v1" % "version",
+  "com.rallyhealth" %% "weexml-v1" % "version"
+)
+```
+```scala
+import com.rallyhealth.weejson.v1.xml.{FromXml, ToXml}
 
-object Foo {
-  implicit val rw: FromTo[Foo] = macroFromTo
-}
-
-FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
-FromScala(Foo(1)).transform(ToXml.string)            ==> """<root><i>1</i></root>"""
-FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
+FromScala(Foo(1)).transform(ToXml.string)                      ==> """<root><i>1</i></root>"""
+FromXml("""<root><i>1</i></root>""").transform(ToJson.string)  ==> """{"i":"1"}"""
 ```
 
 ## Pick Any Two
