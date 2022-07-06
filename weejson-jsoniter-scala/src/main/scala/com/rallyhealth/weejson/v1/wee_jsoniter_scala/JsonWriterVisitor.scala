@@ -135,7 +135,10 @@ class JsonWriterVisitor(
     offset: Int,
     len: Int
   ): JsonWriter = {
-    val trimmed = if (bytes.length != len) bytes.take(len) else bytes
+    val trimmed =
+      if (offset == 0 && bytes.length <= len) bytes
+      else bytes.slice(offset, offset + len)
+
     writer.writeBase64Val(trimmed, true)
     writer
   }
