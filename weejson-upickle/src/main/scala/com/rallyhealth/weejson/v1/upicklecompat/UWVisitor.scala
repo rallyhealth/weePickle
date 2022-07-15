@@ -18,7 +18,7 @@ class UWVisitor[T, J](visitor: upickle.core.Visitor[T, J]) extends Visitor[T, J]
   }
 
   override def visitObject(length: Int): ObjVisitor[T, J] = {
-    val obj = visitor.visitObject(length, -1)
+    val obj = visitor.visitObject(length, true, -1)
     new ObjVisitor[T, J] {
       override def visitKey(): Visitor[_, _] = new UWVisitor(obj.visitKey(-1))
 

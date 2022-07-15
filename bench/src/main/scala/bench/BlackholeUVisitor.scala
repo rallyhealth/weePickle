@@ -16,7 +16,7 @@ class BlackholeUVisitor(bh: Blackhole) extends Visitor[Any, Null] {
     }
   }
 
-  override def visitObject(length: Int, index: Int): ObjVisitor[Any, Null] = new ObjVisitor[Any, Null] {
+  override def visitObject(length: Int, jsonableKeys: Boolean, index: Int): ObjVisitor[Any, Null] = new ObjVisitor[Any, Null] {
     override def visitKey(index: Int): Visitor[_, _] = {
       BlackholeUVisitor.this
     }
