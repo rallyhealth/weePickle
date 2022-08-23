@@ -30,6 +30,11 @@ object JvmPrimitiveTests extends TestSuite {
       test("Date") {
         rw(new Date(1579664660824L), "\"2020-01-22T03:44:20.824Z\"")
       }
+      test("ZoneId") {
+        rw(ZoneId.of("America/New_York"), "\"America/New_York\"")
+        rw(ZoneId.of("US/Eastern"), "\"US/Eastern\"")
+        rw(ZoneId.of("US/Pacific"), "\"US/Pacific\"")
+      }
     }
   }
 }

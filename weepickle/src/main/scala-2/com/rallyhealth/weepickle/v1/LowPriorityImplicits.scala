@@ -2,7 +2,7 @@ package com.rallyhealth.weepickle.v1
 
 import com.rallyhealth.weepickle.v1.core.{FromInput, Visitor}
 
-import java.time.ZonedDateTime
+import java.time.{ZonedDateTime, ZoneId}
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters._
 import scala.util.control.NoStackTrace
@@ -15,6 +15,11 @@ abstract class LowPriorityImplicits extends AttributeTagged {
 
   implicit val FromZonedDateTime: From[ZonedDateTime] = FromString.comap[ZonedDateTime](_.toString)
   implicit val ToZonedDateTime: To[ZonedDateTime] = new MapStringTo(s => ZonedDateTime.parse(s.toString))
+
+  implicit val FromZoneId: From[ZoneId] = FromString.comap[ZoneId](_.toString)
+  implicit val ToZoneId: To[ZoneId] = new MapStringTo(
+    s => ZoneId.of(s.toString)
+  )
 
   private def toEnumerationName[E <: scala.Enumeration](e: E): To[E#Value] = {
     val cache = new ConcurrentHashMap[String, E#Value] // mitigate withName() slowness.
