@@ -15,6 +15,8 @@ abstract class LowPriorityImplicits extends AttributeTagged {
 
   implicit val FromZonedDateTime: From[ZonedDateTime] = FromString.comap[ZonedDateTime](_.toString)
   implicit val ToZonedDateTime: To[ZonedDateTime] = new MapStringTo(s => ZonedDateTime.parse(s.toString))
+  implicit val FromZoneId: From[ZoneId] = FromString.comap[ZoneId](_.toString)
+  implicit val ToZoneId: To[ZoneId] = new MapStringTo(s => ZoneId.of(s.toString))
 
   //  Note that, in Scala 3, using E#Value is not allowed: "E is not a legal path since it is not a concrete type".
   //  Parameterizing and using evidence for type equivilance to get around this. TBD if there is a better way.
