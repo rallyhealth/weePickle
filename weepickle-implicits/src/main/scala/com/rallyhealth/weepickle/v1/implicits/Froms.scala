@@ -15,5 +15,4 @@ trait Froms extends DefaultFroms { this: Annotator =>
     override def transform0[V](v: Instant, out: Visitor[_, V]): V = out.visitTimestamp(v)
   }
   implicit val FromDate: From[Date] = FromInstant.comap(_.toInstant)
-  implicit val FromZoneId: From[ZoneId] = FromString.comap[ZoneId](_.toString)
 }

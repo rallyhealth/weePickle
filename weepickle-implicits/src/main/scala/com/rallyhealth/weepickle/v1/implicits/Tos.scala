@@ -35,7 +35,4 @@ trait Tos extends DefaultTos { this: Annotator =>
     }
   }
   implicit val ToDate: To[Date] = ToInstant.map(i => new Date(i.toEpochMilli))
-  implicit val ToZoneId: To[ZoneId] = new MapStringTo(
-    s => ZoneId.of(s.toString)
-  )
 }
