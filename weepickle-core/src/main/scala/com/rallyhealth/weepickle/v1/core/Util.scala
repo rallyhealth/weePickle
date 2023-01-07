@@ -5,46 +5,68 @@ import java.util.UUID
 object Util {
 
   def parseIntegralNum(s: CharSequence, decIndex: Int, expIndex: Int): Long = {
-    val expMul =
-      if (expIndex == -1) 1
-      else {
-        var mult = 1
-        val e = parseLong(s, expIndex + 1, s.length())
-        var i = 0
-        while (i < e) {
-          if (mult >= Long.MaxValue / 10) throw new Abort("expected integer")
-          mult = mult * 10
-          i += 1
-        }
-        mult
-      }
-
-    val intPortion = {
+    val intPortionRaw = {
       val end =
         if (decIndex != -1) decIndex
         else if (expIndex != -1) expIndex
         else s.length
 
-      parseLong(s, 0, end) * expMul
+      parseLong(s, 0, end)
     }
 
-    val decPortion =
+    val decPortionRaw =
       if (decIndex == -1) 0
       else {
         val end = if (expIndex != -1) expIndex else s.length
-        var value = parseLong(s, decIndex + 1, end) * expMul
-        var i = end - (decIndex + 1)
-        while (i > 0) {
-          value = value / 10
-          i -= 1
-        }
-        if (s.charAt(0) == '-') -value else value
+        parseLong(s, decIndex + 1, math.min(end, decIndex + 19))
       }
+
+    val (expMul, expPositive) = // when not expPositive, treat expMul as a divisor
+      if (expIndex == -1) (1L, true)
+      else {
+        var mult: Long = 1 // must be long for some of the math to work
+        val eRaw = parseLong(s, expIndex + 1, s.length())
+        val e = math.abs(eRaw)
+        var i = 0
+        while (i < e) {
+          if (mult >= Long.MaxValue / 10)
+            if (eRaw > 0 && (intPortionRaw != 0 || decPortionRaw != 0)) throw new Abort("expected integer")
+            else mult = 0 // underflow or zero value
+          mult = mult * 10
+          i += 1
+        }
+        (mult, eRaw > 0)
+      }
+
+    val intPortion =
+      if (expPositive || expMul == 0) intPortionRaw * expMul
+      else intPortionRaw / expMul
+
+    val decPortion = {
+      val value =
+        if (expMul == 0 || !expPositive) 0L // if exponent is negative, dec portion should just be truncated
+        else {
+          // avoid overflow due to leading zeros by decreasing the multiplier first
+          val end = if (expIndex != -1) expIndex else s.length
+          var expValue = expMul
+          var i = end - (decIndex + 1)
+          while (i > 0 && expValue > 1) {
+            expValue = expValue / 10
+            i -= 1
+          }
+          var residue = decPortionRaw * expValue
+          while (i > 0) {
+            residue = residue / 10
+            i -= 1
+          }
+          residue
+        }
+      if (s.charAt(0) == '-') -value else value
+    }
 
     intPortion + decPortion
   }
-  def parseLong(cs: CharSequence, start: Int, len: Int): Long = {
-
+  def parseLong(cs: CharSequence, start: Int, end: Int): Long = {
     // we store the inverse of the positive sum, to ensure we don't
     // incorrectly overflow on Long.MinValue. for positive numbers
     // this inverse sum will be inverted before being returned.
@@ -52,25 +74,28 @@ object Util {
     var inverseSign: Long = -1L
     var i: Int = start
 
+    if ((start | end | end - start | cs.length - end) < 0) throw new IndexOutOfBoundsException
+
     if (cs.charAt(start) == '-') {
       inverseSign = 1L
-      i = 1
+      i += 1
+    } else if (cs.charAt(start) == '+') { // big longs format positive exp with '+'
+      i += 1
     }
 
-    val size = len - i
-    if (i >= len) throw new NumberFormatException(cs.toString)
-    if (size > 19) throw new NumberFormatException(cs.toString)
+    val digitCount = end - i
+    if (digitCount <= 0 || digitCount > 19) throw new NumberFormatException(cs.toString.substring(start, end))
 
-    while (i < len) {
+    while (i < end) {
       val digit = cs.charAt(i).toInt - 48
-      if (digit < 0 || 9 < digit) new NumberFormatException(cs.toString)
+      if (digit < 0 || 9 < digit) throw new NumberFormatException(cs.toString.substring(start, end))
       inverseSum = inverseSum * 10L - digit
       i += 1
     }
 
     // detect and throw on overflow
-    if (size == 19 && (inverseSum >= 0 || (inverseSum == Long.MinValue && inverseSign < 0))) {
-      throw new NumberFormatException(cs.toString)
+    if (digitCount == 19 && (inverseSum >= 0 || (inverseSum == Long.MinValue && inverseSign < 0))) {
+      throw new NumberFormatException(cs.toString.substring(start, end))
     }
 
     inverseSum * inverseSign
@@ -80,26 +105,26 @@ object Util {
     val ns = nibbles
     var msb, lsb = 0L
     if (name.length == 36 && {
-      val ch1: Long = name.charAt(8)
-      val ch2: Long = name.charAt(13)
-      val ch3: Long = name.charAt(18)
-      val ch4: Long = name.charAt(23)
-      (ch1 << 48 | ch2 << 32 | ch3 << 16 | ch4) == 0x2D002D002D002DL
-    } && {
-      val msb1 = parse4Nibbles(name, ns, 0)
-      val msb2 = parse4Nibbles(name, ns, 4)
-      val msb3 = parse4Nibbles(name, ns, 9)
-      val msb4 = parse4Nibbles(name, ns, 14)
-      msb = msb1 << 48 | msb2 << 32 | msb3 << 16 | msb4
-      (msb1 | msb2 | msb3 | msb4) >= 0
-    } && {
-      val lsb1 = parse4Nibbles(name, ns, 19)
-      val lsb2 = parse4Nibbles(name, ns, 24)
-      val lsb3 = parse4Nibbles(name, ns, 28)
-      val lsb4 = parse4Nibbles(name, ns, 32)
-      lsb = lsb1 << 48 | lsb2 << 32 | lsb3 << 16 | lsb4
-      (lsb1 | lsb2 | lsb3 | lsb4) >= 0
-    }) new UUID(msb, lsb)
+          val ch1: Long = name.charAt(8)
+          val ch2: Long = name.charAt(13)
+          val ch3: Long = name.charAt(18)
+          val ch4: Long = name.charAt(23)
+          (ch1 << 48 | ch2 << 32 | ch3 << 16 | ch4) == 0x2D002D002D002DL
+        } && {
+          val msb1 = parse4Nibbles(name, ns, 0)
+          val msb2 = parse4Nibbles(name, ns, 4)
+          val msb3 = parse4Nibbles(name, ns, 9)
+          val msb4 = parse4Nibbles(name, ns, 14)
+          msb = msb1 << 48 | msb2 << 32 | msb3 << 16 | msb4
+          (msb1 | msb2 | msb3 | msb4) >= 0
+        } && {
+          val lsb1 = parse4Nibbles(name, ns, 19)
+          val lsb2 = parse4Nibbles(name, ns, 24)
+          val lsb3 = parse4Nibbles(name, ns, 28)
+          val lsb4 = parse4Nibbles(name, ns, 32)
+          lsb = lsb1 << 48 | lsb2 << 32 | lsb3 << 16 | lsb4
+          (lsb1 | lsb2 | lsb3 | lsb4) >= 0
+        }) new UUID(msb, lsb)
     else UUID.fromString(name.toString)
   }
 
@@ -145,7 +170,11 @@ object Util {
    * If you need one, you can add a safe version like is implemented in String.regionMatches that includes:
    * (otherOffset >= 0) && (csOffset >= 0) && (csOffset <= cs.length - compareLen) && (otherOffset <= other.length - compareLen) &&
    */
-  def regionMatches(cs: CharSequence, csOffset: Int, other: CharSequence, otherOffset: Int, compareLen: Int): Boolean = {
+  def regionMatches(cs: CharSequence,
+                    csOffset: Int,
+                    other: CharSequence,
+                    otherOffset: Int,
+                    compareLen: Int): Boolean = {
     var i = 0
     while (i < compareLen) {
       if (cs.charAt(csOffset + i) != other.charAt(otherOffset + i)) return false

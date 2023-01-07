@@ -1,9 +1,10 @@
 package com.rallyhealth.weepickle.v1
-import utest._
-import acyclic.file
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepack.v1.{FromMsgPack, ToMsgPack}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
+import utest._
+
+import scala.Numeric.Implicits._
 
 /**
   * Created by haoyi on 4/22/14.
@@ -64,6 +65,19 @@ class TestUtil[Api <: com.rallyhealth.weepickle.v1.Api](val api: Api) {
       FromJson(s).transform(api.to[T])
     }
     api.from[T].transform(t, ToJson.string)
+  }
+
+  def rwNum[T: Numeric: api.To: api.From](t: T, strings: String*) = {
+    rw(t, strings: _*)
+    num(t)
+  }
+
+  def num[T: Numeric : api.To](t: T) = {
+    api.to[T].visitFloat32(t.toFloat) ==> t.toFloat
+    api.to[T].visitFloat64(t.toDouble) ==> t.toDouble
+    api.to[T].visitInt32(t.toInt) ==> t.toInt
+    api.to[T].visitInt64(t.toLong) ==> t.toLong
+    api.to[T].visitFloat64String(t.toLong.toString) ==> t.toLong
   }
 
   def roundTripMsgPack[T: WeePickle.From: WeePickle.To](in: T) = {

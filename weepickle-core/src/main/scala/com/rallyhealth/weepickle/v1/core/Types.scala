@@ -1,5 +1,6 @@
 package com.rallyhealth.weepickle.v1.core
 
+import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
@@ -13,6 +14,7 @@ trait Types { types =>
   /**
     * A combined [[To]] and [[From]], along with some utility methods.
     */
+  @implicitNotFound("Could not find an implicit WeePickle.FromTo[${T}]. Consider adding one with `object ${T} { implicit val pickler: WeePickle.FromTo[${T}] = macroFromTo }`")
   trait FromTo[T] extends From[T] with To[T] {
     override def narrow[K]: FromTo[K] = this.asInstanceOf[FromTo[K]]
     def bimap[In](f: In => T, g: T => In): FromTo[In] = {
@@ -60,6 +62,7 @@ trait Types { types =>
     * A thin wrapper around [[Visitor]], but needs to be it's own class in order
     * to make type inference automatically pick up it's implicit values.
     */
+  @implicitNotFound("Could not find an implicit WeePickle.To[${T}]. Consider adding one with `object ${T} { implicit val pickleTo: WeePickle.To[${T}] = macroTo }`")
   trait To[T] extends com.rallyhealth.weepickle.v1.core.Visitor[Any, T] {
 
     override def map[Z](f: T => Z): To[Z] = new To.MapTo[T, T, Z](To.this) {
@@ -74,18 +77,14 @@ trait Types { types =>
   }
 
   object To {
-    class Delegate[T, J](delegatedTo: Visitor[T, J])
-        extends Visitor.Delegate[T, J](delegatedTo)
-        with To[J] {
+    class Delegate[T, J](delegatedTo: Visitor[T, J]) extends Visitor.Delegate[T, J](delegatedTo) with To[J] {
       override def visitObject(length: Int): ObjVisitor[Any, J] =
         super.visitObject(length).asInstanceOf[ObjVisitor[Any, J]]
       override def visitArray(length: Int): ArrVisitor[Any, J] =
         super.visitArray(length).asInstanceOf[ArrVisitor[Any, J]]
     }
 
-    abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V])
-        extends Visitor.MapTo[T, V, Z](delegatedTo)
-        with To[Z] {
+    abstract class MapTo[-T, V, Z](delegatedTo: Visitor[T, V]) extends Visitor.MapTo[T, V, Z](delegatedTo) with To[Z] {
 
       def mapNonNullsFunction(t: V): Z
 
@@ -105,6 +104,7 @@ trait Types { types =>
     * Generally nothing more than a way of applying the `In` to
     * a [[Visitor]], along with some utility methods
     */
+  @implicitNotFound("Could not find an implicit WeePickle.From[${In}]. Consider adding one with `object ${In} { implicit val pickleFrom: WeePickle.From[${In}] = macroFrom }`")
   trait From[In] {
     def narrow[K] = this.asInstanceOf[From[K]]
     def transform[Out](in: In, out: Visitor[_, Out]): Out = {
@@ -285,8 +285,10 @@ trait Types { types =>
     class Node[T](rs: TaggedTo[_ <: T]*) extends TaggedTo[T] {
       override val tagName: String = findTagName(rs)
       def findTo(s: String) = scanChildren(rs)(_.findTo(s)).asInstanceOf[To[T]]
-      override def map[Z](f: T => Z): TaggedTo[Z] = new Node[Z](rs.map(_.map(f).asInstanceOf[TaggedTo[Z]]): _*)
-      override def mapNulls[Z](f: T => Z): TaggedTo[Z] = new Node(rs.map(_.mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def map[Z](f: T => Z): TaggedTo[Z] =
+        new Node[Z](rs.map(_.asInstanceOf[To[T]].map(f).asInstanceOf[TaggedTo[Z]]): _*)
+      override def mapNulls[Z](f: T => Z): TaggedTo[Z] =
+        new Node(rs.map(_.asInstanceOf[To[T]].mapNulls(f).asInstanceOf[TaggedTo[Z]]): _*)
     }
   }
 
@@ -310,11 +312,7 @@ trait Types { types =>
     }
   }
 
-  trait TaggedFromTo[T]
-      extends FromTo[T]
-      with TaggedTo[T]
-      with TaggedFrom[T]
-      with SimpleTo[T] {
+  trait TaggedFromTo[T] extends FromTo[T] with TaggedTo[T] with TaggedFrom[T] with SimpleTo[T] {
     override def visitArray(length: Int) = taggedArrayContext(this)
     override def visitObject(length: Int) = taggedObjectContext(this)
 

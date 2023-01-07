@@ -23,10 +23,10 @@ object Custom {
   class Thing2(val i: Int, val s: String) extends ThingBase
 
   abstract class ThingBaseCompanion[T <: ThingBase](f: (Int, String) => T) {
-    implicit val thing2From = com.rallyhealth.weepickle.v1.WeePickle
+    implicit val thing2From: WeePickle.FromTo[T] = WeePickle
       .fromTo[String]
       .bimap[T](
-        t => t.i + " " + t.s,
+        t => s"${t.i} ${t.s}",
         str => {
           val Array(i, s) = str.toString.split(" ", 2)
           f(i.toInt, s)
@@ -59,11 +59,21 @@ object TypedFoo {
 sealed trait Pony
 @key("twi") case class Twilight() extends Pony
 object Twilight {
-  implicit val fromTwi = WeePickle.macroFrom[Twilight] // supporting comap requires breaking changes.
-  implicit val toTwi = WeePickle.macroTo[Twilight].map(identity)
+  implicit val fromTwi: WeePickle.From[Twilight] = WeePickle.macroFrom[Twilight] // supporting comap requires breaking changes.
+  implicit val toTwi: WeePickle.To[Twilight] = WeePickle.macroTo[Twilight].map(identity)
 }
 object Pony {
-  implicit val pickler = WeePickle.macroFromTo[Pony]
+  implicit val pickler: WeePickle.FromTo[Pony] = WeePickle.macroFromTo[Pony]
+}
+
+sealed trait SpecialChars
+
+object SpecialChars {
+  case class `+1`(`+1`: Int = 0) extends SpecialChars
+  case class `-1`(`-1`: Int = 0) extends SpecialChars
+  implicit def plusonerw: WeePickle.FromTo[`+1`] = WeePickle.macroFromTo
+  implicit def minusonerw: WeePickle.FromTo[`-1`] = WeePickle.macroFromTo
+  implicit def rw: WeePickle.FromTo[SpecialChars] = WeePickle.macroFromTo
 }
 
 object MacroTests extends TestSuite {
@@ -132,7 +142,7 @@ object MacroTests extends TestSuite {
         // )
         val chunks = for (i <- 1 to 18) yield {
           val rhs = if (i % 2 == 1) "1" else "\"1\""
-          val lhs = '"' + s"t$i" + '"'
+          val lhs = s""""t$i""""
           s"$lhs:$rhs"
         }
 
@@ -260,6 +270,13 @@ object MacroTests extends TestSuite {
       rw(Varargs.Sentence("a"), """{"a":"a","bs":[]}""")
     }
 
+    test("specialchars"){
+      rw(SpecialChars.`+1`(), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.+1"}""")
+      rw(SpecialChars.`+1`(1), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.+1", "+1": 1}""")
+      rw(SpecialChars.`-1`(), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.-1"}""")
+      rw(SpecialChars.`-1`(1), """{"$type": "com.rallyhealth.weepickle.v1.SpecialChars.-1", "-1": 1}""")
+    }
+
     // format: off
     test("lots of fields"){
       val b63 = Big63(
@@ -314,37 +331,38 @@ object MacroTests extends TestSuite {
     test("map") {
       rw[Pony](Twilight(), """{"$type": "twi"}""")
     }
+
   }
 }
 
 
 // format: off
-case class Big63(_0: Byte, _1: Byte, _2: Byte, _3: Byte, _4: Byte, _5: Byte, _6: Byte, _7: Byte,
-  _8: Byte, _9: Byte, _10: Byte, _11: Byte, _12: Byte, _13: Byte, _14: Byte,
-  _15: Byte, _16: Byte, _17: Byte, _18: Byte, _19: Byte, _20: Byte, _21: Byte,
-  _22: Byte, _23: Byte, _24: Byte, _25: Byte, _26: Byte, _27: Byte, _28: Byte,
-  _29: Byte, _30: Byte, _31: Byte, _32: Byte, _33: Byte, _34: Byte, _35: Byte,
-  _36: Byte, _37: Byte, _38: Byte, _39: Byte, _40: Byte, _41: Byte, _42: Byte,
-  _43: Byte, _44: Byte, _45: Byte, _46: Byte, _47: Byte, _48: Byte, _49: Byte,
-  _50: Byte, _51: Byte, _52: Byte, _53: Byte, _54: Byte, _55: Byte, _56: Byte,
-  _57: Byte, _58: Byte, _59: Byte, _60: Byte, _61: Byte, _62: Byte)
-case class Big64(_0: Byte, _1: Byte, _2: Byte, _3: Byte, _4: Byte, _5: Byte, _6: Byte, _7: Byte,
-  _8: Byte, _9: Byte, _10: Byte, _11: Byte, _12: Byte, _13: Byte, _14: Byte,
-  _15: Byte, _16: Byte, _17: Byte, _18: Byte, _19: Byte, _20: Byte, _21: Byte,
-  _22: Byte, _23: Byte, _24: Byte, _25: Byte, _26: Byte, _27: Byte, _28: Byte,
-  _29: Byte, _30: Byte, _31: Byte, _32: Byte, _33: Byte, _34: Byte, _35: Byte,
-  _36: Byte, _37: Byte, _38: Byte, _39: Byte, _40: Byte, _41: Byte, _42: Byte,
-  _43: Byte, _44: Byte, _45: Byte, _46: Byte, _47: Byte, _48: Byte, _49: Byte,
-  _50: Byte, _51: Byte, _52: Byte, _53: Byte, _54: Byte, _55: Byte, _56: Byte,
-  _57: Byte, _58: Byte, _59: Byte, _60: Byte, _61: Byte, _62: Byte, _63: Byte)
-case class Big65(_0: Byte, _1: Byte, _2: Byte, _3: Byte, _4: Byte, _5: Byte, _6: Byte, _7: Byte,
-  _8: Byte, _9: Byte, _10: Byte, _11: Byte, _12: Byte, _13: Byte, _14: Byte,
-  _15: Byte, _16: Byte, _17: Byte, _18: Byte, _19: Byte, _20: Byte, _21: Byte,
-  _22: Byte, _23: Byte, _24: Byte, _25: Byte, _26: Byte, _27: Byte, _28: Byte,
-  _29: Byte, _30: Byte, _31: Byte, _32: Byte, _33: Byte, _34: Byte, _35: Byte,
-  _36: Byte, _37: Byte, _38: Byte, _39: Byte, _40: Byte, _41: Byte, _42: Byte,
-  _43: Byte, _44: Byte, _45: Byte, _46: Byte, _47: Byte, _48: Byte, _49: Byte,
-  _50: Byte, _51: Byte, _52: Byte, _53: Byte, _54: Byte, _55: Byte, _56: Byte,
-  _57: Byte, _58: Byte, _59: Byte, _60: Byte, _61: Byte, _62: Byte, _63: Byte,
-  _64: Byte)
+case class Big63(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte,
+  b8: Byte, b9: Byte, b10: Byte, b11: Byte, b12: Byte, b13: Byte, b14: Byte,
+  b15: Byte, b16: Byte, b17: Byte, b18: Byte, b19: Byte, b20: Byte, b21: Byte,
+  b22: Byte, b23: Byte, b24: Byte, b25: Byte, b26: Byte, b27: Byte, b28: Byte,
+  b29: Byte, b30: Byte, b31: Byte, b32: Byte, b33: Byte, b34: Byte, b35: Byte,
+  b36: Byte, b37: Byte, b38: Byte, b39: Byte, b40: Byte, b41: Byte, b42: Byte,
+  b43: Byte, b44: Byte, b45: Byte, b46: Byte, b47: Byte, b48: Byte, b49: Byte,
+  b50: Byte, b51: Byte, b52: Byte, b53: Byte, b54: Byte, b55: Byte, b56: Byte,
+  b57: Byte, b58: Byte, b59: Byte, b60: Byte, b61: Byte, b62: Byte)
+case class Big64(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte,
+  b8: Byte, b9: Byte, b10: Byte, b11: Byte, b12: Byte, b13: Byte, b14: Byte,
+  b15: Byte, b16: Byte, b17: Byte, b18: Byte, b19: Byte, b20: Byte, b21: Byte,
+  b22: Byte, b23: Byte, b24: Byte, b25: Byte, b26: Byte, b27: Byte, b28: Byte,
+  b29: Byte, b30: Byte, b31: Byte, b32: Byte, b33: Byte, b34: Byte, b35: Byte,
+  b36: Byte, b37: Byte, b38: Byte, b39: Byte, b40: Byte, b41: Byte, b42: Byte,
+  b43: Byte, b44: Byte, b45: Byte, b46: Byte, b47: Byte, b48: Byte, b49: Byte,
+  b50: Byte, b51: Byte, b52: Byte, b53: Byte, b54: Byte, b55: Byte, b56: Byte,
+  b57: Byte, b58: Byte, b59: Byte, b60: Byte, b61: Byte, b62: Byte, b63: Byte)
+case class Big65(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte,
+  b8: Byte, b9: Byte, b10: Byte, b11: Byte, b12: Byte, b13: Byte, b14: Byte,
+  b15: Byte, b16: Byte, b17: Byte, b18: Byte, b19: Byte, b20: Byte, b21: Byte,
+  b22: Byte, b23: Byte, b24: Byte, b25: Byte, b26: Byte, b27: Byte, b28: Byte,
+  b29: Byte, b30: Byte, b31: Byte, b32: Byte, b33: Byte, b34: Byte, b35: Byte,
+  b36: Byte, b37: Byte, b38: Byte, b39: Byte, b40: Byte, b41: Byte, b42: Byte,
+  b43: Byte, b44: Byte, b45: Byte, b46: Byte, b47: Byte, b48: Byte, b49: Byte,
+  b50: Byte, b51: Byte, b52: Byte, b53: Byte, b54: Byte, b55: Byte, b56: Byte,
+  b57: Byte, b58: Byte, b59: Byte, b60: Byte, b61: Byte, b62: Byte, b63: Byte,
+  b64: Byte)
 // format: on

@@ -8,7 +8,12 @@ import play.api.libs.json._
 import java.util.{LinkedHashMap => JLinkedHashMap}
 import scala.jdk.CollectionConverters._
 
-object PlayJson extends PlayJson
+object PlayJson extends PlayJson {
+
+  override def visitTrue(): JsValue = JsValueSingletons.jsTrue
+
+  override def visitFalse(): JsValue = JsValueSingletons.jsFalse
+}
 
 class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
   def transform[T](i: JsValue, to: Visitor[_, T]): T = (i: @unchecked) match {
@@ -36,14 +41,17 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
       override def visitValue(v: JsValue): Unit = vs.put(key, v)
 
-      override def visitEnd(): JsValue = JsObject(vs)
+      override def visitEnd(): JsValue = {
+        if (vs.isEmpty) JsValueSingletons.jsObjectEmpty
+        else JsObject(vs)
+      }
     }
 
   def visitNull(): JsValue = JsNull
 
-  val visitFalse: JsValue = JsBoolean(false)
+  def visitFalse(): JsValue = PlayJson.visitFalse()
 
-  val visitTrue: JsValue = JsBoolean(true)
+  def visitTrue(): JsValue = PlayJson.visitTrue()
 
   def visitFloat64StringParts(cs: CharSequence, decIndex: Int, expIndex: Int): JsValue = {
     JsNumber(BigDecimal(cs.toString))
@@ -59,9 +67,9 @@ class PlayJson extends com.rallyhealth.weejson.v1.AstTransformer[JsValue] {
 
   def visitString(cs: CharSequence): JsValue = JsString(cs.toString)
 
-  implicit val FromJsValue: From[JsValue] = new From[JsValue] {
+  implicit def FromJsValue: From[JsValue] = new From[JsValue] {
     def transform0[Out](in: JsValue, out: Visitor[_, Out]): Out = PlayJson.this.transform(in, out)
   }
 
-  implicit val ToJsValue: To[JsValue] = new To.Delegate[JsValue, JsValue](this)
+  implicit def ToJsValue: To[JsValue] = new To.Delegate[JsValue, JsValue](this)
 }

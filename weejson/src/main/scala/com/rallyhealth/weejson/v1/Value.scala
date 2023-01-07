@@ -144,9 +144,9 @@ object Value extends AstTransformer[Value] {
     }
   }
 
-  implicit def JsonableSeq[T](items: TraversableOnce[T])(implicit f: T => Value): Arr = Arr.from(items.map(f))
+  implicit def JsonableSeq[T](items: TraversableOnce[T])(implicit f: T => Value): Arr = Arr.from(items.iterator.map(f))
   implicit def JsonableDict[T](items: TraversableOnce[(String, T)])(implicit f: T => Value): Obj =
-    Obj.from(items.map(x => (x._1, f(x._2))))
+    Obj.from(items.iterator.map(x => (x._1, f(x._2))))
   implicit def JsonableBoolean(i: Boolean): Bool = if (i) True else False
   implicit def JsonableByte(i: Byte): Num = Num(BigDecimal(i))
   implicit def JsonableShort(i: Short): Num = Num(BigDecimal(i))
@@ -225,7 +225,7 @@ object Obj {
   // https://github.com/lihaoyi/upickle/issues/230
   def apply[V](item: (String, V), items: (String, Value)*)(implicit viewBound: V => Value): Obj = {
     val map = new java.util.LinkedHashMap[String, Value](items.size).asScala
-    map.put(item._1, item._2)
+    map.put(item._1, viewBound(item._2))
     for (i <- items) map.put(i._1, i._2)
     Obj(map)
   }
@@ -236,7 +236,7 @@ case class Arr(value: ArrayBuffer[Value]) extends Value
 
 object Arr {
   implicit def from[T](items: TraversableOnce[T])(implicit viewBound: T => Value): Arr =
-    Arr(items.map(x => x: Value).to(mutable.ArrayBuffer))
+    Arr(items.iterator.map(x => viewBound(x)).to(mutable.ArrayBuffer))
 
   def apply(items: Value*): Arr = new Arr(items.to(mutable.ArrayBuffer))
 }

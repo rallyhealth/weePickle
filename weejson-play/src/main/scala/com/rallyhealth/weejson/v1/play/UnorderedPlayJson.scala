@@ -12,11 +12,12 @@ object UnorderedPlayJson extends UnorderedPlayJson
   * Uses ~0.6x of the heap of [[PlayJson]] in exchange for undefined order of JsObject keys.
   * Ideal for {{{jsValue.as[T]}}} where order is irrelevant.
   *
-  * Heap usage for https://rally-connect-non-prod.s3.amazonaws.com/chop-shop/test-data/labcorp.json.xz:
+  * Heap usage for a particularly large JSON file captured from the wild:
   *  - 814 MB:   `Array[Byte]`
   *  - 5,629 MB: `play.Json.parse()`
   *  - 5,243 MB: `FromJson().transform(PlayJson)` (`java.util.LinkedHashMap` initialCapacity=2)
   *  - 3,355 MB: `FromJson().transform(UnorderedPlayJson)` (`Map1-4` + `TreeMap`)
+  *  - 3,107 MB: `FromJson().transform(UnorderedPlayJson)` (jsObjectEmpty + `Map1-4` + `TreeMap`)
   */
 class UnorderedPlayJson extends PlayJson {
 
@@ -25,8 +26,8 @@ class UnorderedPlayJson extends PlayJson {
   }
 
   private def toJsObject(buf: ArrayBuffer[(String, JsValue)]) = {
-    val map = if (buf.size <= 4) buf.toMap
-    else (TreeMap.newBuilder[String, JsValue] ++= buf).result()
-    JsObject(map)
+    if (buf.isEmpty) JsValueSingletons.jsObjectEmpty
+    else if (buf.size <= 4) JsObject(buf.toMap)
+    else JsObject((TreeMap.newBuilder[String, JsValue] ++= buf).result())
   }
 }

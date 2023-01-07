@@ -30,10 +30,7 @@ object JsonPointerVisitor {
     */
   class JsonPointerException(val jsonPointer: String, cause: Throwable)
       extends Exception(jsonPointer, cause)
-      with NoStackTrace {
-
-    override def toString: String = jsonPointer
-  }
+      with NoStackTrace
 
   /**
     * Internally, the paths form a linked list back to the root by the visitors themselves.
@@ -97,7 +94,7 @@ object JsonPointerVisitor {
 
 }
 
-private class JsonPointerVisitor[T, J](
+private class JsonPointerVisitor[T, J] private (
   protected val delegate: Visitor[T, J],
   parentPath: HasPath
 ) extends Visitor.Delegate[T, J](delegate) {

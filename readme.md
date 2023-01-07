@@ -1,4 +1,4 @@
-# weePickle ![version](https://img.shields.io/github/v/release/rallyhealth/weepickle)
+# weePickle ![version](https://img.shields.io/github/v/release/rallyhealth/weepickle) ![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 
 A *stable* JSON, YAML, MsgPack, XML, etc. serialization framework based on [uPickle](https://com-lihaoyi.github.io/upickle/).
 
@@ -27,25 +27,23 @@ weePickle combines some of the best parts of the serialization ecosystem.
 - Fast serialization to/from [MessagePack](#messagepack)
 
 ## sbt
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 ```scala
-resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
 libraryDependencies += "com.rallyhealth" %% "weepickle-v1" % "version"
 ```
-version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg) ](https://bintray.com/rallyhealth/maven/weePickle/_latestVersion)
-
 
 ## Getting Started
-JSON to Scala:
+#### JSON to Scala
 ```scala
 FromJson("[1,2,3]").transform(ToScala[List[Int]])    ==> List(1, 2, 3)
 ```
 
-Scala to JSON:
+#### Scala to JSON
 ```scala
 FromScala(List(1, 2, 3)).transform(ToJson.string)    ==> "[1,2,3]"
 ```
 
-JSON to pretty JSON:
+#### JSON to pretty JSON
 ```scala
 FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 [
@@ -55,15 +53,29 @@ FromJson("[1,2,3]").transform(ToPrettyJson.string)   ==>
 ]
 ```
 
-Files & YAML:
-#### sbt
+#### Case Classes
 ```scala
-resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
+import com.rallyhealth.weepickle.v1.WeePickle.{macroFromTo, FromTo}
+case class Foo(i: Int)
+
+object Foo {
+  implicit val rw: FromTo[Foo] = macroFromTo
+}
+
+FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
+FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
+```
+
+#### Files & YAML
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
+
+```scala
 libraryDependencies ++= Seq(
   "com.rallyhealth" %% "weepickle-v1" % "version",
   "com.rallyhealth" %% "weeyaml-v1" % "version"
 )
 ```
+
 ```scala
 import com.rallyhealth.weejson.v1.yaml.{FromYaml, ToYaml}
 import com.rallyhealth.weejson.v1.jackson.FromJson
@@ -76,18 +88,22 @@ val yamlFile = Files.newOutputStream(Paths.get("file.yml"))
 FromJson(jsonFile).transform(ToYaml.outputStream(yamlFile))
 ```
 
-Case Classes:
+#### XML
+
+XML and JSON feature sets don't translate one-to-one. The output is currently "whatever jackson does."
+
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepickle-v1_2.13)
 ```scala
-import com.rallyhealth.weepickle.v1.WeePickle.{macroFromTo, FromTo}
-case class Foo(i: Int)
+libraryDependencies ++= Seq(
+  "com.rallyhealth" %% "weepickle-v1" % "version",
+  "com.rallyhealth" %% "weexml-v1" % "version"
+)
+```
+```scala
+import com.rallyhealth.weejson.v1.xml.{FromXml, ToXml}
 
-object Foo {
-  implicit val rw: FromTo[Foo] = macroFromTo
-}
-
-FromScala(Foo(1)).transform(ToJson.string)           ==> """{"i":1}"""
-FromScala(Foo(1)).transform(ToXml.string)            ==> """<root><i>1</i></root>"""
-FromJson("""{"i":1}""").transform(ToScala[Foo])      ==> Foo(1)
+FromScala(Foo(1)).transform(ToXml.string)                      ==> """<root><i>1</i></root>"""
+FromXml("""<root><i>1</i></root>""").transform(ToJson.string)  ==> """{"i":"1"}"""
 ```
 
 ## Pick Any Two
@@ -399,11 +415,10 @@ See:
 weePack is weePickle's [MessagePack](https://msgpack.org/index.html) implementation, largely unchanged from the upstream [uPack](https://com-lihaoyi.github.io/upickle/#uPack).
 
 ### sbt
+![Maven Central](https://img.shields.io/maven-central/v/com.rallyhealth/weepack-v1_2.13)
 ```scala
-resolvers += "Rally Health" at "https://dl.bintray.com/rallyhealth/maven"
 libraryDependencies += "com.rallyhealth" %% "weepack-v1" % "version"
 ```
-version: [ ![Download](https://api.bintray.com/packages/rallyhealth/maven/weePickle/images/download.svg) ](https://bintray.com/rallyhealth/maven/weePickle/_latestVersion)
 
 ### Benchmarks
 `FromMsgPack`/`ToMsgPack` perform exceptionally well under benchmarks, yielding higher throughput than JSON or the official [jackson-dataformat-msgpack](https://github.com/msgpack/msgpack-java/blob/develop/msgpack-jackson/README.md).
@@ -448,3 +463,5 @@ uPickle: a simple Scala JSON and Binary (MessagePack) serialization library
 If you use uPickle/weePickle and like it, please support it by donating to lihaoyi's Patreon:
 
 - [https://www.patreon.com/lihaoyi](https://www.patreon.com/lihaoyi)
+
+Thanks to [JSONTestSuite](https://github.com/nst/JSONTestSuite) for the comprehensive collection of interesting JSON test files.

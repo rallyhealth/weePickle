@@ -12,12 +12,8 @@ import scala.reflect.ClassTag
   * its behavior. Override the `annotate` methods to control how a sealed
   * trait instance is tagged during reading and writing.
   */
-trait Api
-    extends com.rallyhealth.weepickle.v1.core.Types
-    with implicits.Tos
-    with implicits.Froms
-    with Api.NoOpMappers
-    with FromToValue {
+trait Api extends implicits.Tos with implicits.Froms with Api.NoOpMappers with FromToValue {
+  this: Annotator =>
 
   /**
     * Somewhat internal version of [[WeePickle.ToScala]] for use by custom API bundles.
@@ -76,7 +72,7 @@ object Api {
   * behavior of using an attribute, but allow you to control what the name
   * of the attribute is.
   */
-trait AttributeTagged extends Api {
+trait AttributeTagged extends Api with Annotator {
 
   /**
     * Default discriminator field name.

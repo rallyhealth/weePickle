@@ -157,6 +157,7 @@ abstract class BaseMsgPackParser {
 
       case _ =>
         val (arr, i, j) = sliceBytes(index, n)
+        incrementIndex(n)
         visitor.visitExt(extType, arr, i, j)
     }
   }
