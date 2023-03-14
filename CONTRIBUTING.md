@@ -40,7 +40,6 @@ Ensure your pull request (PR) adheres to the following guidelines:
 
 * Try to make the name concise and descriptive.
 * Give a good description of the change being made. Since this is very subjective, see the [Updating Your Pull Request (PR)](#updating-your-pull-request-pr) section below for further details.
-* Every pull request should be associated with one or more issues. If no issue exists yet, please create your own.
 * Make sure that all applicable issues are mentioned somewhere in the PR description. This can be done by typing # to bring up a list of issues.
 
 ### Updating Your Pull Request (PR)
