@@ -16,10 +16,6 @@ We track our work using Issues in GitHub. Feel free to open up your own issue to
 
 We have some general guidelines towards contributing to this project.
 
-### Languages
-
-*Lua*
-
 ## Pull Requests
 
 If you've gotten as far as reading this section, then thank you for your suggestions.
