@@ -10,6 +10,7 @@ lazy val bench = project
   .dependsOn(
     `weepickle-tests` % "compile;test",
     `weejson-upickle`,
+    `weejson-jsoniter-scala`,
   )
   .enablePlugins(JmhPlugin)
   .settings(
@@ -94,6 +95,7 @@ lazy val `weepickle-tests` = project
     `weejson-argonaut`,
     `weejson-circe`,
     `weejson-json4s`,
+    `weejson-jsoniter-scala`,
     `weejson-play-base`,
     `weejson` % "compile;test->test",
     `weepack` % "compile;test->test",
@@ -135,6 +137,27 @@ lazy val `weejson-jackson` = project
     mimaBinaryIssueFilters ++= Seq(
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.rallyhealth.weejson.v1.jackson.TextBufferCharSequence.isEmpty")
     )
+  )
+
+/**
+  * A very fast JSON parser.
+  *
+  * Uses MiMa, but not shaded. Package naming strategy across major versions is unknown.
+  *
+  * @see https://github.com/plokhotnyuk/jsoniter-scala
+  */
+lazy val `weejson-jsoniter-scala` = project
+  .dependsOn(`weepickle-core`)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.12.0"
+    ),
+    mimaPreviousArtifacts := {
+      if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.8.0")))
+        Set.empty
+      else
+        mimaPreviousArtifacts.value
+    }
   )
 
 lazy val `weejson-circe` = project
