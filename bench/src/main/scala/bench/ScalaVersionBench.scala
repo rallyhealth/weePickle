@@ -58,7 +58,7 @@ class FlatPrimitivesDefaultBench extends PickleFromToBench(ScalaVersionDefaultBe
 
 class FlatPrimitivesTruncDefaultBench extends PickleFromToBench(ScalaVersionDefaultBench.benchmarkFlatPrimitivesTrunc)
 
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@OutputTimeUnit(TimeUnit.SECONDS)
 class HandrolledFlatPrimitivesBench extends PickleFromToBench(HandrolledFlatPrimitives())
 
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -335,7 +335,7 @@ object HandrolledFlatPrimitives {
   implicit val writer: default.Reader[HandrolledFlatPrimitives] = upickle.default.macroR[HandrolledFlatPrimitives]
   implicit val reader: default.Writer[HandrolledFlatPrimitives] = new upickle.default.Writer[HandrolledFlatPrimitives] {
     override def write0[V](out: core.Visitor[_, V], v: HandrolledFlatPrimitives): V = {
-      val obj = out.visitObject(6, -1).narrow
+      val obj = out.visitObject(6, true, -1).narrow
 
       obj.visitKeyValue(obj.visitKey(-1).visitString("i", -1))
       obj.visitValue(obj.subVisitor.visitInt32(Int.MinValue, -1), -1)

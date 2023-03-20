@@ -17,7 +17,7 @@ class WUVisitor[T, J](weepickle: Visitor[T, J]) extends upickle.core.Visitor[T, 
     }
   }
 
-  override def visitObject(length: Int, index: Int): ObjVisitor[T, J] = {
+  override def visitObject(length: Int, jsonableKeys: Boolean, index: Int): ObjVisitor[T, J] = {
     val obj = weepickle.visitObject(length)
 
     new ObjVisitor[T, J] {

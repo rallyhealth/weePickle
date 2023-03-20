@@ -201,7 +201,7 @@ lazy val `weejson-upickle` = project
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "1.4.2",
+      "com.lihaoyi" %% "upickle" % "2.0.0",
     ),
     mimaPreviousArtifacts := {
       if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.6.0")))
