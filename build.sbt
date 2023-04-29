@@ -83,6 +83,7 @@ lazy val weepickle = project
   .dependsOn(
     `weepickle-implicits`,
     weejson,
+    `weepickle-laws` % Test,
   )
 
 /**
@@ -113,6 +114,9 @@ lazy val `weepickle-tests` = project
   */
 lazy val weejson = project
   .dependsOn(`weejson-jackson`)
+  .settings(
+    Test / scalacOptions := (Test / scalacOptions).value.filterNot(_ == "-deprecation"),
+  )
 
 lazy val weepack = project
   .dependsOn(
@@ -236,3 +240,16 @@ lazy val `weepickle-macro-lint-tests` = project
   .settings(scalacOptions := (scalacOptions.value ++ Seq("-Xlint", "-Xfatal-warnings")).distinct)
   .settings(crossScalaVersions := supportedScala2Versions) // TODO: Scala 3?
 //  .settings(scalacOptions += "-Ymacro-debug-lite")
+
+lazy val `weepickle-laws` = project
+  .dependsOn(
+    `weepickle-core`,
+    weejson % "compile;test->test",
+  )
+  .settings(
+    mimaPreviousArtifacts := (if (version.value < "1.7") Set.empty else mimaPreviousArtifacts.value),
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "sourcecode" % "0.2.7",
+      "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,
+    ),
+  )
