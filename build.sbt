@@ -9,20 +9,20 @@ crossScalaVersions := Nil // crossScalaVersions must be set to Nil on the aggreg
 lazy val bench = project
   .dependsOn(
     `weepickle-tests` % "compile;test",
-    `weejson-upickle`,
   )
   .enablePlugins(JmhPlugin)
   .settings(
     noPublish,
     crossScalaVersions := Seq(scala213, scala3),
     libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "upickle" % "3.1.0", // need the latest Scala 3 support
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.0",
       "com.fasterxml.jackson.dataformat" % "jackson-dataformat-smile" % "2.13.0",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.0",
       "io.circe" %% "circe-generic" % "0.14.1",
       "io.circe" %% "circe-parser" % "0.14.1",
       "org.msgpack" % "jackson-dataformat-msgpack" % "0.9.0",
-      "com.lihaoyi" %% "sourcecode" % "0.2.7",
+      "com.lihaoyi" %% "sourcecode" % "0.3.0",
     )
   )
 
@@ -166,7 +166,7 @@ lazy val `weejson-play-base` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC5" else "2.7.4"),
+      "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC7" else "2.7.4"), // TODO
     ),
     noPublish
   )
@@ -191,11 +191,20 @@ lazy val `weejson-play25` = playProject("2.5.19", Seq(scala211))
 
 lazy val `weejson-play27` = playProject("2.7.4", supportedScala2Versions)
 
-lazy val `weejson-play28` = playProject("2.8.1", Seq(scala213))
+lazy val `weejson-play28` = playProject("2.8.2", Seq(scala213))
 
+// Using play-json version numbering, which is slightly confusing. Play 2.9 uses play-json 2.10 for some reason,
+// and no version of Play actually uses play-json 2.9
 lazy val `weejson-play29` = playProject("2.9.2", Seq(scala213))
 
-lazy val `weejson-play210` = playProject("2.10.0-RC5", Seq(scala3))
+lazy val `weejson-play210` = playProject("2.10.0-RC7", Seq(scala213, scala3)).settings( // TODO
+  mimaPreviousArtifacts := {
+    if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.8.1")) && scalaBinaryVersion.value == "2.13")
+      Set.empty
+    else
+      mimaPreviousArtifacts.value
+  }
+)
 
 lazy val `weejson-upickle` = project
   .dependsOn(weepickle)

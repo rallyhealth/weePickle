@@ -3,7 +3,7 @@ package com.rallyhealth.weejson.v1
 import com.rallyhealth.weejson.v1.jackson.ToJson
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, ObjVisitor, Visitor}
 
-import scala.collection.JavaConverters._
+import CollectionConverters._ // from package object
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
