@@ -13,9 +13,9 @@ object WeePicklePlugin extends AutoPlugin {
   object autoImport {
 
     val scala211 = "2.11.12"
-    val scala212 = "2.12.12"
-    val scala213 = "2.13.11-M1" // TODO
-    val scala3 = "3.3.0-RC3" // TODO
+    val scala212 = "2.12.12" // TODO: -> .18 when released
+    val scala213 = "2.13.10" // TODO: -> .11 when released
+    val scala3 = "3.3.0-RC6" // TODO: -> 3.3.0 when play-json 2.10.0 is released
     val supportedScala2Versions = Seq(scala211, scala212, scala213)
     val supportedScalaVersions = supportedScala2Versions :+ scala3
 

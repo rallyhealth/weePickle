@@ -166,7 +166,7 @@ lazy val `weejson-play-base` = (project in file("weejson-play"))
   .dependsOn(weepickle)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC7" else "2.7.4"), // TODO
+      "com.typesafe.play" %% "play-json" % (if (scalaBinaryVersion.value == "3") "2.10.0-RC8" else "2.7.4"), // TODO
     ),
     noPublish
   )
@@ -197,7 +197,7 @@ lazy val `weejson-play28` = playProject("2.8.2", Seq(scala213))
 // and no version of Play actually uses play-json 2.9
 lazy val `weejson-play29` = playProject("2.9.2", Seq(scala213))
 
-lazy val `weejson-play210` = playProject("2.10.0-RC7", Seq(scala213, scala3)).settings( // TODO
+lazy val `weejson-play210` = playProject("2.10.0-RC8", Seq(scala213, scala3)).settings( // TODO
   mimaPreviousArtifacts := {
     if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.8.1")) && scalaBinaryVersion.value == "2.13")
       Set.empty
