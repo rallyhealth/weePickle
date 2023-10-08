@@ -28,7 +28,7 @@ class VisitorJsonGenerator[J](
 
   private val cs = new TextBufferCharSequence(Array.emptyCharArray, 0, 0)
 
-  private val stack: mutable.ArrayStack[ObjArrVisitor[Any, _]] = new mutable.ArrayStack[ObjArrVisitor[Any, _]]()
+  private var stack: List[ObjArrVisitor[Any, _]] = Nil
 
   // Manually managing this reference is faster than calling stack.top every time.
   private var ctxt: ObjArrVisitor[Any, _] = {
@@ -50,12 +50,13 @@ class VisitorJsonGenerator[J](
   protected def top: ObjArrVisitor[Any, _] = ctxt
 
   protected def push(e: ObjArrVisitor[Any, _]): Unit = {
-    stack.push(top)
+    stack = top :: stack
     ctxt = e
   }
   protected def pop(): ObjArrVisitor[Any, _] = {
     val ret = top
-    ctxt = stack.pop()
+    ctxt = stack.head
+    stack = stack.tail
     ret
   }
 
@@ -209,7 +210,7 @@ class VisitorJsonGenerator[J](
 
   override def close(): Unit = {
     if (!isClosed) {
-      stack.clear()
+      stack = Nil
       ctxt = null
     }
   }

@@ -13,9 +13,9 @@ object WeePicklePlugin extends AutoPlugin {
   object autoImport {
 
     val scala211 = "2.11.12"
-    val scala212 = "2.12.12" // TODO: -> .18 when released
-    val scala213 = "2.13.10" // TODO: -> .11 when released
-    val scala3 = "3.3.0-RC6" // TODO: -> 3.3.0 when play-json 2.10.0 is released
+    val scala212 = "2.12.18"
+    val scala213 = "2.13.12"
+    val scala3 = "3.3.1"
     val supportedScala2Versions = Seq(scala211, scala212, scala213)
     val supportedScalaVersions = supportedScala2Versions :+ scala3
 
@@ -67,13 +67,10 @@ object WeePicklePlugin extends AutoPlugin {
       compilerPlugin(acyclic.value),
       acyclic.value % "provided"
     ),
-    mimaPreviousArtifacts := {
-      if (scalaBinaryVersion.value == "3") Set.empty // TODO: remove once there's a previous Scala 3 artifact
-      else
-        previousStableVersion.value
-          .map(organization.value %% moduleName.value % _)
-          .toSet
-    },
+    mimaPreviousArtifacts := previousStableVersion.value
+      .map(organization.value %% moduleName.value % _)
+      .toSet
+    ,
     (Test / test) := {
       mimaReportBinaryIssues.value
       (Test / test).value
@@ -96,7 +93,7 @@ object WeePicklePlugin extends AutoPlugin {
           builder ++= Seq(
             "-Xmax-inlines",
             "128" // MacroTests exceeds default of 32 inlines, 64 is still too small
-            //TODO: what new options should we add? See: https://docs.scala-lang.org/scala3/guides/migration/options-lookup.html
+            // See: https://docs.scala-lang.org/scala3/guides/migration/options-lookup.html
           )
           ()
 
