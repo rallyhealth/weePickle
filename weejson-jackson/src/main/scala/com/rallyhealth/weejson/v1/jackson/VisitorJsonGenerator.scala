@@ -6,8 +6,6 @@ import java.math.BigInteger
 import com.fasterxml.jackson.core._
 import com.rallyhealth.weepickle.v1.core._
 
-import scala.collection.mutable
-
 /**
   * Implements most of the `JsonGenerator` interface.
   *
@@ -28,9 +26,19 @@ class VisitorJsonGenerator[J](
 
   private val cs = new TextBufferCharSequence(Array.emptyCharArray, 0, 0)
 
+  /*
+   * This stack used to be implemented as an ArrayStack. Scala 2.13 deprecated ArrayStack with the message "Use Stack
+   * instead of ArrayStack; it now uses an array-based implementation". However, Scala 2.12 deprecated Stack with the
+   * message "Stack is an inelegant and potentially poorly-performing wrapper around List. Use a List assigned to a var
+   * instead." To avoid these dueling deprecations in the cross-version build, we are using a List now (i.e., a mutable
+   * reference to an immutable data structure instead of an immutable reference to a mutable data structure), which may
+   * slightly increase the memory allocation rate for all but the smallest messages. This is unlikely to cause any
+   * noticeable performance regression, but at least it is private, so if such a regression is identified later, it can
+   * be addressed without breaking binary compatibility.
+   */
   private var stack: List[ObjArrVisitor[Any, _]] = Nil
 
-  // Manually managing this reference is faster than calling stack.top every time.
+  // Manually managing this reference is faster than calling stack.head every time.
   private var ctxt: ObjArrVisitor[Any, _] = {
     // Create a dummy root stack element that returns the rootVisitor.
     // This is simpler than special-casing the rootVisitor.
