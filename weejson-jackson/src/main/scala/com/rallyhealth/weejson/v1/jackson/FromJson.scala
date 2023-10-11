@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.{JsonFactory, JsonParser, JsonToken, JsonToken
 import com.rallyhealth.weepickle.v1.core.{Abort, CallbackVisitor, FromInput, TransformException, Visitor}
 
 import java.io.{File, InputStream, Reader}
+import java.nio.CharBuffer
 import java.nio.file.Path
 import scala.annotation.switch
 import scala.util.Try
@@ -109,8 +110,8 @@ class JsonFromInput(createParser: () => JsonParser) extends FromInput {
           if (p.getTextLength == 0) ""
           else {
             val start = p.getTextOffset
-            val end = start + p.getTextLength
-            new runtime.ArrayCharSequence(p.getTextCharacters, start, end)
+            val length = p.getTextLength
+            CharBuffer.wrap(p.getTextCharacters, start, length)
           }
         v.visitString(cs)
       case ID_FIELD_NAME =>

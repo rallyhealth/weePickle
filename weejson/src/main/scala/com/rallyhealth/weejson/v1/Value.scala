@@ -3,7 +3,8 @@ package com.rallyhealth.weejson.v1
 import com.rallyhealth.weejson.v1.jackson.ToJson
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, ObjVisitor, Visitor}
 
-import scala.collection.JavaConverters._
+import CollectionConverters._ // from package object
+import scala.annotation.nowarn
 import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -144,7 +145,9 @@ object Value extends AstTransformer[Value] {
     }
   }
 
+  @nowarn("cat=deprecation") // change to IterableOnce in a future version
   implicit def JsonableSeq[T](items: TraversableOnce[T])(implicit f: T => Value): Arr = Arr.from(items.iterator.map(f))
+  @nowarn("cat=deprecation") // change to IterableOnce in a future version
   implicit def JsonableDict[T](items: TraversableOnce[(String, T)])(implicit f: T => Value): Obj =
     Obj.from(items.iterator.map(x => (x._1, f(x._2))))
   implicit def JsonableBoolean(i: Boolean): Bool = if (i) True else False
@@ -212,6 +215,7 @@ case class Str(value: String) extends Value
 case class Obj(value: mutable.Map[String, Value]) extends Value
 
 object Obj {
+  @nowarn("cat=deprecation") // change to IterableOnce in a future version
   implicit def from(items: TraversableOnce[(String, Value)]): Obj = {
     val initialCapacity = items match {
       case is: mutable.IndexedSeq[_] => is.size
@@ -235,6 +239,7 @@ object Obj {
 case class Arr(value: ArrayBuffer[Value]) extends Value
 
 object Arr {
+  @nowarn("cat=deprecation") // change to IterableOnce in a future version
   implicit def from[T](items: TraversableOnce[T])(implicit viewBound: T => Value): Arr =
     Arr(items.iterator.map(x => viewBound(x)).to(mutable.ArrayBuffer))
 
