@@ -3,6 +3,7 @@ package com.rallyhealth.weejson.v1
 import java.time.Instant
 import com.rallyhealth.weepickle.v1.core.{ArrVisitor, FromInput, JsVisitor, ObjVisitor, Visitor}
 
+import java.util.Arrays
 import scala.collection.mutable
 import scala.util.Try
 
@@ -162,6 +163,19 @@ object BufferedValue extends Transformer[BufferedValue] {
   case class Obj(value0: (String, BufferedValue)*) extends BufferedValue {
 
     override def toString: String = value0.map { case (k, v) => s""""$k": $v""" }.mkString("Obj(", ", ", ")")
+
+    override def equals(that: Any): Boolean = that match {
+      case Obj(thatValue0 @ _*) =>
+        this.value0.size == thatValue0.size &&
+          this.value0.sortBy(_._1).zip(thatValue0.sortBy(_._1)).forall {
+            case ((thisKey, thisValue), (thatKey, thatValue)) =>
+              thisKey == thatKey && thisValue == thatValue
+          }
+      case _ => super.equals(that)
+    }
+
+    // expensive but reliable
+    override def hashCode(): Int = this.value0.sortBy(_._1).hashCode()
   }
 
   case class Arr(value: BufferedValue*) extends BufferedValue {
@@ -172,15 +186,53 @@ object BufferedValue extends Transformer[BufferedValue] {
   sealed trait AnyNum extends BufferedValue {
     def value: BigDecimal
   }
+
   case class Num(s: String, decIndex: Int, expIndex: Int) extends AnyNum {
     override def value: BigDecimal = BigDecimal(s)
+
+    override def equals(that: Any): Boolean = that match {
+      case NumLong(otherL) => value == otherL
+      case NumDouble(otherD) => value.toDouble == otherD
+      case other: Num => value == other.value
+      case _ => super.equals(that)
+    }
+
+    override def hashCode(): Int = {
+      /*
+       * All values outside of Double's range hash to the same values
+       * (i.e., Double.PositiveInfinity.## and Double.NegativeInfinity.##),
+       * but these gigantic numbers are rarely encountered.
+       */
+      this.value.toDouble.##
+    }
   }
+
   case class NumLong(l: Long) extends AnyNum {
     override def value: BigDecimal = BigDecimal(l)
+
+    override def equals(that: Any): Boolean = that match {
+      case NumLong(otherL) => this.l == otherL
+      case NumDouble(otherD) => this.l == otherD
+      case other: Num => this.l == other.value
+      case _ => super.equals(that)
+    }
+
+    override def hashCode(): Int = this.l.toDouble.##
   }
+
   case class NumDouble(d: Double) extends AnyNum {
     override def value: BigDecimal = BigDecimal(d)
+
+    override def equals(that: Any): Boolean = that match {
+      case NumLong(otherL) => this.d == otherL.toDouble
+      case NumDouble(otherD) => this.d == otherD
+      case other: Num => this.d == other.value.toDouble
+      case _ => super.equals(that)
+    }
+
+    override def hashCode(): Int = this.d.##
   }
+
   object AnyNum {
     def apply(d: BigDecimal): AnyNum = // precision sensitive
       if (d.isValidLong) NumLong(d.longValue)
@@ -197,21 +249,44 @@ object BufferedValue extends Transformer[BufferedValue] {
       }
   }
 
-  case class Binary(b: Array[Byte]) extends BufferedValue
+  case class Binary(b: Array[Byte]) extends BufferedValue {
+    override def toString: String = s"Binary(${b.toSeq})"
 
-  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue
+    override def equals(that: Any): Boolean = that match {
+      case Binary(thatB) => Arrays.equals(this.b, thatB)
+      case _ => super.equals(that)
+    }
+
+    override def hashCode(): Int = Arrays.hashCode(this.b)
+  }
+
+  case class Ext(tag: Byte, b: Array[Byte]) extends BufferedValue {
+    override def toString: String = s"Ext($tag, ${b.toSeq})"
+
+    override def equals(that: Any): Boolean = that match {
+      case Ext(thatTag, thatB) =>
+        this.tag == thatTag && Arrays.equals(this.b, thatB)
+      case _ => super.equals(that)
+    }
+
+    // collision when only tag is different (rare)
+    override def hashCode(): Int = Arrays.hashCode(this.b)
+  }
 
   case class Timestamp(i: Instant) extends BufferedValue
 
   sealed trait Bool extends BufferedValue {
     def value: Boolean
   }
+
   case object False extends Bool {
     override def value = false
   }
+
   case object True extends Bool {
     override def value = true
   }
+
   object Bool {
     def apply(value: Boolean): BufferedValue = if (value) True else False
   }

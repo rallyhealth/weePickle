@@ -3,9 +3,17 @@ package com.rallyhealth.weejson.v1
 import com.rallyhealth.weejson.v1.CanonicalizeNumsVisitor._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
+import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
 
-trait GenBufferedValue {
+/**
+ * Generator for BufferedValue
+ *
+ * @param jsonReversible if you are piping the arbitrary BufferedValue through JSON, set this to true so that
+ *                       only reversible types are used (i.e., excludes Timestamp, Ext, and Binary, which are
+ *                       encoded in such a way that they are not reversible)
+ */
+abstract class GenBufferedValue(jsonReversible: Boolean) {
 
   import BufferedValueOps._
   import com.rallyhealth.weejson.v1.BufferedValue._
@@ -28,11 +36,24 @@ trait GenBufferedValue {
     } yield obj
 
   def genValue(depth: Int): Gen[BufferedValue] = {
-    val nonRecursive: List[Gen[BufferedValue]] = List(
+    /*
+     * These round-trip through JSON fine, at least with the canonicalization of numbers
+     */
+    def nonRecursiveJsonReversible: List[Gen[BufferedValue]] = List(
       Gen.alphaNumStr.map(Str.apply),
       arbNum.arbitrary,
       Arbitrary.arbitrary[Boolean].map(Bool(_)),
       Gen.const(Null)
+    )
+
+    /*
+     * These don't round-trip through JSON properly (e.g., timestamps are encoded as strings),
+     * and proper BufferedValue types cannot be reliably canonicalized
+     */
+    def nonRecursiveAny: List[Gen[BufferedValue]] = nonRecursiveJsonReversible ++ List(
+      arbBinary.arbitrary,
+      arbExt.arbitrary,
+      arbTimestamp.arbitrary
     )
 
     val maybeRecursive: List[Gen[BufferedValue]] = depth match {
@@ -44,6 +65,7 @@ trait GenBufferedValue {
         )
     }
 
+    val nonRecursive = if (jsonReversible) nonRecursiveJsonReversible else nonRecursiveAny
     val generators: List[Gen[BufferedValue]] = nonRecursive ++ maybeRecursive
     Gen.oneOf(generators(0), generators(1), generators.drop(2): _*)
       .map(b => b.transform(BufferedValue.Builder.canonicalize))
@@ -57,6 +79,22 @@ trait GenBufferedValue {
 
   implicit val arbNum: Arbitrary[AnyNum] = Arbitrary {
     Arbitrary.arbitrary[BigDecimal].map(AnyNum(_))
+  }
+
+  implicit val arbBinary: Arbitrary[Binary] = Arbitrary {
+    Arbitrary.arbitrary[Array[Byte]].map(Binary(_))
+  }
+
+  implicit val arbExt: Arbitrary[Ext] = Arbitrary {
+    Arbitrary.arbitrary[Byte].flatMap { tag =>
+      Arbitrary.arbitrary[Array[Byte]].map(Ext(tag, _))
+    }
+  }
+
+  // can't use Arbitrary.arbitrary[Instant] because it isn't available in Scala 2.11 libs :'(
+  implicit val arbTimestamp: Arbitrary[Timestamp] = Arbitrary {
+    Gen.chooseNum[Long](Long.MinValue, Long.MaxValue)
+      .map(ms => Timestamp(Instant.ofEpochMilli(ms)))
   }
 
   implicit val shrinkValue: Shrink[BufferedValue] = Shrink[BufferedValue] { bv =>
@@ -84,8 +122,8 @@ trait GenBufferedValue {
       case Str(s) => Shrink.shrink(s).map(Str(_))
       case Timestamp(s) => Shrink.shrink(s).map(Timestamp(_))
       case Ext(tag, bytes) => Shrink.shrink(bytes).map(Ext(tag, _))
-      case _ =>
-        Stream.empty
+      case Binary(bytes) => Shrink.shrink(bytes).map(Binary(_))
+      case _ => Stream.empty // Null, True, False, Num
     }
   }
 }
