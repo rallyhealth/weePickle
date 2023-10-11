@@ -1,6 +1,6 @@
 package com.rallyhealth.weejson.v1.xml
 
-import com.rallyhealth.weejson.v1.{Str, Value}
+import com.rallyhealth.weejson.v1.{Obj, Str, Value}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.Inside
 import org.scalatest.freespec.AnyFreeSpec
@@ -109,19 +109,19 @@ class XmlTests extends AnyFreeSpec with Matchers with Inside with TypeCheckedTri
       }
       "int" in {
         val x = readXml("1")
-        assert(x === Str("1"))
-        val y = x.transform(ToXml.string)
+        assert(x === Obj("" -> Str("1"))) // different than weexml 1.8 (jackson-dataformat-xml 2.13 -> 2.15)
+        val y = Str("1").transform(ToXml.string)
         assert(y == "<root>1</root>")
         val v = FromXml(y).transform(Value)
-        assert(v === Str("1"))
+        assert(v === Obj("" -> Str("1"))) // different than weexml 1.8 (jackson-dataformat-xml 2.13 -> 2.15)
       }
       "string" in {
         val x = readXml("\"1\"") // parses as object with nameless attribute in {"":"\"1\""}
-        assert(x === Str("\"1\""))
-        val y = x.transform(ToXml.string)
+        assert(x === Obj("" -> Str("\"1\""))) // different than weexml 1.8 (jackson-dataformat-xml 2.13 -> 2.15)
+        val y = Str("\"1\"").transform(ToXml.string)
         assert(y === "<root>\"1\"</root>")
         val v2 = FromXml(y).transform(Value)
-        assert(v2 === Str("\"1\""))
+        assert(v2 === Obj("" -> Str("\"1\""))) // different than weexml 1.8 (jackson-dataformat-xml 2.13 -> 2.15)
       }
     }
   }
