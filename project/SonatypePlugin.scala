@@ -29,6 +29,6 @@ object SonatypePlugin extends AutoPlugin {
     sonatypeCredentialHost := "s01.oss.sonatype.org",
     publishTo := sonatypePublishToBundle.value,
     sonatypeProfileName := "com.rallyhealth",
-    sonatypeProjectHosting := Some(GitHubHosting("rallyhealth", "weepickle", "roperdj+weepickle@gmail.com")),
+    sonatypeProjectHosting := Some(GitHubHosting("rallyhealth", "weepickle", "russell.remple@optum.com")),
   )
 }
