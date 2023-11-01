@@ -177,12 +177,13 @@ lazy val `weejson-play-base` = (project in file("weejson-play"))
 
 def playProject(playVersion: String, scalaVersions: Seq[String]) = {
   val playString = playVersion.split('.').take(2).mkString("play", "", "")
+  val playOrg =
+    if (playVersion.startsWith("3")) "org.playframework"
+    else "com.typesafe.play"
   Project(s"weejson-$playString", file(s"weejson-$playString"))
     .dependsOn(weepickle)
     .settings(
-      libraryDependencies ++= Seq(
-        "com.typesafe.play" %% "play-json" % playVersion,
-      ),
+      libraryDependencies += playOrg %% "play-json" % playVersion,
       Compile / unmanagedSourceDirectories ++= (`weejson-play-base` / Compile / unmanagedSourceDirectories).value,
       Test / unmanagedSourceDirectories ++= (`weejson-play-base` / Test / unmanagedSourceDirectories).value,
       crossScalaVersions := scalaVersions,
@@ -201,14 +202,10 @@ lazy val `weejson-play28` = playProject("2.8.2", Seq(scala213))
 // and no version of Play actually uses play-json 2.9
 lazy val `weejson-play29` = playProject("2.9.4", Seq(scala213))
 
-lazy val `weejson-play210` = playProject("2.10.1", Seq(scala213, scala3)).settings(
-  mimaPreviousArtifacts := {
-    if (VersionNumber(version.value).matchesSemVer(SemanticSelector("<1.9.0")) && scalaBinaryVersion.value == "2.13")
-      Set.empty // TODO: remove once there's a previous Scala 2.13 artifact
-    else
-      mimaPreviousArtifacts.value
-  }
-)
+lazy val `weejson-play210` = playProject("2.10.2", Seq(scala213, scala3))
+
+lazy val `weejson-play30` = playProject("3.0.0", Seq(scala213, scala3))
+  .settings(mimaPreviousArtifacts := Set.empty) // TODO: remove once there's a previous artifact
 
 lazy val `weejson-upickle` = project
   .dependsOn(weepickle)
